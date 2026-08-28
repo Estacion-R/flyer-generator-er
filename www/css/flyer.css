@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+
+/* ---- FLYER CONTAINER ---- */
+.flyer-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+.flyer {
+  width: 540px;
+  min-height: 680px;
+  background: #FFFFFF;
+  border: 2.5px solid #151515;
+  box-shadow: 8px 8px 0 #EAFF38;
+  padding: 2.5rem 2.8rem 2rem 2.8rem;
+  font-family: 'Ubuntu', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  position: relative;
+}
+
+/* ---- BADGE ---- */
+.flyer-badge {
+  display: inline-block;
+  background: #447099;
+  color: #FFFFFF;
+  border: 2px solid #151515;
+  padding: 0.22rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Ubuntu Mono', monospace;
+  width: fit-content;
+}
+
+/* ---- TÍTULO ---- */
+.flyer-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* ---- SUBTÍTULO ---- */
+.flyer-subtitle {
+  font-size: 0.95rem;
+  color: #404041;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ---- BULLETS ---- */
+.flyer-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flyer-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  color: #151515;
+}
+
+.flyer-bullets li::before {
+  content: '●';
+  color: #EE6331;
+  font-size: 0.7rem;
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+}
+
+/* ---- 3 COLUMNAS INFO ---- */
+.flyer-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  border-top: 2px solid #151515;
+  padding-top: 1rem;
+  margin-top: auto;
+}
+
+.flyer-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flyer-info-icon {
+  font-size: 1.3rem;
+  margin-bottom: 0.2rem;
+}
+
+.flyer-info-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+}
+
+.flyer-info-text {
+  font-size: 0.82rem;
+  color: #404041;
+  line-height: 1.4;
+}
+
+/* ---- FOOTER DESTACADO ---- */
+.flyer-footer-highlight {
+  background: #EAFF38;
+  border: 2px solid #151515;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.flyer-footer-highlight .footer-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.flyer-footer-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+/* ---- LOGO ER ---- */
+.flyer-brand {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #707073;
+  font-family: 'Ubuntu Mono', monospace;
+  letter-spacing: 0.1em;
+  border-top: 1.5px solid #C2C2C4;
+  padding-top: 0.75rem;
+}
+
+.flyer-brand strong {
+  color: #447099;
+  font-weight: 700;
+}
+
+/* ---- APP LAYOUT ---- */
+.panel-form {
+  background: #FFFFFF;
+  border: 2px solid #151515;
+  box-shadow: 4px 4px 0 #EE6331;
+  padding: 1.5rem;
+  height: fit-content;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #447099;
+  font-family: 'Ubuntu Mono', monospace;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.btn-download {
+  background: #151515;
+  color: #EAFF38;
+  border: 2px solid #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  font-weight: 700;
+  padding: 0.6rem 1.5rem;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.btn-download:hover {
+  background: #447099;
+  color: #FFFFFF;
+}
