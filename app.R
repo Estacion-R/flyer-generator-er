@@ -2,13 +2,43 @@ library(shiny)
 library(bslib)
 library(htmltools)
 library(base64enc)
-library(webshot2)
 
 BADGE_COLORES <- c(
   "Azul ER"    = "#447099",
   "Naranja ER" = "#EE6331",
   "Teal ER"    = "#419599",
   "Negro"      = "#151515"
+)
+
+# Íconos inline SVG — mismos que usa estacion-r.com/courses (Boxicons)
+SVG_ICON <- function(path_d, extra_path = NULL) {
+  paths <- paste0('<path d="', path_d, '"/>')
+  if (!is.null(extra_path)) paths <- paste0(paths, '<path d="', extra_path, '"/>')
+  paste0(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ',
+    'style="width:1.5rem;height:1.5rem;fill:#447099;display:block;">',
+    paths, '</svg>'
+  )
+}
+
+SVG_MOVIE_PLAY <- SVG_ICON(
+  "M20 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2zm.001 6c-.001 0-.001 0 0 0h-.465l-2.667-4H20l.001 4zM9.536 9 6.869 5h2.596l2.667 4H9.536zm5 0-2.667-4h2.596l2.667 4h-2.596zM4 5h.465l2.667 4H4V5zm0 14v-8h16l.002 8H4z",
+  "m10 18 5.5-3-5.5-3z"
+)
+
+SVG_CERTIFICATION <- SVG_ICON(
+  "M2.06 14.68a1 1 0 0 0 .46.6l1.91 1.11v2.2a1 1 0 0 0 1 1h2.2l1.11 1.91a1 1 0 0 0 .86.5 1 1 0 0 0 .51-.14l1.9-1.1 1.91 1.1a1 1 0 0 0 1.37-.36l1.1-1.91h2.2a1 1 0 0 0 1-1v-2.2l1.91-1.11a1 1 0 0 0 .37-1.36L20.76 12l1.11-1.91a1 1 0 0 0-.37-1.36l-1.91-1.1v-2.2a1 1 0 0 0-1-1h-2.2l-1.1-1.91a1 1 0 0 0-.61-.46 1 1 0 0 0-.76.1L12 3.26l-1.9-1.1a1 1 0 0 0-1.36.36L7.63 4.43h-2.2a1 1 0 0 0-1 1v2.2l-1.9 1.1a1 1 0 0 0-.37 1.37l1.1 1.9-1.1 1.91a1 1 0 0 0-.1.77zm3.22-3.17L4.39 10l1.55-.9a1 1 0 0 0 .49-.86V6.43h1.78a1 1 0 0 0 .87-.5L10 4.39l1.54.89a1 1 0 0 0 1 0l1.55-.89.91 1.54a1 1 0 0 0 .87.5h1.77v1.78a1 1 0 0 0 .5.86l1.54.9-.89 1.54a1 1 0 0 0 0 1l.89 1.54-1.54.9a1 1 0 0 0-.5.86v1.78h-1.83a1 1 0 0 0-.86.5l-.89 1.54-1.55-.89a1 1 0 0 0-1 0l-1.51.89-.89-1.54a1 1 0 0 0-.87-.5H6.43v-1.78a1 1 0 0 0-.49-.81l-1.55-.9.89-1.54a1 1 0 0 0 0-1.05z"
+)
+
+SVG_SLACK <- SVG_ICON(
+  "M20.935 12.646a1.617 1.617 0 0 0-2.022-1.034l-1.632.532c-.355-1.099-.735-2.268-1.092-3.365l.006-.002-.004-.008 1.613-.523a1.62 1.62 0 0 0 1.035-2.023 1.62 1.62 0 0 0-2.025-1.034l-1.621.527-.519-1.604a1.619 1.619 0 0 0-2.024-1.034 1.618 1.618 0 0 0-1.033 2.024l.522 1.609-3.368 1.092-.524-1.611a1.618 1.618 0 0 0-2.022-1.034 1.617 1.617 0 0 0-1.034 2.023l.524 1.616-1.662.541a1.602 1.602 0 0 0-.988 1.95c.25.856 1.152 1.373 1.979 1.092.006 0 .658-.209 1.665-.536l1.099 3.386h-.002v.002l-1.67.545a1.599 1.599 0 0 0-.987 1.949c.25.857 1.15 1.374 1.979 1.093.007 0 .659-.211 1.665-.538l.003.005a.024.024 0 0 0 .008-.002l.539 1.657a1.6 1.6 0 0 0 1.949.989c.857-.25 1.373-1.151 1.094-1.979 0-.006-.209-.654-.533-1.654l-.003-.009c1.104-.358 2.276-.739 3.376-1.098l.543 1.668a1.602 1.602 0 0 0 1.949.989c.856-.251 1.374-1.152 1.092-1.979 0-.007-.209-.659-.535-1.663l.019-.006-.003-.007 1.609-.522a1.62 1.62 0 0 0 1.035-2.024zM10.86 14.238l-1.097-3.377a.02.02 0 0 0 .005-.001v-.006c1.098-.356 2.268-.735 3.363-1.092l1.098 3.377-3.369 1.099z"
+)
+
+# Dimensiones por formato (ancho en px, alto en px o NULL = automático)
+FORMATOS <- list(
+  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL),
+  "Cuadrado — Instagram (1:1)"       = list(w = 540, h = 540),
+  "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675)
 )
 
 css_flyer_raw <- readLines(
@@ -32,14 +62,41 @@ ui <- page_sidebar(
   ),
   tags$head(
     tags$link(rel = "stylesheet", href = "css/flyer.css"),
-    tags$link(rel = "stylesheet",
-              href = "https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"),
+    tags$script(
+      src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    ),
+    tags$script(HTML("
+      function descargarPNG() {
+        var flyer = document.querySelector('.flyer');
+        if (!flyer) { alert('No se encontró el flyer'); return; }
+        document.fonts.ready.then(function() {
+          html2canvas(flyer, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff'
+          }).then(function(canvas) {
+            var link = document.createElement('a');
+            link.download = 'flyer_er.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }).catch(function(err) {
+            alert('Error al generar PNG: ' + err.message);
+          });
+        });
+      }
+    "))
   ),
 
   # ---- PANEL LATERAL ----
   sidebar = sidebar(
     width = 320,
     class = "panel-form",
+
+    tags$span("Formato / red social", class = "section-label"),
+    selectInput("formato", NULL,
+      choices = names(FORMATOS),
+      selected = names(FORMATOS)[1]),
 
     tags$span("Imagen del curso", class = "section-label"),
     fileInput("course_image", NULL,
@@ -87,7 +144,7 @@ ui <- page_sidebar(
       rows = 2),
 
     tags$hr(),
-    tags$span("Destacado final (precio / fecha / horario)", class = "section-label"),
+    tags$span("Destacado final", class = "section-label"),
     textInput("footer_icon", "Ícono (emoji)", value = "📣"),
     textAreaInput("footer_texto", "Texto",
       value = "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO",
@@ -97,8 +154,12 @@ ui <- page_sidebar(
       style = "display:flex; gap:0.5rem; margin-top:1rem;",
       downloadButton("descargar_html", "⬇ HTML", class = "btn-download",
         style = "flex:1; margin:0;"),
-      downloadButton("descargar_png", "⬇ PNG", class = "btn-download",
-        style = "flex:1; margin:0; background:#447099; color:#fff; border:2px solid #151515;")
+      tags$button(
+        "⬇ PNG",
+        onclick = "descargarPNG()",
+        class = "btn-download",
+        style = "flex:1; margin:0; background:#447099; color:#fff; border:2px solid #151515; cursor:pointer;"
+      )
     )
   ),
 
@@ -124,7 +185,11 @@ server <- function(input, output, session) {
            base64enc::base64encode(input$course_image$datapath))
   })
 
-  build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL) {
+  formato_dims <- reactive({
+    FORMATOS[[input$formato]]
+  })
+
+  build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL, dims = NULL) {
     bullets <- strsplit(input$bullets, "\n")[[1]]
     bullets <- bullets[nchar(trimws(bullets)) > 0]
 
@@ -141,7 +206,17 @@ server <- function(input, output, session) {
       tags$img(src = course_img_src, class = "flyer-course-image")
     } else NULL
 
-    div(class = "flyer",
+    flyer_style <- if (!is.null(dims)) {
+      w <- paste0(dims$w, "px")
+      h_css <- if (!is.null(dims$h)) {
+        paste0("width:", w, "; height:", dims$h, "px; min-height:", dims$h, "px;")
+      } else {
+        paste0("width:", w, ";")
+      }
+      h_css
+    } else ""
+
+    div(class = "flyer", style = flyer_style,
       course_img_tag,
       div(class = "flyer-badge", style = badge_style, toupper(input$badge)),
       h1(class = "flyer-title", input$titulo),
@@ -153,17 +228,17 @@ server <- function(input, output, session) {
 
       div(class = "flyer-info-grid",
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", tags$i(class = "bx bx-movie-play")),
+          div(class = "flyer-info-icon", HTML(SVG_MOVIE_PLAY)),
           div(class = "flyer-info-label", "ACCESO DE POR VIDA"),
           div(class = "flyer-info-text", input$col1_texto)
         ),
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", tags$i(class = "bx bx-certification")),
+          div(class = "flyer-info-icon", HTML(SVG_CERTIFICATION)),
           div(class = "flyer-info-label", "CERTIFICACIÓN"),
           div(class = "flyer-info-text", input$col2_texto)
         ),
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", tags$i(class = "bx bxl-slack-old")),
+          div(class = "flyer-info-icon", HTML(SVG_SLACK)),
           div(class = "flyer-info-label", "ACCESO A LA COMUNIDAD"),
           div(class = "flyer-info-text", input$col3_texto)
         )
@@ -185,43 +260,8 @@ server <- function(input, output, session) {
 
   output$preview <- renderUI({
     img_src <- if (!is.null(input$course_image)) img_b64() else NULL
-    build_flyer_tag(badge_hex(), course_img_src = img_src)
+    build_flyer_tag(badge_hex(), course_img_src = img_src, dims = formato_dims())
   })
-
-  output$descargar_png <- downloadHandler(
-    filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".png"),
-    content = function(file) {
-      logo_b64 <- paste0(
-        "data:image/png;base64,",
-        base64enc::base64encode("www/logo_er.png")
-      )
-      img_src <- if (!is.null(input$course_image)) img_b64() else NULL
-      flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64, course_img_src = img_src)
-      html_content <- as.character(tagList(
-        tags$html(
-          tags$head(
-            tags$meta(charset = "UTF-8"),
-            tags$link(rel = "stylesheet",
-              href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap"),
-            tags$link(rel = "stylesheet",
-              href = "https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"),
-            tags$style(HTML(css_flyer))
-          ),
-          tags$body(style = "margin:0; padding:2rem; background:#f5f5f5;", flyer_tag)
-        )
-      ))
-      tmp_html <- tempfile(fileext = ".html")
-      writeLines(html_content, tmp_html)
-      webshot2::webshot(
-        url = tmp_html,
-        file = file,
-        selector = ".flyer",
-        zoom = 2,
-        delay = 1.5
-      )
-      unlink(tmp_html)
-    }
-  )
 
   output$descargar_html <- downloadHandler(
     filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".html"),
@@ -231,15 +271,14 @@ server <- function(input, output, session) {
         base64enc::base64encode("www/logo_er.png")
       )
       img_src <- if (!is.null(input$course_image)) img_b64() else NULL
-      flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64, course_img_src = img_src)
+      flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64,
+                                   course_img_src = img_src, dims = formato_dims())
       html <- as.character(tagList(
         tags$html(
           tags$head(
             tags$meta(charset = "UTF-8"),
             tags$link(rel = "stylesheet",
               href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap"),
-            tags$link(rel = "stylesheet",
-              href = "https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"),
             tags$style(HTML(css_flyer))
           ),
           tags$body(style = "margin:0; padding:2rem; background:#f5f5f5;", flyer_tag)
