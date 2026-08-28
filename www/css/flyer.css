@@ -20,7 +20,6 @@
   flex-direction: column;
   gap: 1.4rem;
   position: relative;
-  overflow: hidden;
 }
 
 /* ---- IMAGEN DEL CURSO ---- */
