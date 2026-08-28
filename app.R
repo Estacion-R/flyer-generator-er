@@ -1,6 +1,7 @@
 library(shiny)
 library(bslib)
 library(htmltools)
+library(base64enc)
 
 BADGE_COLORES <- c(
   "Azul ER"    = "#447099",
@@ -9,7 +10,6 @@ BADGE_COLORES <- c(
   "Negro"      = "#151515"
 )
 
-# CSS sin el @import (las fuentes se cargan por <link> en el <head>)
 css_flyer_raw <- readLines(
   file.path(getwd(), "www/css/flyer.css"), warn = FALSE
 )
@@ -31,6 +31,8 @@ ui <- page_sidebar(
   ),
   tags$head(
     tags$link(rel = "stylesheet", href = "css/flyer.css"),
+    tags$link(rel = "stylesheet",
+              href = "https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"),
     tags$script(
       src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
     ),
@@ -53,6 +55,12 @@ ui <- page_sidebar(
   sidebar = sidebar(
     width = 320,
     class = "panel-form",
+
+    tags$span("Imagen del curso", class = "section-label"),
+    fileInput("course_image", NULL,
+              accept = c("image/png", "image/jpeg", "image/jpg"),
+              buttonLabel = "Elegir imagen...",
+              placeholder = "Sin imagen"),
 
     tags$span("Tipo de evento", class = "section-label"),
     textInput("badge", NULL, value = "Curso virtual"),
@@ -78,25 +86,19 @@ ui <- page_sidebar(
       rows = 5),
 
     tags$hr(),
-    tags$span("Columna 1", class = "section-label"),
-    textInput("col1_icon", "Ícono (emoji)", value = "👥"),
-    textInput("col1_label", "Título", value = "DIRIGIDO A"),
-    textAreaInput("col1_texto", "Texto",
-      value = "Profesionales de Ciencias Sociales, docentes e investigadores/as",
+    tags$span("Acceso de por vida — texto", class = "section-label"),
+    textAreaInput("col1_texto", NULL,
+      value = "Grabaciones disponibles para repasar cuando quieras",
       rows = 2),
 
-    tags$span("Columna 2", class = "section-label"),
-    textInput("col2_icon", "Ícono (emoji)", value = "🎯"),
-    textInput("col2_label", "Título", value = "METODOLOGÍA"),
-    textAreaInput("col2_texto", "Texto",
-      value = "Clases prácticas con datos reales y ejercicios guiados",
+    tags$span("Certificación — texto", class = "section-label"),
+    textAreaInput("col2_texto", NULL,
+      value = "Certificado de participación al completar el programa",
       rows = 2),
 
-    tags$span("Columna 3", class = "section-label"),
-    textInput("col3_icon", "Ícono (emoji)", value = "📅"),
-    textInput("col3_label", "Título", value = "INFO GENERAL"),
-    textAreaInput("col3_texto", "Texto",
-      value = "8 encuentros virtuales\nCertificado de participación\nMateriales incluidos",
+    tags$span("Acceso a la comunidad — texto", class = "section-label"),
+    textAreaInput("col3_texto", NULL,
+      value = "Canal exclusivo de Estación R para consultas y seguimiento",
       rows = 2),
 
     tags$hr(),
@@ -133,22 +135,33 @@ server <- function(input, output, session) {
     BADGE_COLORES[[input$badge_color]]
   })
 
-  build_flyer_tag <- function(badge_color_hex, logo_base64 = NULL) {
+  img_b64 <- reactive({
+    req(input$course_image)
+    ext <- tools::file_ext(input$course_image$name)
+    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
+    paste0("data:", mime, ";base64,",
+           base64enc::base64encode(input$course_image$datapath))
+  })
+
+  build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL) {
     bullets <- strsplit(input$bullets, "\n")[[1]]
     bullets <- bullets[nchar(trimws(bullets)) > 0]
 
-    badge_style <- paste0("background:", badge_color_hex, ";")
     badge_text_color <- if (badge_color_hex == "#151515") "#EAFF38" else "#FFFFFF"
-    badge_style <- paste0(badge_style, "color:", badge_text_color, ";")
+    badge_style <- paste0("background:", badge_color_hex, "; color:", badge_text_color, ";")
 
-    logo_tag <- if (!is.null(logo_base64)) {
-      tags$img(src = logo_base64, style = "height:28px; display:block; margin:0 auto 0.3rem;")
+    logo_tag <- if (!is.null(logo_b64)) {
+      tags$img(src = logo_b64, style = "height:28px; display:block; margin:0 auto 0.3rem;")
     } else {
       tags$img(src = "logo_er.png", style = "height:28px; display:block; margin:0 auto 0.3rem;")
     }
 
-    div(class = "flyer",
+    course_img_tag <- if (!is.null(course_img_src)) {
+      tags$img(src = course_img_src, class = "flyer-course-image")
+    } else NULL
 
+    div(class = "flyer",
+      course_img_tag,
       div(class = "flyer-badge", style = badge_style, toupper(input$badge)),
       h1(class = "flyer-title", input$titulo),
       p(class = "flyer-subtitle", input$subtitulo),
@@ -159,18 +172,18 @@ server <- function(input, output, session) {
 
       div(class = "flyer-info-grid",
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", input$col1_icon),
-          div(class = "flyer-info-label", input$col1_label),
+          div(class = "flyer-info-icon", tags$i(class = "bx bx-movie-play")),
+          div(class = "flyer-info-label", "ACCESO DE POR VIDA"),
           div(class = "flyer-info-text", input$col1_texto)
         ),
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", input$col2_icon),
-          div(class = "flyer-info-label", input$col2_label),
+          div(class = "flyer-info-icon", tags$i(class = "bx bx-certification")),
+          div(class = "flyer-info-label", "CERTIFICACIÓN"),
           div(class = "flyer-info-text", input$col2_texto)
         ),
         div(class = "flyer-info-col",
-          div(class = "flyer-info-icon", input$col3_icon),
-          div(class = "flyer-info-label", input$col3_label),
+          div(class = "flyer-info-icon", tags$i(class = "bx bxl-slack-old")),
+          div(class = "flyer-info-label", "ACCESO A LA COMUNIDAD"),
           div(class = "flyer-info-text", input$col3_texto)
         )
       ),
@@ -190,10 +203,10 @@ server <- function(input, output, session) {
   }
 
   output$preview <- renderUI({
-    build_flyer_tag(badge_hex())
+    img_src <- if (!is.null(input$course_image)) img_b64() else NULL
+    build_flyer_tag(badge_hex(), course_img_src = img_src)
   })
 
-  # Descarga HTML standalone
   output$descargar_html <- downloadHandler(
     filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".html"),
     content = function(file) {
@@ -201,13 +214,16 @@ server <- function(input, output, session) {
         "data:image/png;base64,",
         base64enc::base64encode("www/logo_er.png")
       )
-      flyer_tag <- build_flyer_tag(badge_hex(), logo_base64 = logo_b64)
+      img_src <- if (!is.null(input$course_image)) img_b64() else NULL
+      flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64, course_img_src = img_src)
       html <- as.character(tagList(
         tags$html(
           tags$head(
             tags$meta(charset = "UTF-8"),
             tags$link(rel = "stylesheet",
-              href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap"),
+              href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap"),
+            tags$link(rel = "stylesheet",
+              href = "https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"),
             tags$style(HTML(css_flyer))
           ),
           tags$body(style = "margin:0; padding:2rem; background:#f5f5f5;", flyer_tag)
@@ -216,8 +232,6 @@ server <- function(input, output, session) {
       writeLines(html, file)
     }
   )
-
-
 }
 
 shinyApp(ui, server)
