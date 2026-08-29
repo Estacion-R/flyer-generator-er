@@ -2,6 +2,7 @@ library(shiny)
 library(bslib)
 library(htmltools)
 library(base64enc)
+library(webshot2)
 
 BADGE_COLORES <- c(
   "Azul ER"    = "#447099",
@@ -61,31 +62,7 @@ ui <- page_sidebar(
     "border-radius" = "0"
   ),
   tags$head(
-    tags$link(rel = "stylesheet", href = "css/flyer.css"),
-    tags$script(
-      src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
-    ),
-    tags$script(HTML("
-      function descargarPNG() {
-        var flyer = document.querySelector('.flyer');
-        if (!flyer) { alert('No se encontró el flyer'); return; }
-        document.fonts.ready.then(function() {
-          html2canvas(flyer, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff'
-          }).then(function(canvas) {
-            var link = document.createElement('a');
-            link.download = 'flyer_er.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-          }).catch(function(err) {
-            alert('Error al generar PNG: ' + err.message);
-          });
-        });
-      }
-    "))
+    tags$link(rel = "stylesheet", href = "css/flyer.css")
   ),
 
   # ---- PANEL LATERAL ----
@@ -154,12 +131,8 @@ ui <- page_sidebar(
       style = "display:flex; gap:0.5rem; margin-top:1rem;",
       downloadButton("descargar_html", "⬇ HTML", class = "btn-download",
         style = "flex:1; margin:0;"),
-      tags$button(
-        "⬇ PNG",
-        onclick = "descargarPNG()",
-        class = "btn-download",
-        style = "flex:1; margin:0; background:#447099; color:#fff; border:2px solid #151515; cursor:pointer;"
-      )
+      downloadButton("descargar_png", "⬇ PNG", class = "btn-download",
+        style = "flex:1; margin:0; background:#447099; color:#fff; border:2px solid #151515;")
     )
   ),
 
@@ -285,6 +258,34 @@ server <- function(input, output, session) {
         )
       ))
       writeLines(html, file)
+    }
+  )
+
+  output$descargar_png <- downloadHandler(
+    filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".png"),
+    content = function(file) {
+      logo_b64 <- paste0(
+        "data:image/png;base64,",
+        base64enc::base64encode("www/logo_er.png")
+      )
+      img_src <- if (!is.null(input$course_image)) img_b64() else NULL
+      flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64,
+                                   course_img_src = img_src, dims = formato_dims())
+      html <- as.character(tagList(
+        tags$html(
+          tags$head(
+            tags$meta(charset = "UTF-8"),
+            tags$link(rel = "stylesheet",
+              href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap"),
+            tags$style(HTML(css_flyer))
+          ),
+          tags$body(style = "margin:0; padding:0; background:#ffffff;", flyer_tag)
+        )
+      ))
+      tmp_html <- tempfile(fileext = ".html")
+      writeLines(html, tmp_html)
+      on.exit(unlink(tmp_html), add = TRUE)
+      webshot2::webshot(tmp_html, file = file, selector = ".flyer", zoom = 2)
     }
   )
 }
