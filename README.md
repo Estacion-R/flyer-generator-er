@@ -1,6 +1,6 @@
 # Generador de Flyers — Estación R
 
-App Shiny para generar flyers de cursos con el branding oficial de Estación R (minimalista neobrutalist-light): formulario en vivo, preview y descarga en HTML y PNG.
+App Shiny para generar flyers de Estación R (minimalista neobrutalist-light) con dos plantillas: **Curso** (flyer completo con imagen, contenidos, CTA) y **Tip / Paquete de R** (tarjeta con código R con resaltado de sintaxis). Formulario en vivo, preview y descarga en HTML y PNG.
 
 **Deploy activo:** shiny-server local → `http://localhost:3838/flyer/` (en LAN: `http://192.168.68.117:3838/flyer/`)
 
@@ -8,8 +8,9 @@ App Shiny para generar flyers de cursos con el branding oficial de Estación R (
 
 ## Características
 
-- Formulario en vivo: formato/red, imagen del curso, badge (texto + color), título, descripción, contenidos, columnas de info, destacado final
-- Tres formatos de salida: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
+- Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
+- Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
+- Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
 - Preview en vivo con branding ER: borde negro, sombra dura amarilla `#EAFF38`, paleta oficial, Ubuntu / Ubuntu Mono
 - Descarga **HTML** (CSS y logo embebidos, abre solo) y **PNG** (render server-side)
 - Íconos SVG de Boxicons (los mismos de estacion-r.com/courses)
@@ -31,7 +32,7 @@ app.R (Shiny + bslib)
 generate_flyer.js (Node + playwright) ┘──▶ Chrome ──▶ screenshot PNG
 ```
 
-`generate_flyer.js` también funciona como CLI independiente:
+`generate_flyer.js` también funciona como CLI independiente (schema de ambos templates en el header del archivo):
 
 ```bash
 node generate_flyer.js --config config.json --output flyer.png
@@ -80,7 +81,8 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 
 ## Roadmap
 
-- **Formato 2 — flyer de tips/paquetes de R:** boceto de referencia en `design/formato2_tip.html` (header azul con "R" gigante)
+- ~~Formato 2 — flyer de tips/paquetes de R~~ ✅ hecho en `v1.1.0` (boceto original conservado en `design/formato2_tip.html`)
+- Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story)
 
 ## Convenciones de desarrollo
 
