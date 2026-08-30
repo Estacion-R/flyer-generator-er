@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #f0f0f0; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; font-family: 'Ubuntu', sans-serif; }
+
+.card {
+  width: 540px;
+  border: 3px solid #151515;
+  box-shadow: 10px 10px 0 #EAFF38;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+/* HEADER AZUL */
+.card-header {
+  background: #447099;
+  padding: 2.2rem 2.5rem 2rem 2.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-header::after {
+  content: 'R';
+  position: absolute;
+  right: -0.5rem;
+  bottom: -1.2rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 8rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.badge-categoria {
+  display: inline-block;
+  background: #EAFF38;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.7rem;
+  border: 2px solid #151515;
+  width: fit-content;
+}
+
+.pkg-nombre {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.pkg-nombre span.brace {
+  color: #EAFF38;
+  font-size: 2.2rem;
+}
+
+.pkg-version {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.08em;
+}
+
+/* BODY BLANCO */
+.card-body {
+  padding: 1.8rem 2.5rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.pkg-desc {
+  font-size: 0.95rem;
+  color: #404041;
+  line-height: 1.6;
+}
+
+/* CODE BLOCK */
+.code-block {
+  background: #F5F5F5;
+  border: 2px solid #151515;
+  border-left: 5px solid #447099;
+  padding: 0.9rem 1rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.82rem;
+  color: #151515;
+  line-height: 1.6;
+}
+.code-comment { color: #707073; }
+.code-fn { color: #447099; font-weight: 700; }
+.code-arg { color: #EE6331; }
+.code-str { color: #419599; }
+
+/* AUTOR */
+.pkg-autor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #707073;
+  font-family: 'Ubuntu Mono', monospace;
+}
+.pkg-autor strong {
+  color: #151515;
+}
+
+/* FOOTER */
+.card-footer {
+  background: #EAFF38;
+  border-top: 2px solid #151515;
+  padding: 0.65rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-brand {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #151515;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.footer-url {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.68rem;
+  color: #404041;
+  letter-spacing: 0.06em;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="card-header">
+    <div class="badge-categoria">Paquete de R</div>
+    <div class="pkg-nombre"><span class="brace">{</span>janitor<span class="brace">}</span></div>
+    <div class="pkg-version">v2.2.0 · CRAN · Sam Firke</div>
+  </div>
+
+  <div class="card-body">
+
+    <p class="pkg-desc">
+      Limpiá y normalizá datos de forma rápida: nombres de columnas, tablas cruzadas y detección de duplicados con una sola línea de código.
+    </p>
+
+    <div class="code-block">
+      <span class="code-comment"># Normalizá los nombres de columnas</span><br>
+      datos <span style="color:#151515;">&lt;-</span> datos |&gt;<br>
+      &nbsp;&nbsp;<span class="code-fn">clean_names</span>() |&gt;<br>
+      &nbsp;&nbsp;<span class="code-fn">remove_empty</span>(<span class="code-arg">which</span> <span style="color:#151515;">=</span> <span class="code-str">"rows"</span>)
+    </div>
+
+    <div class="pkg-autor">
+      📦 <strong>janitor</strong> &nbsp;·&nbsp; GitHub: <strong>sfirke/janitor</strong>
+    </div>
+
+  </div>
+
+  <div class="card-footer">
+    <span class="footer-brand">Estación R</span>
+    <span class="footer-url">estacion-r.com</span>
+  </div>
+
+</div>
+
+</body>
+</html>
