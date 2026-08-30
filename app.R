@@ -2,7 +2,9 @@ library(shiny)
 library(bslib)
 library(htmltools)
 library(base64enc)
+library(jsonlite)
 
+# ---- Config ----
 BADGE_COLORES <- c(
   "Azul ER"    = "#447099",
   "Naranja ER" = "#EE6331",
@@ -10,7 +12,20 @@ BADGE_COLORES <- c(
   "Negro"      = "#151515"
 )
 
-# Íconos inline SVG — mismos que usa estacion-r.com/courses (Boxicons)
+FORMATOS <- list(
+  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL, key = "linkedin"),
+  "Cuadrado — Instagram (1:1)"       = list(w = 540, h = 540,  key = "instagram"),
+  "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675,  key = "story")
+)
+
+# Path al script Node de Playwright (en el home de pablote)
+PLAYWRIGHT_SCRIPT <- "/srv/shiny-server/flyer/generate_flyer.js"
+# node de Linuxbrew: el /usr/bin/node v18 que resuelve el usuario shiny no cumple
+# el engines.node >=20 que pide playwright-core
+NODE_BIN <- "/home/linuxbrew/.linuxbrew/bin/node"
+LOGO_PATH <- "/srv/shiny-server/flyer/www/logo_er.png"
+
+# ---- SVG icons (Boxicons — mismos que estacion-r.com/courses) ----
 SVG_ICON <- function(path_d, extra_path = NULL) {
   paths <- paste0('<path d="', path_d, '"/>')
   if (!is.null(extra_path)) paths <- paste0(paths, '<path d="', extra_path, '"/>')
@@ -34,20 +49,214 @@ SVG_SLACK <- SVG_ICON(
   "M20.935 12.646a1.617 1.617 0 0 0-2.022-1.034l-1.632.532c-.355-1.099-.735-2.268-1.092-3.365l.006-.002-.004-.008 1.613-.523a1.62 1.62 0 0 0 1.035-2.023 1.62 1.62 0 0 0-2.025-1.034l-1.621.527-.519-1.604a1.619 1.619 0 0 0-2.024-1.034 1.618 1.618 0 0 0-1.033 2.024l.522 1.609-3.368 1.092-.524-1.611a1.618 1.618 0 0 0-2.022-1.034 1.617 1.617 0 0 0-1.034 2.023l.524 1.616-1.662.541a1.602 1.602 0 0 0-.988 1.95c.25.856 1.152 1.373 1.979 1.092.006 0 .658-.209 1.665-.536l1.099 3.386h-.002v.002l-1.67.545a1.599 1.599 0 0 0-.987 1.949c.25.857 1.15 1.374 1.979 1.093.007 0 .659-.211 1.665-.538l.003.005a.024.024 0 0 0 .008-.002l.539 1.657a1.6 1.6 0 0 0 1.949.989c.857-.25 1.373-1.151 1.094-1.979 0-.006-.209-.654-.533-1.654l-.003-.009c1.104-.358 2.276-.739 3.376-1.098l.543 1.668a1.602 1.602 0 0 0 1.949.989c.856-.251 1.374-1.152 1.092-1.979 0-.007-.209-.659-.535-1.663l.019-.006-.003-.007 1.609-.522a1.62 1.62 0 0 0 1.035-2.024zM10.86 14.238l-1.097-3.377a.02.02 0 0 0 .005-.001v-.006c1.098-.356 2.268-.735 3.363-1.092l1.098 3.377-3.369 1.099z"
 )
 
-# Dimensiones por formato (ancho en px, alto en px o NULL = automático)
-FORMATOS <- list(
-  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL),
-  "Cuadrado — Instagram (1:1)"       = list(w = 540, h = 540),
-  "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675)
-)
+css_flyer <- "
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
 
-css_flyer_raw <- readLines(
-  file.path(getwd(), "www/css/flyer.css"), warn = FALSE
-)
-css_flyer <- paste(
-  css_flyer_raw[!grepl("^@import", css_flyer_raw)],
-  collapse = "\n"
-)
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #f5f5f5; }
+
+.flyer-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+}
+
+.flyer {
+  width: 540px;
+  min-height: 680px;
+  background: #FFFFFF;
+  border: 2.5px solid #151515;
+  box-shadow: 8px 8px 0 #EAFF38;
+  padding: 2.5rem 2.8rem 2rem 2.8rem;
+  font-family: 'Ubuntu', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  position: relative;
+}
+
+.flyer-course-image {
+  width: calc(100% + 5.6rem);
+  margin: -2.5rem -2.8rem 0 -2.8rem;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 2.5px solid #151515;
+}
+
+.flyer-badge {
+  display: inline-block;
+  background: #447099;
+  color: #FFFFFF;
+  border: 2px solid #151515;
+  padding: 0.22rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: 'Ubuntu', sans-serif;
+  width: fit-content;
+}
+
+.flyer-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #151515;
+  font-family: 'Ubuntu', sans-serif;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.flyer-subtitle {
+  font-size: 0.95rem;
+  color: #404041;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.flyer-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flyer-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  color: #151515;
+}
+
+.flyer-bullets li::before {
+  content: '●';
+  color: #EE6331;
+  font-size: 0.7rem;
+  margin-top: 0.3rem;
+  flex-shrink: 0;
+}
+
+.flyer-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  border-top: 2px solid #151515;
+  padding-top: 1rem;
+  margin-top: auto;
+}
+
+.flyer-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flyer-info-icon {
+  font-size: 1.4rem;
+  color: #447099;
+  margin-bottom: 0.2rem;
+  line-height: 1;
+}
+
+.flyer-info-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #151515;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.flyer-info-text {
+  font-size: 0.82rem;
+  color: #404041;
+  line-height: 1.4;
+}
+
+.flyer-footer-highlight {
+  background: #EAFF38;
+  border: 2px solid #151515;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.flyer-footer-highlight .footer-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.flyer-footer-text {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #151515;
+  font-family: 'Ubuntu', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.flyer-brand {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #707073;
+  font-family: 'Ubuntu', sans-serif;
+  letter-spacing: 0.08em;
+  border-top: 1.5px solid #C2C2C4;
+  padding-top: 0.75rem;
+}
+
+.flyer-brand img {
+  height: 28px;
+  display: block;
+  margin: 0 auto 0.3rem;
+}
+
+.panel-form {
+  background: #FFFFFF;
+  border: 2px solid #151515;
+  box-shadow: 4px 4px 0 #EE6331;
+  padding: 1.5rem;
+  height: fit-content;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #447099;
+  font-family: 'Ubuntu', sans-serif;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.btn-download {
+  background: #151515;
+  color: #EAFF38;
+  border: 2px solid #151515;
+  font-family: 'Ubuntu', sans-serif;
+  font-weight: 700;
+  padding: 0.6rem 1.5rem;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}
+
+.btn-download:hover {
+  background: #447099;
+  color: #FFFFFF;
+}
+"
 
 # ---- UI ----
 ui <- page_sidebar(
@@ -61,33 +270,9 @@ ui <- page_sidebar(
     "border-radius" = "0"
   ),
   tags$head(
-    tags$link(rel = "stylesheet", href = "css/flyer.css"),
-    tags$script(
-      src = "https://cdn.jsdelivr.net/npm/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"
-    ),
-    tags$script(HTML("
-      function descargarPNG() {
-        var flyer = document.querySelector('.flyer');
-        if (!flyer) { alert('No se encontró el flyer'); return; }
-        document.fonts.ready.then(function() {
-          var w = flyer.scrollWidth;
-          var h = flyer.scrollHeight;
-          domtoimage.toPng(flyer, { scale: 2, bgcolor: '#ffffff', width: w, height: h })
-            .then(function(dataUrl) {
-              var link = document.createElement('a');
-              link.download = 'flyer_er.png';
-              link.href = dataUrl;
-              link.click();
-            })
-            .catch(function(err) {
-              alert('Error al generar PNG: ' + err.message);
-            });
-        });
-      }
-    "))
+    tags$style(HTML(css_flyer))
   ),
 
-  # ---- PANEL LATERAL ----
   sidebar = sidebar(
     width = 320,
     class = "panel-form",
@@ -153,16 +338,11 @@ ui <- page_sidebar(
       style = "display:flex; gap:0.5rem; margin-top:1rem;",
       downloadButton("descargar_html", "⬇ HTML", class = "btn-download",
         style = "flex:1; margin:0;"),
-      tags$button(
-        "⬇ PNG",
-        onclick = "descargarPNG()",
-        class = "btn-download",
-        style = "flex:1; margin:0; background:#447099; color:#fff; border:2px solid #151515; cursor:pointer;"
-      )
+      downloadButton("descargar_png", "⬇ PNG", class = "btn-download",
+        style = "flex:1; margin:0; background:#447099; color:#fff;")
     )
   ),
 
-  # ---- PREVIEW ----
   div(
     class = "flyer-wrap",
     uiOutput("preview")
@@ -207,12 +387,11 @@ server <- function(input, output, session) {
 
     flyer_style <- if (!is.null(dims)) {
       w <- paste0(dims$w, "px")
-      h_css <- if (!is.null(dims$h)) {
+      if (!is.null(dims$h)) {
         paste0("width:", w, "; height:", dims$h, "px; min-height:", dims$h, "px;")
       } else {
         paste0("width:", w, ";")
       }
-      h_css
     } else ""
 
     div(class = "flyer", style = flyer_style,
@@ -262,12 +441,13 @@ server <- function(input, output, session) {
     build_flyer_tag(badge_hex(), course_img_src = img_src, dims = formato_dims())
   })
 
+  # ---- Download HTML ----
   output$descargar_html <- downloadHandler(
     filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".html"),
     content = function(file) {
       logo_b64 <- paste0(
         "data:image/png;base64,",
-        base64enc::base64encode("www/logo_er.png")
+        base64enc::base64encode(LOGO_PATH)
       )
       img_src <- if (!is.null(input$course_image)) img_b64() else NULL
       flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64,
@@ -284,6 +464,54 @@ server <- function(input, output, session) {
         )
       ))
       writeLines(html, file)
+    }
+  )
+
+  # ---- Download PNG via Playwright ----
+  output$descargar_png <- downloadHandler(
+    filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".png"),
+    content = function(file) {
+      # Build config JSON for the Node script
+      dims <- formato_dims()
+      formato_key <- dims$key
+
+      # Handle course image: save to temp file if provided
+      img_path <- NULL
+      if (!is.null(input$course_image)) {
+        img_path <- input$course_image$datapath
+      }
+
+      config <- list(
+        formato = formato_key,
+        imagen_curso = img_path,
+        badge_texto = input$badge,
+        badge_color = input$badge_color,
+        titulo = input$titulo,
+        subtitulo = input$subtitulo,
+        bullets = strsplit(input$bullets, "\n")[[1]],
+        col1_texto = input$col1_texto,
+        col2_texto = input$col2_texto,
+        col3_texto = input$col3_texto,
+        footer_texto = input$footer_texto,
+        footer_icon = input$footer_icon
+      )
+
+      config_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), config_file)
+
+      # Run Node script
+      result <- system2(
+        NODE_BIN,
+        args = c(PLAYWRIGHT_SCRIPT, "--config", config_file, "--output", file),
+        stdout = TRUE, stderr = TRUE
+      )
+
+      # Clean up
+      unlink(config_file)
+
+      if (!file.exists(file)) {
+        stop("Error generando PNG: ", paste(result, collapse = "\n"))
+      }
     }
   )
 

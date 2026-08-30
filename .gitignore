@@ -1,0 +1,6 @@
+node_modules/
+app_cache/
+restart.txt
+rsconnect/
+*.Rhistory
+.RData
