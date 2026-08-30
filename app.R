@@ -70,7 +70,9 @@ ui <- page_sidebar(
         var flyer = document.querySelector('.flyer');
         if (!flyer) { alert('No se encontró el flyer'); return; }
         document.fonts.ready.then(function() {
-          domtoimage.toPng(flyer, { scale: 2, bgcolor: '#ffffff' })
+          var w = flyer.scrollWidth;
+          var h = flyer.scrollHeight;
+          domtoimage.toPng(flyer, { scale: 2, bgcolor: '#ffffff', width: w, height: h })
             .then(function(dataUrl) {
               var link = document.createElement('a');
               link.download = 'flyer_er.png';
