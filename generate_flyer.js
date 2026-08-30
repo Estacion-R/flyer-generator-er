@@ -6,8 +6,9 @@
  *   node generate_flyer.js --config config.json --output flyer.png
  *   node generate_flyer.js --config config.json --output flyer.html  (solo HTML)
  *
- * config.json:
+ * config.json (template "curso", default):
  * {
+ *   "template": "curso",                   // opcional, default
  *   "formato": "instagram|linkedin|story",
  *   "imagen_curso": "/ruta/a/imagen.png",   // opcional
  *   "badge_texto": "Curso virtual",
@@ -20,6 +21,17 @@
  *   "col3_texto": "Canal exclusivo...",
  *   "footer_texto": "INSCRIPCIÓN ABIERTA\nMARTES 19:00",
  *   "footer_icon": "📣"
+ * }
+ *
+ * config.json (template "tip" — tarjeta de tip/paquete):
+ * {
+ *   "template": "tip",
+ *   "categoria": "Paquete de R",             // texto del badge
+ *   "pkg_nombre": "janitor",                // se muestra como {janitor}
+ *   "version_line": "v2.2.0 · CRAN · Sam Firke",
+ *   "descripcion": "Qué hace el paquete en una o dos líneas",
+ *   "codigo": "datos <- datos |>\n  clean_names()",
+ *   "autor_line": "📦 janitor · GitHub: sfirke/janitor"
  * }
  */
 
@@ -294,6 +306,207 @@ function buildHTML(config, logoB64) {
 </html>`;
 }
 
+// ---- CSS tip (tarjeta de tip/paquete) ----
+const CSS_TIP = `
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #f5f5f5; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
+
+.tip-card {
+  width: 540px;
+  border: 3px solid #151515;
+  box-shadow: 10px 10px 0 #EAFF38;
+  overflow: hidden;
+  background: #FFFFFF;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.tip-header {
+  background: #447099;
+  padding: 2.2rem 2.5rem 2rem 2.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tip-header::after {
+  content: 'R';
+  position: absolute;
+  right: -0.5rem;
+  bottom: -1.2rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 8rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tip-badge {
+  display: inline-block;
+  background: #EAFF38;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.7rem;
+  border: 2px solid #151515;
+  width: fit-content;
+}
+
+.tip-nombre {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.tip-nombre .brace { color: #EAFF38; font-size: 2.2rem; }
+
+.tip-version {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.08em;
+}
+
+.tip-body {
+  padding: 1.8rem 2.5rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.tip-desc {
+  font-size: 0.95rem;
+  color: #404041;
+  line-height: 1.6;
+}
+
+.tip-code {
+  background: #F5F5F5;
+  border: 2px solid #151515;
+  border-left: 5px solid #447099;
+  padding: 0.9rem 1rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.82rem;
+  color: #151515;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tip-code .code-comment { color: #707073; }
+.tip-code .code-fn { color: #447099; font-weight: 700; }
+.tip-code .code-arg { color: #EE6331; }
+.tip-code .code-str { color: #419599; }
+
+.tip-autor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #707073;
+  font-family: 'Ubuntu Mono', monospace;
+}
+
+.tip-autor strong { color: #151515; }
+
+.tip-footer {
+  background: #EAFF38;
+  border-top: 2px solid #151515;
+  padding: 0.65rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tip-footer .brand {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #151515;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tip-footer .url {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.68rem;
+  color: #404041;
+  letter-spacing: 0.06em;
+}
+`;
+
+// ---- Highlighter de R (una sola pasada para no auto-corromper spans) ----
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function highlightR(code) {
+  const esc = escapeHtml(code);
+  return esc.replace(
+    /("(?:[^"\\]|\\.)*")|(#[^\n]*)|([A-Za-z_.][A-Za-z0-9_.]*(?=\s*\())|([A-Za-z_][A-Za-z0-9_.]*(?=\s*=))/g,
+    (m, str, com, fn, arg) => {
+      if (str) return `<span class="code-str">${str}</span>`;
+      if (com) return `<span class="code-comment">${com}</span>`;
+      if (fn) return `<span class="code-fn">${fn}</span>`;
+      if (arg) return `<span class="code-arg">${arg}</span>`;
+      return m;
+    }
+  );
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ---- Build HTML tip ----
+function buildTipHTML(config, logoB64) {
+  const nombre = config.pkg_nombre || 'paquete';
+
+  // Autor: resalta el nombre del paquete en negrita (como el boceto)
+  let autorHTML = escapeHtml(config.autor_line || '');
+  if (nombre) {
+    autorHTML = autorHTML.replace(new RegExp(escapeRegExp(nombre), 'g'),
+      (mname) => `<strong>${mname}</strong>`);
+  }
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>${CSS_TIP}</style>
+</head>
+<body>
+<div class="tip-card">
+  <div class="tip-header">
+    <div class="tip-badge">${escapeHtml(config.categoria || 'Paquete de R')}</div>
+    <div class="tip-nombre"><span class="brace">{</span>${escapeHtml(nombre)}<span class="brace">}</span></div>
+    <div class="tip-version">${escapeHtml(config.version_line || '')}</div>
+  </div>
+  <div class="tip-body">
+    <p class="tip-desc">${escapeHtml(config.descripcion || '')}</p>
+    <div class="tip-code">${highlightR(config.codigo || '')}</div>
+    <div class="tip-autor">${autorHTML}</div>
+  </div>
+  <div class="tip-footer">
+    <span class="brand">Estación R</span>
+    <span class="url">estacion-r.com</span>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
 // ---- Main ----
 async function main() {
   const args = process.argv.slice(2);
@@ -314,13 +527,15 @@ async function main() {
 
   // Resolve logo path relative to script dir
   const scriptDir = __dirname;
-  const logoPath = path.join(scriptDir, 'logo_er.png');
+  const logoPath = path.join(scriptDir, 'www', 'logo_er.png');
   let logoB64 = null;
   if (fs.existsSync(logoPath)) {
     logoB64 = 'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
   }
 
-  const html = buildHTML(config, logoB64);
+  const html = config.template === 'tip'
+    ? buildTipHTML(config, logoB64)
+    : buildHTML(config, logoB64);
 
   // If output is .html, just write and exit
   if (outputFile.endsWith('.html')) {
@@ -343,7 +558,8 @@ async function main() {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
 
-  const flyer = await page.locator('.flyer');
+  const selector = config.template === 'tip' ? '.tip-card' : '.flyer';
+  const flyer = await page.locator(selector);
   await flyer.screenshot({
     path: outputFile,
     scale: 'css',

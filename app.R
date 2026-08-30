@@ -259,6 +259,173 @@ body { background: #f5f5f5; }
 }
 "
 
+css_tip <- "
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.tip-card {
+  width: 540px;
+  border: 3px solid #151515;
+  box-shadow: 10px 10px 0 #EAFF38;
+  overflow: hidden;
+  background: #FFFFFF;
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.tip-header {
+  background: #447099;
+  padding: 2.2rem 2.5rem 2rem 2.5rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tip-header::after {
+  content: 'R';
+  position: absolute;
+  right: -0.5rem;
+  bottom: -1.2rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 8rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.08);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tip-badge {
+  display: inline-block;
+  background: #EAFF38;
+  color: #151515;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.7rem;
+  border: 2px solid #151515;
+  width: fit-content;
+}
+
+.tip-nombre {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.tip-nombre .brace { color: #EAFF38; font-size: 2.2rem; }
+
+.tip-version {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.08em;
+}
+
+.tip-body {
+  padding: 1.8rem 2.5rem 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.tip-desc {
+  font-size: 0.95rem;
+  color: #404041;
+  line-height: 1.6;
+}
+
+.tip-code {
+  background: #F5F5F5;
+  border: 2px solid #151515;
+  border-left: 5px solid #447099;
+  padding: 0.9rem 1rem;
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.82rem;
+  color: #151515;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tip-code .code-comment { color: #707073; }
+.tip-code .code-fn { color: #447099; font-weight: 700; }
+.tip-code .code-arg { color: #EE6331; }
+.tip-code .code-str { color: #419599; }
+
+.tip-autor {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #707073;
+  font-family: 'Ubuntu Mono', monospace;
+}
+
+.tip-autor strong { color: #151515; }
+
+.tip-footer {
+  background: #EAFF38;
+  border-top: 2px solid #151515;
+  padding: 0.65rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tip-footer .brand {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #151515;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tip-footer .url {
+  font-family: 'Ubuntu Mono', monospace;
+  font-size: 0.68rem;
+  color: #404041;
+  letter-spacing: 0.06em;
+}
+"
+
+# ---- Highlighter de R (una sola pasada, mismo criterio que generate_flyer.js) ----
+highlight_r_code <- function(code) {
+  esc <- gsub("&", "&amp;", code, fixed = TRUE)
+  esc <- gsub("<", "&lt;", esc, fixed = TRUE)
+  esc <- gsub(">", "&gt;", esc, fixed = TRUE)
+
+  # strings | comentarios | funciones (lookahead "(") | args (lookahead "=")
+  pat <- '"(?:[^"\\\\]|\\\\.)*"|#[^\\n]*|[A-Za-z_.][A-Za-z0-9_.]*(?=\\s*\\()|[A-Za-z_][A-Za-z0-9_.]*(?=\\s*=)'
+  m_list <- gregexpr(pat, esc, perl = TRUE)
+  m <- m_list[[1]]
+  if (m[1] == -1) return(esc)
+
+  full <- regmatches(esc, m_list)[[1]]
+  lens <- attr(m, "match.length")
+
+  clas <- vapply(seq_along(full), function(i) {
+    txt <- full[i]
+    if (substr(txt, 1, 1) == '"') return("code-str")
+    if (substr(txt, 1, 1) == "#") return("code-comment")
+    despues <- substring(esc, m[i] + lens[i], m[i] + lens[i] + 4)
+    if (grepl("^\\s*\\(", despues)) return("code-fn")
+    "code-arg"
+  }, character(1))
+
+  wrapped <- paste0('<span class="', clas, '">', full, '</span>')
+  parts <- regmatches(esc, m_list, invert = TRUE)[[1]]
+  paste0(parts[1], paste0(paste0(wrapped, parts[-1]), collapse = ""))
+}
+
 # ---- UI ----
 ui <- page_sidebar(
   title = "Generador de Flyers — Estación R",
@@ -271,12 +438,21 @@ ui <- page_sidebar(
     "border-radius" = "0"
   ),
   tags$head(
-    tags$style(HTML(css_flyer))
+    tags$style(HTML(css_flyer)),
+    tags$style(HTML(css_tip))
   ),
 
   sidebar = sidebar(
     width = 320,
     class = "panel-form",
+
+    tags$span("Plantilla", class = "section-label"),
+    selectInput("template", NULL,
+      choices = c("Curso", "Tip / Paquete de R"),
+      selected = "Curso"),
+
+    conditionalPanel(
+      condition = "input.template == 'Curso'",
 
     tags$span("Formato / red social", class = "section-label"),
     selectInput("formato", NULL,
@@ -333,7 +509,32 @@ ui <- page_sidebar(
     textInput("footer_icon", "Ícono (emoji)", value = "📣"),
     textAreaInput("footer_texto", "Texto",
       value = "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO",
-      rows = 2),
+      rows = 2)
+    ),  # /conditionalPanel curso
+
+    conditionalPanel(
+      condition = "input.template == 'Tip / Paquete de R'",
+
+      tags$span("Categoría (badge)", class = "section-label"),
+      textInput("tip_categoria", NULL, value = "Paquete de R"),
+
+      tags$span("Nombre del paquete / tip", class = "section-label"),
+      textInput("tip_nombre", NULL, value = "janitor"),
+
+      tags$span("Versión / fuente", class = "section-label"),
+      textInput("tip_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
+
+      tags$span("Descripción", class = "section-label"),
+      textAreaInput("tip_desc", NULL, rows = 2,
+        value = "Limpiá y normalizá datos de forma rápida: nombres de columnas, tablas cruzadas y detección de duplicados con una sola línea de código."),
+
+      tags$span("Código (R)", class = "section-label"),
+      textAreaInput("tip_codigo", NULL, rows = 5,
+        value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")"),
+
+      tags$span("Autor / repo", class = "section-label"),
+      textInput("tip_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor")
+    ),
 
     tags$div(
       style = "display:flex; gap:0.5rem; margin-top:1rem;",
@@ -437,15 +638,65 @@ server <- function(input, output, session) {
     )
   }
 
+  build_flyer_tip_tag <- function() {
+    nombre <- input$tip_nombre
+
+    autor_html <- input$tip_autor
+    if (nchar(nombre) > 0) {
+      autor_html <- gsub(nombre, paste0("<strong>", nombre, "</strong>"),
+                         autor_html, fixed = TRUE)
+    }
+
+    div(class = "tip-card",
+      div(class = "tip-header",
+        div(class = "tip-badge", input$tip_categoria),
+        div(class = "tip-nombre",
+          span(class = "brace", "{"), nombre, span(class = "brace", "}")
+        ),
+        div(class = "tip-version", input$tip_version)
+      ),
+      div(class = "tip-body",
+        p(class = "tip-desc", input$tip_desc),
+        div(class = "tip-code", HTML(highlight_r_code(input$tip_codigo))),
+        div(class = "tip-autor", HTML(autor_html))
+      ),
+      div(class = "tip-footer",
+        span(class = "brand", "Estación R"),
+        span(class = "url", "estacion-r.com")
+      )
+    )
+  }
+
   output$preview <- renderUI({
+    if (identical(input$template, "Tip / Paquete de R")) {
+      return(build_flyer_tip_tag())
+    }
     img_src <- if (!is.null(input$course_image)) img_b64() else NULL
     build_flyer_tag(badge_hex(), course_img_src = img_src, dims = formato_dims())
   })
 
   # ---- Download HTML ----
   output$descargar_html <- downloadHandler(
-    filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".html"),
+    filename = function() {
+      pref <- if (identical(input$template, "Tip / Paquete de R")) "tip_er_" else "flyer_er_"
+      paste0(pref, format(Sys.Date(), "%Y%m%d"), ".html")
+    },
     content = function(file) {
+      if (identical(input$template, "Tip / Paquete de R")) {
+        tip_tag <- build_flyer_tip_tag()
+        # htmltools descarta tags$head con as.character(tagList()) —
+        # se arma el documento a mano para no perder charset/fonts/css
+        html <- paste0(
+          "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
+          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap\">\n",
+          "<style>", css_tip, "</style>\n</head>\n",
+          "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
+          as.character(tip_tag),
+          "\n</body>\n</html>"
+        )
+        writeLines(html, file)
+        return(invisible())
+      }
       logo_b64 <- paste0(
         "data:image/png;base64,",
         base64enc::base64encode(LOGO_PATH)
@@ -453,25 +704,50 @@ server <- function(input, output, session) {
       img_src <- if (!is.null(input$course_image)) img_b64() else NULL
       flyer_tag <- build_flyer_tag(badge_hex(), logo_b64 = logo_b64,
                                    course_img_src = img_src, dims = formato_dims())
-      html <- as.character(tagList(
-        tags$html(
-          tags$head(
-            tags$meta(charset = "UTF-8"),
-            tags$link(rel = "stylesheet",
-              href = "https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap"),
-            tags$style(HTML(css_flyer))
-          ),
-          tags$body(style = "margin:0; padding:2rem; background:#f5f5f5;", flyer_tag)
-        )
-      ))
+      # htmltools descarta tags$head con as.character(tagList()) —
+      # se arma el documento a mano para no perder charset/fonts/css
+      html <- paste0(
+        "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
+        "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap\">\n",
+        "<style>", css_flyer, "</style>\n</head>\n",
+        "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
+        as.character(flyer_tag),
+        "\n</body>\n</html>"
+      )
       writeLines(html, file)
     }
   )
 
   # ---- Download PNG via Playwright ----
   output$descargar_png <- downloadHandler(
-    filename = function() paste0("flyer_er_", format(Sys.Date(), "%Y%m%d"), ".png"),
+    filename = function() {
+      pref <- if (identical(input$template, "Tip / Paquete de R")) "tip_er_" else "flyer_er_"
+      paste0(pref, format(Sys.Date(), "%Y%m%d"), ".png")
+    },
     content = function(file) {
+      if (identical(input$template, "Tip / Paquete de R")) {
+        config <- list(
+          template = "tip",
+          categoria = input$tip_categoria,
+          pkg_nombre = input$tip_nombre,
+          version_line = input$tip_version,
+          descripcion = input$tip_desc,
+          codigo = input$tip_codigo,
+          autor_line = input$tip_autor
+        )
+        config_file <- tempfile(fileext = ".json")
+        writeLines(jsonlite::toJSON(config, auto_unbox = TRUE), config_file)
+        result <- system2(
+          NODE_BIN,
+          args = c(PLAYWRIGHT_SCRIPT, "--config", config_file, "--output", file),
+          stdout = TRUE, stderr = TRUE
+        )
+        unlink(config_file)
+        if (!file.exists(file)) {
+          stop("Error generando PNG: ", paste(result, collapse = "\n"))
+        }
+        return(invisible())
+      }
       # Build config JSON for the Node script
       dims <- formato_dims()
       formato_key <- dims$key
@@ -483,6 +759,7 @@ server <- function(input, output, session) {
       }
 
       config <- list(
+        template = "curso",
         formato = formato_key,
         imagen_curso = img_path,
         badge_texto = input$badge,
