@@ -18,12 +18,13 @@ FORMATOS <- list(
   "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675,  key = "story")
 )
 
-# Path al script Node de Playwright (en el home de pablote)
-PLAYWRIGHT_SCRIPT <- "/srv/shiny-server/flyer/generate_flyer.js"
+# Rutas relativas al directorio de la app — repo y deploy comparten layout,
+# así un clone fresco funciona igual (Shiny corre con wd = raíz de la app).
+PLAYWRIGHT_SCRIPT <- "generate_flyer.js"
+LOGO_PATH <- "www/logo_er.png"
 # node de Linuxbrew: el /usr/bin/node v18 que resuelve el usuario shiny no cumple
-# el engines.node >=20 que pide playwright-core
+# el engines.node >= 20 que pide playwright
 NODE_BIN <- "/home/linuxbrew/.linuxbrew/bin/node"
-LOGO_PATH <- "/srv/shiny-server/flyer/www/logo_er.png"
 
 # ---- SVG icons (Boxicons — mismos que estacion-r.com/courses) ----
 SVG_ICON <- function(path_d, extra_path = NULL) {

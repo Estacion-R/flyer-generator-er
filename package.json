@@ -1,14 +1,19 @@
 {
-  "name": "flyer_local",
+  "name": "flyer-generator-er",
   "version": "1.0.0",
-  "description": "",
+  "description": "Generador de flyers de Estación R — render PNG server-side con Playwright",
   "main": "generate_flyer.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "flyer": "node generate_flyer.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "estacion-r",
+    "shiny",
+    "flyer",
+    "playwright"
+  ],
+  "author": "Estación R",
+  "license": "UNLICENSED",
   "type": "commonjs",
   "dependencies": {
     "playwright": "^1.62.1"
