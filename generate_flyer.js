@@ -30,7 +30,7 @@
  *   "autor_line": "📦 janitor · GitHub: sfirke/janitor"
  * }
  *
- * config.json (template "carousel" — 4 slides 1080×1080, ZIP desde R):
+ * config.json (template "carousel" — paquete de R, 4 slides 1080×1080, ZIP desde R):
  * {
  *   "template": "carousel",
  *   "output_dir": "/tmp/carousel_xxx/",
@@ -46,6 +46,21 @@
  *   "slide3_codigo": "datos <- datos |>\n  clean_names()",
  *   "slide4_tagline": "Seguinos para más tips de R"
  * }
+ *
+ * config.json (template "carousel_curso" — anuncio de curso, 3 slides 1080×1080, ZIP desde R):
+ * {
+ *   "template": "carousel_curso",
+ *   "output_dir": "/tmp/carousel_xxx/",
+ *   "nombre": "Introducción a R para Ciencias Sociales",
+ *   "badge": "Curso virtual",
+ *   "tagline": "Aprendé a analizar datos con R desde cero",
+ *   "fecha_inicio": "22 de septiembre",
+ *   "imagen_curso": "/ruta/portada.png",
+ *   "s2_bullets": ["Introducción a R y RStudio", "Manejo de datos con tidyverse"],
+ *   "cta": "INSCRIPCIÓN ABIERTA"
+ * }
+ *
+ * "imagen_curso" es opcional: banda superior (~40%) del slide 1; sin ella el slide se adapta.
  */
 
 const { chromium } = require('playwright');
@@ -670,7 +685,7 @@ ${CSS_CAROUSEL_FONTS}
 }
 
 // ============================================================
-// ---- Carrusel Anuncio de Curso (4 slides 1080×1080) ----
+// ---- Carrusel Anuncio de Curso (3 slides 1080×1080) ----
 // ============================================================
 
 function buildCourseSlide1(config, logoB64) {
@@ -680,27 +695,44 @@ function buildCourseSlide1(config, logoB64) {
   const fecha   = escapeHtml(config.fecha_inicio || '');
   const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
 
+  let imgBand = '';
+  let hasImg = '';
+  if (typeof config.imagen_curso === 'string' && config.imagen_curso && fs.existsSync(config.imagen_curso)) {
+    const imgData = fs.readFileSync(config.imagen_curso);
+    const ext = path.extname(config.imagen_curso).slice(1).toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    imgBand = `<div class="band"><img src="data:${mime};base64,${imgData.toString('base64')}" alt=""/></div>`;
+    hasImg = ' has-img';
+  }
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8">
 <style>
 ${CSS_CAROUSEL_FONTS}
 .slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.band{width:100%;height:430px;border-bottom:6px solid #151515;overflow:hidden;flex-shrink:0}
+.band img{width:100%;height:100%;object-fit:cover;display:block}
 .wm{position:absolute;right:-10px;bottom:-30px;font-family:'Ubuntu',sans-serif;font-size:260px;font-weight:700;color:rgba(255,255,255,0.06);line-height:1;pointer-events:none;user-select:none}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
+.slide.has-img .ctr{top:480px}
 .mc{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 90px;gap:44px;position:relative;z-index:1}
+.slide.has-img .mc{padding:48px 90px;gap:32px}
 .badge{display:inline-block;background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:12px 30px;border:3px solid #151515;width:fit-content}
 .cn{font-family:'Ubuntu',sans-serif;font-size:84px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.02em;max-width:900px}
+.slide.has-img .cn{font-size:64px}
 .tl{font-family:'Ubuntu',sans-serif;font-size:32px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:820px}
+.slide.has-img .tl{font-size:28px}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fi{font-family:'Ubuntu Mono',monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
 </style>
 </head>
 <body>
-<div class="slide">
+<div class="slide${hasImg}">
   <div class="wm">ER</div>
-  <div class="ctr">1 / 4</div>
+  <div class="ctr">1 / 3</div>
+  ${imgBand}
   <div class="mc">
     <div class="badge">${badge}</div>
     <div class="cn">${nombre}</div>
@@ -745,7 +777,7 @@ ${CSS_CAROUSEL_FONTS}
 <body>
 <div class="slide">
   <div class="hdr">
-    <div class="ctr">2 / 4</div>
+    <div class="ctr">2 / 3</div>
     <div class="hl">Estación R</div>
     <div class="hn">${nombre}</div>
   </div>
@@ -762,62 +794,7 @@ ${CSS_CAROUSEL_FONTS}
 }
 
 function buildCourseSlide3(config, logoB64) {
-  const nombre   = escapeHtml(config.nombre || '');
-  const fecha    = escapeHtml(config.s3_fecha || '');
-  const horario  = escapeHtml(config.s3_horario || '');
-  const precio   = escapeHtml(config.s3_precio || '');
-  const modalidad = escapeHtml(config.s3_modalidad || '');
-  const extra    = escapeHtml(config.s3_extra || '');
-  const logoTag  = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:48px;display:block;"/>` : '';
-
-  return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8">
-<style>
-${CSS_CAROUSEL_FONTS}
-.slide{width:1080px;height:1080px;background:#F5F5F5;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
-.hdr{background:#151515;padding:42px 80px;display:flex;align-items:center;justify-content:space-between}
-.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em;z-index:2}
-.ht{font-family:'Ubuntu',sans-serif;font-size:42px;font-weight:700;color:#EAFF38;letter-spacing:0.08em;text-transform:uppercase}
-.hp{font-family:'Ubuntu',sans-serif;font-size:26px;color:rgba(255,255,255,0.45)}
-.bd{flex:1;padding:60px 80px;display:flex;flex-direction:column;gap:36px;justify-content:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
-.cell{background:#FFFFFF;border:3px solid #151515;padding:32px 36px;display:flex;flex-direction:column;gap:10px}
-.cl{font-family:'Ubuntu Mono',monospace;font-size:18px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#447099}
-.cv{font-family:'Ubuntu',sans-serif;font-size:28px;font-weight:700;color:#151515;line-height:1.25}
-.extra{font-family:'Ubuntu',sans-serif;font-size:26px;color:#404041;text-align:center;padding:0 20px}
-.foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
-.fb{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
-.fu{font-family:'Ubuntu Mono',monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
-</style>
-</head>
-<body>
-<div class="slide">
-  <div class="ctr">3 / 4</div>
-  <div class="hdr">
-    <div class="ht">📅 Info del curso</div>
-    <div class="hp">${nombre}</div>
-  </div>
-  <div class="bd">
-    <div class="grid">
-      <div class="cell"><div class="cl">📅 Fechas</div><div class="cv">${fecha}</div></div>
-      <div class="cell"><div class="cl">🕕 Horario</div><div class="cv">${horario}</div></div>
-      <div class="cell"><div class="cl">💰 Precio</div><div class="cv">${precio}</div></div>
-      <div class="cell"><div class="cl">💻 Modalidad</div><div class="cv">${modalidad}</div></div>
-    </div>
-    ${extra ? `<div class="extra">✶ ${extra}</div>` : ''}
-  </div>
-  <div class="foot">
-    <div class="fb">Estación R</div>${logoTag}<div class="fu">estacion-r.com</div>
-  </div>
-</div>
-</body>
-</html>`;
-}
-
-function buildCourseSlide4(config, logoB64) {
-  const cta    = escapeHtml(config.s4_cta || '¡Inscribite ahora!');
-  const url    = escapeHtml(config.s4_url || 'estacion-r.com');
+  const cta     = escapeHtml(config.cta || 'INSCRIPCIÓN ABIERTA');
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
 
   return `<!DOCTYPE html>
@@ -828,19 +805,19 @@ ${CSS_CAROUSEL_FONTS}
 .slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
 .mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
-.cta{font-family:'Ubuntu',sans-serif;font-size:58px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px}
-.url{font-family:'Ubuntu Mono',monospace;font-size:32px;font-weight:700;color:#447099;letter-spacing:0.04em;background:#FFFFFF;border:3px solid #151515;padding:16px 40px}
+.cta{font-family:'Ubuntu',sans-serif;font-size:76px;font-weight:700;color:#151515;text-align:center;line-height:1.15;max-width:900px;text-transform:uppercase}
+.bio{font-family:'Ubuntu',sans-serif;font-size:34px;color:#151515;background:#FFFFFF;border:3px solid #151515;padding:18px 44px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .pill{background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
 </style>
 </head>
 <body>
 <div class="slide">
-  <div class="ctr">4 / 4</div>
+  <div class="ctr">3 / 3</div>
   <div class="mc">
     ${logoTag}
     <div class="cta">${cta}</div>
-    <div class="url">🔗 ${url}</div>
+    <div class="bio">🔗 Link en bio</div>
     <div class="handles">
       <div class="pill">@estacion_r</div>
       <div class="pill">@estacionr.bsky.social</div>
@@ -860,8 +837,7 @@ async function generateCarousel(config, logoB64) {
     ? [
         buildCourseSlide1(config, logoB64),
         buildCourseSlide2(config, logoB64),
-        buildCourseSlide3(config, logoB64),
-        buildCourseSlide4(config, logoB64)
+        buildCourseSlide3(config, logoB64)
       ]
     : [
         buildSlide1(config, logoB64),
@@ -890,7 +866,7 @@ async function generateCarousel(config, logoB64) {
       await page.locator('.slide').screenshot({ path: outPNG, scale: 'css', type: 'png' });
       await page.close();
       fs.unlinkSync(tmpHTML);
-      console.log(`Slide ${i+1}/4: ${outPNG}`);
+      console.log(`Slide ${i+1}/${slides.length}: ${outPNG}`);
     }
   } finally {
     await browser.close();
@@ -922,7 +898,7 @@ async function main() {
     logoB64 = 'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
   }
 
-  // Carousel (paquete o curso): genera 4 PNGs en output_dir; no usa --output
+  // Carousel (paquete 4 slides / curso 3 slides): genera PNGs en output_dir; no usa --output
   if (config.template === 'carousel' || config.template === 'carousel_curso') {
     await generateCarousel(config, logoB64);
     return;
