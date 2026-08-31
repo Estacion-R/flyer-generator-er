@@ -669,17 +669,206 @@ ${CSS_CAROUSEL_FONTS}
 </html>`;
 }
 
+// ============================================================
+// ---- Carrusel Anuncio de Curso (4 slides 1080×1080) ----
+// ============================================================
+
+function buildCourseSlide1(config, logoB64) {
+  const nombre  = escapeHtml(config.nombre || '');
+  const badge   = escapeHtml(config.badge  || 'Curso virtual');
+  const tagline = escapeHtml(config.tagline || '');
+  const fecha   = escapeHtml(config.fecha_inicio || '');
+  const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${CSS_CAROUSEL_FONTS}
+.slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.wm{position:absolute;right:-10px;bottom:-30px;font-family:'Ubuntu',sans-serif;font-size:260px;font-weight:700;color:rgba(255,255,255,0.06);line-height:1;pointer-events:none;user-select:none}
+.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
+.mc{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 90px;gap:44px;position:relative;z-index:1}
+.badge{display:inline-block;background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:12px 30px;border:3px solid #151515;width:fit-content}
+.cn{font-family:'Ubuntu',sans-serif;font-size:84px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.02em;max-width:900px}
+.tl{font-family:'Ubuntu',sans-serif;font-size:32px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:820px}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fi{font-family:'Ubuntu Mono',monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="wm">ER</div>
+  <div class="ctr">1 / 4</div>
+  <div class="mc">
+    <div class="badge">${badge}</div>
+    <div class="cn">${nombre}</div>
+    ${tagline ? `<div class="tl">${tagline}</div>` : ''}
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>${logo}<div class="fi">Inicio: ${fecha}</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function buildCourseSlide2(config, logoB64) {
+  const nombre  = escapeHtml(config.nombre || '');
+  const bullets = (config.s2_bullets || []).filter(b => String(b).trim());
+  const logoTag = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:48px;display:block;"/>` : '';
+  const bulletsHTML = bullets
+    .map(b => `<li><span class="dot">●</span><span>${escapeHtml(b)}</span></li>`)
+    .join('');
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${CSS_CAROUSEL_FONTS}
+.slide{width:1080px;height:1080px;background:#FFFFFF;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.hdr{background:#447099;padding:52px 80px 42px;position:relative}
+.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
+.hl{font-family:'Ubuntu Mono',monospace;font-size:20px;color:rgba(255,255,255,0.55);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px}
+.hn{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.1}
+.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px}
+.stit{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#447099;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
+.bul{list-style:none;display:flex;flex-direction:column;gap:18px}
+.bul li{display:flex;align-items:flex-start;gap:20px;font-size:26px;color:#151515;font-family:'Ubuntu',sans-serif;line-height:1.45}
+.dot{color:#EE6331;font-size:18px;margin-top:6px;flex-shrink:0}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fu{font-family:'Ubuntu Mono',monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="hdr">
+    <div class="ctr">2 / 4</div>
+    <div class="hl">Estación R</div>
+    <div class="hn">${nombre}</div>
+  </div>
+  <div class="bd">
+    <div class="stit">¿Qué vas a aprender?</div>
+    ${bulletsHTML ? `<ul class="bul">${bulletsHTML}</ul>` : ''}
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>${logoTag}<div class="fu">estacion-r.com</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function buildCourseSlide3(config, logoB64) {
+  const nombre   = escapeHtml(config.nombre || '');
+  const fecha    = escapeHtml(config.s3_fecha || '');
+  const horario  = escapeHtml(config.s3_horario || '');
+  const precio   = escapeHtml(config.s3_precio || '');
+  const modalidad = escapeHtml(config.s3_modalidad || '');
+  const extra    = escapeHtml(config.s3_extra || '');
+  const logoTag  = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:48px;display:block;"/>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${CSS_CAROUSEL_FONTS}
+.slide{width:1080px;height:1080px;background:#F5F5F5;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.hdr{background:#151515;padding:42px 80px;display:flex;align-items:center;justify-content:space-between}
+.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em;z-index:2}
+.ht{font-family:'Ubuntu',sans-serif;font-size:42px;font-weight:700;color:#EAFF38;letter-spacing:0.08em;text-transform:uppercase}
+.hp{font-family:'Ubuntu',sans-serif;font-size:26px;color:rgba(255,255,255,0.45)}
+.bd{flex:1;padding:60px 80px;display:flex;flex-direction:column;gap:36px;justify-content:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.cell{background:#FFFFFF;border:3px solid #151515;padding:32px 36px;display:flex;flex-direction:column;gap:10px}
+.cl{font-family:'Ubuntu Mono',monospace;font-size:18px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#447099}
+.cv{font-family:'Ubuntu',sans-serif;font-size:28px;font-weight:700;color:#151515;line-height:1.25}
+.extra{font-family:'Ubuntu',sans-serif;font-size:26px;color:#404041;text-align:center;padding:0 20px}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fu{font-family:'Ubuntu Mono',monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="ctr">3 / 4</div>
+  <div class="hdr">
+    <div class="ht">📅 Info del curso</div>
+    <div class="hp">${nombre}</div>
+  </div>
+  <div class="bd">
+    <div class="grid">
+      <div class="cell"><div class="cl">📅 Fechas</div><div class="cv">${fecha}</div></div>
+      <div class="cell"><div class="cl">🕕 Horario</div><div class="cv">${horario}</div></div>
+      <div class="cell"><div class="cl">💰 Precio</div><div class="cv">${precio}</div></div>
+      <div class="cell"><div class="cl">💻 Modalidad</div><div class="cv">${modalidad}</div></div>
+    </div>
+    ${extra ? `<div class="extra">✶ ${extra}</div>` : ''}
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>${logoTag}<div class="fu">estacion-r.com</div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+function buildCourseSlide4(config, logoB64) {
+  const cta    = escapeHtml(config.s4_cta || '¡Inscribite ahora!');
+  const url    = escapeHtml(config.s4_url || 'estacion-r.com');
+  const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${CSS_CAROUSEL_FONTS}
+.slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
+.mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
+.cta{font-family:'Ubuntu',sans-serif;font-size:58px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px}
+.url{font-family:'Ubuntu Mono',monospace;font-size:32px;font-weight:700;color:#447099;letter-spacing:0.04em;background:#FFFFFF;border:3px solid #151515;padding:16px 40px}
+.handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.pill{background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="ctr">4 / 4</div>
+  <div class="mc">
+    ${logoTag}
+    <div class="cta">${cta}</div>
+    <div class="url">🔗 ${url}</div>
+    <div class="handles">
+      <div class="pill">@estacion_r</div>
+      <div class="pill">@estacionr.bsky.social</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
 async function generateCarousel(config, logoB64) {
   const outputDir = config.output_dir;
   if (!outputDir) throw new Error('output_dir requerido para template carousel');
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-  const slides = [
-    buildSlide1(config, logoB64),
-    buildSlide2(config, logoB64),
-    buildSlide3(config, logoB64),
-    buildSlide4(config, logoB64)
-  ];
+  const slides = config.template === 'carousel_curso'
+    ? [
+        buildCourseSlide1(config, logoB64),
+        buildCourseSlide2(config, logoB64),
+        buildCourseSlide3(config, logoB64),
+        buildCourseSlide4(config, logoB64)
+      ]
+    : [
+        buildSlide1(config, logoB64),
+        buildSlide2(config, logoB64),
+        buildSlide3(config, logoB64),
+        buildSlide4(config, logoB64)
+      ];
 
   const browser = await chromium.launch({
     executablePath: '/usr/bin/google-chrome',
@@ -733,8 +922,8 @@ async function main() {
     logoB64 = 'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
   }
 
-  // Carousel: genera 4 PNGs en output_dir; no usa --output
-  if (config.template === 'carousel') {
+  // Carousel (paquete o curso): genera 4 PNGs en output_dir; no usa --output
+  if (config.template === 'carousel' || config.template === 'carousel_curso') {
     await generateCarousel(config, logoB64);
     return;
   }

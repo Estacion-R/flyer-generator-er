@@ -366,6 +366,143 @@ slide_iframe <- function(html_str) {
   )
 }
 
+# ---- HTML de slides CURSO para preview (iframes) ----
+course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = LOGO_B64) {
+  logo <- if (nchar(logo_b64) > 10)
+    paste0('<img src="', logo_b64, '" alt="ER" style="height:52px;display:block;"/>') else ""
+  tagline_div <- if (nchar(trimws(tagline)) > 0)
+    paste0('<div class="tl">', he(tagline), '</div>') else ""
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+.slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.wm{position:absolute;right:-10px;bottom:-30px;font-family:"Ubuntu",sans-serif;font-size:260px;font-weight:700;color:rgba(255,255,255,0.06);line-height:1;pointer-events:none;user-select:none}
+.ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
+.mc{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 90px;gap:44px;position:relative;z-index:1}
+.badge{display:inline-block;background:#EAFF38;color:#151515;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:12px 30px;border:3px solid #151515;width:fit-content}
+.cn{font-family:"Ubuntu",sans-serif;font-size:84px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.02em;max-width:900px}
+.tl{font-family:"Ubuntu",sans-serif;font-size:32px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:820px}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:"Ubuntu Mono",monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fi{font-family:"Ubuntu Mono",monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
+</style></head><body>
+<div class="slide">
+  <div class="wm">ER</div><div class="ctr">1 / 4</div>
+  <div class="mc">
+    <div class="badge">', he(badge), '</div>
+    <div class="cn">', he(nombre), '</div>
+    ', tagline_div, '
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>', logo, '<div class="fi">Inicio: ', he(fecha_inicio), '</div>
+  </div>
+</div></body></html>')
+}
+
+course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64) {
+  logo <- if (nchar(logo_b64) > 10)
+    paste0('<img src="', logo_b64, '" alt="ER" style="height:48px;display:block;"/>') else ""
+  blist <- bullets[nchar(trimws(bullets)) > 0]
+  bullets_html <- if (length(blist) > 0)
+    paste0('<ul class="bul">', paste0('<li><span class="dot">●</span><span>', he(blist), '</span></li>', collapse = ""), '</ul>')
+  else ""
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+.slide{width:1080px;height:1080px;background:#fff;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.hdr{background:#447099;padding:52px 80px 42px;position:relative}
+.ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
+.hl{font-family:"Ubuntu Mono",monospace;font-size:20px;color:rgba(255,255,255,0.55);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px}
+.hn{font-family:"Ubuntu",sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.1}
+.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px}
+.stit{font-family:"Ubuntu",sans-serif;font-size:52px;font-weight:700;color:#447099;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
+.bul{list-style:none;display:flex;flex-direction:column;gap:18px}
+.bul li{display:flex;align-items:flex-start;gap:20px;font-size:26px;color:#151515;font-family:"Ubuntu",sans-serif;line-height:1.45}
+.dot{color:#EE6331;font-size:18px;margin-top:6px;flex-shrink:0}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fu{font-family:"Ubuntu Mono",monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+</style></head><body>
+<div class="slide">
+  <div class="hdr">
+    <div class="ctr">2 / 4</div>
+    <div class="hl">Estación R</div>
+    <div class="hn">', he(nombre), '</div>
+  </div>
+  <div class="bd">
+    <div class="stit">¿Qué vas a aprender?</div>
+    ', bullets_html, '
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>', logo, '<div class="fu">estacion-r.com</div>
+  </div>
+</div></body></html>')
+}
+
+course_slide3_html <- function(nombre, fecha, horario, precio, modalidad, extra = "", logo_b64 = LOGO_B64) {
+  logo <- if (nchar(logo_b64) > 10)
+    paste0('<img src="', logo_b64, '" alt="ER" style="height:48px;display:block;"/>') else ""
+  extra_div <- if (nchar(trimws(extra)) > 0)
+    paste0('<div class="extra">✶ ', he(extra), '</div>') else ""
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+.slide{width:1080px;height:1080px;background:#F5F5F5;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.hdr{background:#151515;padding:42px 80px;display:flex;align-items:center;justify-content:space-between}
+.ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em;z-index:2}
+.ht{font-family:"Ubuntu",sans-serif;font-size:42px;font-weight:700;color:#EAFF38;letter-spacing:0.08em;text-transform:uppercase}
+.hp{font-family:"Ubuntu",sans-serif;font-size:26px;color:rgba(255,255,255,0.45)}
+.bd{flex:1;padding:60px 80px;display:flex;flex-direction:column;gap:36px;justify-content:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.cell{background:#fff;border:3px solid #151515;padding:32px 36px;display:flex;flex-direction:column;gap:10px}
+.cl{font-family:"Ubuntu Mono",monospace;font-size:18px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#447099}
+.cv{font-family:"Ubuntu",sans-serif;font-size:28px;font-weight:700;color:#151515;line-height:1.25}
+.extra{font-family:"Ubuntu",sans-serif;font-size:26px;color:#404041;text-align:center;padding:0 20px}
+.foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
+.fb{font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
+.fu{font-family:"Ubuntu Mono",monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+</style></head><body>
+<div class="slide">
+  <div class="hdr">
+    <div class="ht">Info del curso</div>
+    <div class="hp">', he(nombre), '</div>
+  </div>
+  <div class="ctr">3 / 4</div>
+  <div class="bd">
+    <div class="grid">
+      <div class="cell"><div class="cl">Fechas</div><div class="cv">', he(fecha), '</div></div>
+      <div class="cell"><div class="cl">Horario</div><div class="cv">', he(horario), '</div></div>
+      <div class="cell"><div class="cl">Precio</div><div class="cv">', he(precio), '</div></div>
+      <div class="cell"><div class="cl">Modalidad</div><div class="cv">', he(modalidad), '</div></div>
+    </div>
+    ', extra_div, '
+  </div>
+  <div class="foot">
+    <div class="fb">Estación R</div>', logo, '<div class="fu">estacion-r.com</div>
+  </div>
+</div></body></html>')
+}
+
+course_slide4_html <- function(cta, url, logo_b64 = LOGO_B64) {
+  logo <- if (nchar(logo_b64) > 10)
+    paste0('<img src="', logo_b64, '" alt="Estación R" style="height:110px;display:block;"/>') else ""
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+.slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
+.mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
+.cta{font-family:"Ubuntu",sans-serif;font-size:58px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px}
+.url{font-family:"Ubuntu Mono",monospace;font-size:32px;font-weight:700;color:#447099;letter-spacing:0.04em;background:#fff;border:3px solid #151515;padding:16px 40px}
+.handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.pill{background:#151515;color:#EAFF38;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+</style></head><body>
+<div class="slide">
+  <div class="ctr">4 / 4</div>
+  <div class="mc">
+    ', logo, '
+    <div class="cta">', he(cta), '</div>
+    <div class="url">\U0001f517 ', he(url), '</div>
+    <div class="handles">
+      <div class="pill">@estacion_r</div>
+      <div class="pill">@estacionr.bsky.social</div>
+    </div>
+  </div>
+</div></body></html>')
+}
+
 # ---- build_flyer_tag para LinkedIn/X ----
 build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL, dims = NULL,
                              badge, titulo, subtitulo, bullets_txt, col1, col2, col3, footer_icon, footer_texto) {
@@ -467,50 +604,106 @@ ui <- page_navbar(
         width = 340,
         class = "panel-form",
 
-        accordion(
-          open = c("pkg"),
-          multiple = TRUE,
+        tags$span("Tipo de carrusel", class = "section-label"),
+        selectInput("ig_tipo_carrusel", NULL,
+          choices = c("📦 Paquete de R" = "paquete", "🎓 Anuncio de curso" = "curso"),
+          selected = "paquete"),
 
-          accordion_panel("📦 Datos del paquete", value = "pkg",
-            tags$span("Categoría (badge)", class = "section-label"),
-            textInput("ig_categoria", NULL, value = "Paquete de R"),
-            tags$span("Nombre del paquete", class = "section-label"),
-            textInput("ig_nombre", NULL, value = "janitor"),
-            tags$span("Versión / fuente", class = "section-label"),
-            textInput("ig_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
-            tags$span("Autor / repo (slide 4)", class = "section-label"),
-            textInput("ig_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor")
-          ),
+        conditionalPanel(
+          condition = "input.ig_tipo_carrusel == 'paquete'",
+          accordion(
+            open = c("pkg"),
+            multiple = TRUE,
 
-          accordion_panel("Slide 1 — Portada", value = "s1",
-            tags$span("Tagline", class = "section-label"),
-            textAreaInput("ig_s1_tagline", NULL, rows = 2,
-              value = "Limpieza de datos en R, sin esfuerzo")
-          ),
+            accordion_panel("📦 Datos del paquete", value = "pkg",
+              tags$span("Categoría (badge)", class = "section-label"),
+              textInput("ig_categoria", NULL, value = "Paquete de R"),
+              tags$span("Nombre del paquete", class = "section-label"),
+              textInput("ig_nombre", NULL, value = "janitor"),
+              tags$span("Versión / fuente", class = "section-label"),
+              textInput("ig_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
+              tags$span("Autor / repo (slide 4)", class = "section-label"),
+              textInput("ig_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor")
+            ),
 
-          accordion_panel("Slide 2 — ¿Qué hace?", value = "s2",
-            tags$span("Título de sección", class = "section-label"),
-            textInput("ig_s2_titulo", NULL, value = "¿Para qué sirve?"),
-            tags$span("Descripción", class = "section-label"),
-            textAreaInput("ig_s2_desc", NULL, rows = 3,
-              value = "Normalizá nombres de columnas, eliminá filas vacías y detectá duplicados con una línea de código."),
-            tags$span("Bullets (uno por línea, máx 3)", class = "section-label"),
-            textAreaInput("ig_s2_bullets", NULL, rows = 3,
-              value = "clean_names(): columnas en snake_case\nremove_empty(): filas y columnas vacías\nget_dupes(): detecta duplicados")
-          ),
+            accordion_panel("Slide 1 — Portada", value = "s1",
+              tags$span("Tagline", class = "section-label"),
+              textAreaInput("ig_s1_tagline", NULL, rows = 2,
+                value = "Limpieza de datos en R, sin esfuerzo")
+            ),
 
-          accordion_panel("Slide 3 — Código", value = "s3",
-            tags$span("Título de sección", class = "section-label"),
-            textInput("ig_s3_titulo", NULL, value = "En la práctica"),
-            tags$span("Código R", class = "section-label"),
-            textAreaInput("ig_s3_codigo", NULL, rows = 6,
-              value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")")
-          ),
+            accordion_panel("Slide 2 — ¿Qué hace?", value = "s2",
+              tags$span("Título de sección", class = "section-label"),
+              textInput("ig_s2_titulo", NULL, value = "¿Para qué sirve?"),
+              tags$span("Descripción", class = "section-label"),
+              textAreaInput("ig_s2_desc", NULL, rows = 3,
+                value = "Normalizá nombres de columnas, eliminá filas vacías y detectá duplicados con una línea de código."),
+              tags$span("Bullets (uno por línea, máx 3)", class = "section-label"),
+              textAreaInput("ig_s2_bullets", NULL, rows = 3,
+                value = "clean_names(): columnas en snake_case\nremove_empty(): filas y columnas vacías\nget_dupes(): detecta duplicados")
+            ),
 
-          accordion_panel("Slide 4 — Cierre", value = "s4",
-            tags$span("Tagline de cierre", class = "section-label"),
-            textAreaInput("ig_s4_tagline", NULL, rows = 2,
-              value = "Seguinos para más tips de R")
+            accordion_panel("Slide 3 — Código", value = "s3",
+              tags$span("Título de sección", class = "section-label"),
+              textInput("ig_s3_titulo", NULL, value = "En la práctica"),
+              tags$span("Código R", class = "section-label"),
+              textAreaInput("ig_s3_codigo", NULL, rows = 6,
+                value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")")
+            ),
+
+            accordion_panel("Slide 4 — Cierre", value = "s4",
+              tags$span("Tagline de cierre", class = "section-label"),
+              textAreaInput("ig_s4_tagline", NULL, rows = 2,
+                value = "Seguinos para más tips de R")
+            )
+          )
+        ),
+
+        conditionalPanel(
+          condition = "input.ig_tipo_carrusel == 'curso'",
+          accordion(
+            open = c("cpkg"),
+            multiple = TRUE,
+
+            accordion_panel("🎓 Datos del curso", value = "cpkg",
+              tags$span("Tipo de evento (badge)", class = "section-label"),
+              textInput("ig_c_badge", NULL, value = "Curso virtual"),
+              tags$span("Nombre del curso", class = "section-label"),
+              textAreaInput("ig_c_nombre", NULL, rows = 2,
+                value = "Introducción a R para Ciencias Sociales"),
+              tags$span("Tagline (slide 1)", class = "section-label"),
+              textAreaInput("ig_c_tagline", NULL, rows = 2,
+                value = "Aprendé a analizar datos con R desde cero"),
+              tags$span("Fecha de inicio", class = "section-label"),
+              textInput("ig_c_fecha_inicio", NULL, value = "22 de septiembre")
+            ),
+
+            accordion_panel("Slide 2 — Contenidos", value = "cs2",
+              tags$span("Contenidos (uno por línea, máx 6)", class = "section-label"),
+              textAreaInput("ig_c_s2_bullets", NULL, rows = 6,
+                value = "Introducción a R y RStudio\nManejo de datos con tidyverse\nVisualización con ggplot2\nReportes con Quarto\nAnálisis estadístico aplicado\nProyecto integrador")
+            ),
+
+            accordion_panel("Slide 3 — Info práctica", value = "cs3",
+              tags$span("Fechas", class = "section-label"),
+              textInput("ig_c_s3_fecha", NULL, value = "22 sep · 8 oct"),
+              tags$span("Horario", class = "section-label"),
+              textInput("ig_c_s3_horario", NULL, value = "19:00-21:30 ARG · mar+jue"),
+              tags$span("Precio", class = "section-label"),
+              textInput("ig_c_s3_precio", NULL, value = "USD 100"),
+              tags$span("Modalidad", class = "section-label"),
+              textInput("ig_c_s3_modalidad", NULL, value = "Online · Zoom · Con grabaciones"),
+              tags$span("Info extra (opcional)", class = "section-label"),
+              textInput("ig_c_s3_extra", NULL, value = "Con tutor de IA incluido")
+            ),
+
+            accordion_panel("Slide 4 — CTA", value = "cs4",
+              tags$span("Llamada a la acción", class = "section-label"),
+              textAreaInput("ig_c_s4_cta", NULL, rows = 2,
+                value = "¡Inscribite antes del 18 de septiembre!"),
+              tags$span("URL de inscripción", class = "section-label"),
+              textInput("ig_c_s4_url", NULL, value = "estacion-r.com")
+            )
           )
         ),
 
@@ -647,7 +840,9 @@ ui <- page_navbar(
 # ============================================================
 server <- function(input, output, session) {
 
-  # -- Instagram: previews reactivos --
+  # -- Instagram: reactivos --
+  ig_tipo <- reactive(input$ig_tipo_carrusel %||% "paquete")
+
   ig_data <- reactive(list(
     nombre   = input$ig_nombre,
     categoria = input$ig_categoria,
@@ -662,21 +857,56 @@ server <- function(input, output, session) {
     s4_tagline = input$ig_s4_tagline
   ))
 
+  ig_curso_data <- reactive(list(
+    nombre       = input$ig_c_nombre %||% "",
+    badge        = input$ig_c_badge %||% "Curso virtual",
+    tagline      = input$ig_c_tagline %||% "",
+    fecha_inicio = input$ig_c_fecha_inicio %||% "",
+    s2_bullets   = strsplit(input$ig_c_s2_bullets %||% "", "\n")[[1]],
+    s3_fecha     = input$ig_c_s3_fecha %||% "",
+    s3_horario   = input$ig_c_s3_horario %||% "",
+    s3_precio    = input$ig_c_s3_precio %||% "",
+    s3_modalidad = input$ig_c_s3_modalidad %||% "",
+    s3_extra     = input$ig_c_s3_extra %||% "",
+    s4_cta       = input$ig_c_s4_cta %||% "¡Inscribite ahora!",
+    s4_url       = input$ig_c_s4_url %||% "estacion-r.com"
+  ))
+
   output$preview_s1 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide1_html(d$nombre, d$categoria, d$s1_tagline))
+    if (identical(ig_tipo(), "curso")) {
+      d <- ig_curso_data()
+      slide_iframe(course_slide1_html(d$nombre, d$badge, d$tagline, d$fecha_inicio))
+    } else {
+      d <- ig_data()
+      slide_iframe(slide1_html(d$nombre, d$categoria, d$s1_tagline))
+    }
   })
   output$preview_s2 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide2_html(d$nombre, d$s2_titulo, d$s2_desc, d$s2_bullets))
+    if (identical(ig_tipo(), "curso")) {
+      d <- ig_curso_data()
+      slide_iframe(course_slide2_html(d$nombre, d$s2_bullets))
+    } else {
+      d <- ig_data()
+      slide_iframe(slide2_html(d$nombre, d$s2_titulo, d$s2_desc, d$s2_bullets))
+    }
   })
   output$preview_s3 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide3_html(d$nombre, d$s3_titulo, d$s3_codigo))
+    if (identical(ig_tipo(), "curso")) {
+      d <- ig_curso_data()
+      slide_iframe(course_slide3_html(d$nombre, d$s3_fecha, d$s3_horario, d$s3_precio, d$s3_modalidad, d$s3_extra))
+    } else {
+      d <- ig_data()
+      slide_iframe(slide3_html(d$nombre, d$s3_titulo, d$s3_codigo))
+    }
   })
   output$preview_s4 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide4_html(d$s4_tagline, d$autor))
+    if (identical(ig_tipo(), "curso")) {
+      d <- ig_curso_data()
+      slide_iframe(course_slide4_html(d$s4_cta, d$s4_url))
+    } else {
+      d <- ig_data()
+      slide_iframe(slide4_html(d$s4_tagline, d$autor))
+    }
   })
 
   # -- Instagram: descarga ZIP --
@@ -687,22 +917,42 @@ server <- function(input, output, session) {
       dir.create(slide_dir)
       on.exit(unlink(slide_dir, recursive = TRUE), add = TRUE)
 
-      d <- ig_data()
-      config <- list(
-        template      = "carousel",
-        output_dir    = slide_dir,
-        pkg_nombre    = d$nombre,
-        categoria     = d$categoria,
-        version_line  = d$version,
-        autor_line    = d$autor,
-        slide1_tagline = d$s1_tagline,
-        slide2_titulo  = d$s2_titulo,
-        slide2_desc    = d$s2_desc,
-        slide2_bullets = d$s2_bullets,
-        slide3_titulo  = d$s3_titulo,
-        slide3_codigo  = d$s3_codigo,
-        slide4_tagline = d$s4_tagline
-      )
+      if (identical(ig_tipo(), "curso")) {
+        d <- ig_curso_data()
+        config <- list(
+          template     = "carousel_curso",
+          output_dir   = slide_dir,
+          nombre       = d$nombre,
+          badge        = d$badge,
+          tagline      = d$tagline,
+          fecha_inicio = d$fecha_inicio,
+          s2_bullets   = d$s2_bullets,
+          s3_fecha     = d$s3_fecha,
+          s3_horario   = d$s3_horario,
+          s3_precio    = d$s3_precio,
+          s3_modalidad = d$s3_modalidad,
+          s3_extra     = d$s3_extra,
+          s4_cta       = d$s4_cta,
+          s4_url       = d$s4_url
+        )
+      } else {
+        d <- ig_data()
+        config <- list(
+          template      = "carousel",
+          output_dir    = slide_dir,
+          pkg_nombre    = d$nombre,
+          categoria     = d$categoria,
+          version_line  = d$version,
+          autor_line    = d$autor,
+          slide1_tagline = d$s1_tagline,
+          slide2_titulo  = d$s2_titulo,
+          slide2_desc    = d$s2_desc,
+          slide2_bullets = d$s2_bullets,
+          slide3_titulo  = d$s3_titulo,
+          slide3_codigo  = d$s3_codigo,
+          slide4_tagline = d$s4_tagline
+        )
+      }
 
       cfg_file <- tempfile(fileext = ".json")
       writeLines(jsonlite::toJSON(config, auto_unbox = TRUE), cfg_file)
