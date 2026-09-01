@@ -8,7 +8,7 @@ App Shiny para generar piezas de difusión de Estación R (minimalista neobrutal
 
 ## Características
 
-- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides, sin precio) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS (solo 4:5), caja central con imagen opcional o isotipo, 4 ítems editables (emoji + negrita + texto)
+- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides, sin precio) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS (solo 4:5), caja central con imagen opcional o isotipo, 4 ítems editables con íconos Boxicons (set basic, inline y coloreados según fondo) y botón CTA opcional que se adapta al fondo (amarillo/tinta negra sobre negro-azul, azul/tinta blanca sobre amarillo-blanco)
 - Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
 - Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
 - Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
@@ -85,6 +85,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Formato 2 — flyer de tips/paquetes de R~~ ✅ hecho en `v1.1.0` (boceto original conservado en `design/formato2_tip.html`)
 - ~~Anuncio de curso en carrusel (3 slides, sin precio)~~ ✅ `v2.1.0`/`v2.1.1`
 - ~~Tarjeta clásica de curso como tercer tipo~~ ✅ `v2.2.0` (4:5 + 16:9, 4 fondos)
+- ~~Íconos Boxicons en ítems + botón CTA adaptativo~~ ✅ `v2.3.0`
 - Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story)
 
 ## Convenciones de desarrollo

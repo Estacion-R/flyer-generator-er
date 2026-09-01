@@ -31,17 +31,38 @@ TARJETA_FONDO_OPTS <- c("Negro" = "negro", "Azul" = "azul",
 TARJETA_FONDOS <- list(
   negro    = list(bg = "#191919", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
-                  circ_bg = "#FFFFFF", circ_fg = "#191919"),
+                  circ_bg = "#FFFFFF", circ_fg = "#191919",
+                  btn_bg = "#EAFF38", btn_fg = "#191919"),
   azul     = list(bg = "#405BFF", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
-                  circ_bg = "#FFFFFF", circ_fg = "#191919"),
+                  circ_bg = "#FFFFFF", circ_fg = "#191919",
+                  btn_bg = "#EAFF38", btn_fg = "#191919"),
   amarillo = list(bg = "#EAFF38", ink = "#191919", tag = "rgba(25,25,25,0.92)",
                   logo = "azul", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
-                  circ_bg = "#405BFF", circ_fg = "#FFFFFF"),
+                  circ_bg = "#405BFF", circ_fg = "#FFFFFF",
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF"),
   blanco   = list(bg = "#FFFFFF", ink = "#191919", tag = "rgba(25,25,25,0.85)",
                   logo = "negro", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
-                  circ_bg = "#405BFF", circ_fg = "#FFFFFF")
+                  circ_bg = "#405BFF", circ_fg = "#FFFFFF",
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF")
 )
+
+# Íconos Boxicons (set basic/regular, free) para los ítems de la tarjeta
+TARJETA_ICON_DIR  <- "www/icons"
+TARJETA_ICON_NAMES <- list.files(TARJETA_ICON_DIR, pattern = "\\.svg$")
+TARJETA_ICONS <- setNames(
+  lapply(TARJETA_ICON_NAMES, function(f)
+    paste(readLines(file.path(TARJETA_ICON_DIR, f), warn = FALSE), collapse = "")),
+  sub("\\.svg$", "", TARJETA_ICON_NAMES))
+TARJETA_ICON_OPTS <- setNames(names(TARJETA_ICONS), sub("^bx-", "", names(TARJETA_ICONS)))
+
+tarjeta_icon_svg <- function(icon, fill) {
+  svg <- TARJETA_ICONS[[icon]]
+  if (is.null(svg) || nchar(svg) == 0) return("")
+  svg <- sub('width="24" height="24" ', "", svg, fixed = TRUE)
+  svg <- sub("<svg ", paste0('<svg fill="', fill, '" '), svg, fixed = TRUE)
+  svg
+}
 
 TARJETA_LOGOS <- list(
   blanco = paste0("data:image/png;base64,", base64enc::base64encode("www/logo_er_blanco.png")),
@@ -515,10 +536,10 @@ tarjeta_iframe <- function(html_str, w, h, wrap_w) {
         "transform:scale(", scale, "); transform-origin:top left;")))
 }
 
-tarjeta_item_html <- function(it) {
+tarjeta_item_html <- function(it, fill) {
   if (nchar(trimws(paste0(it$strong, it$text))) == 0) return("")
   paste0(
-    '<div class="it"><div class="circ">', he(it$emoji), '</div>',
+    '<div class="it"><div class="circ">', tarjeta_icon_svg(it$icon, fill), '</div>',
     '<div class="tx"><strong>', he(it$strong), '</strong>', he(it$text), '</div></div>')
 }
 
@@ -526,7 +547,9 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
   formato <- match.arg(formato)
   f <- TARJETA_FONDOS[[d$fondo %||% "negro"]]
   logo <- TARJETA_LOGOS[[f$logo]]
-  items_html <- paste(vapply(d$items, tarjeta_item_html, character(1)), collapse = "")
+  items_html <- paste(vapply(d$items, tarjeta_item_html, character(1), f$circ_fg), collapse = "")
+  cta_btn <- if (nchar(trimws(d$cta %||% "")) > 0)
+    paste0('<div class="cta"><div class="cta-btn">', he(d$cta), '</div></div>') else ""
   caja <- if (!is.null(img_b64))
     paste0('<img src="', img_b64, '" alt=""/>')
   else
@@ -545,7 +568,9 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
     ".caja img.iso{width:280px;height:auto;object-fit:contain}",
     ".tag{font-size:31px;line-height:1.45;color:", f$tag, ";white-space:pre-wrap}",
     ".it{display:flex;gap:18px;align-items:flex-start}",
-    ".circ{width:54px;height:54px;border-radius:50%;background:", f$circ_bg, ";color:", f$circ_fg, ";display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;font-family:'Noto Color Emoji','Segoe UI Emoji',sans-serif}",
+    ".circ{width:54px;height:54px;border-radius:50%;background:", f$circ_bg, ";display:flex;align-items:center;justify-content:center;flex-shrink:0}",
+    ".circ svg{width:30px;height:30px;display:block}",
+    ".cta-btn{display:inline-block;background:", f$btn_bg, ";color:", f$btn_fg, ";font-family:'Ubuntu',sans-serif;font-weight:700;font-size:34px;line-height:1;padding:22px 64px;border-radius:14px}",
     ".it .tx{font-size:27px;line-height:1.32;color:", f$ink, "}",
     ".it .tx strong{display:block;font-weight:700}")
 
@@ -555,7 +580,8 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       ".tt{font-size:70px;padding:52px 58px 0}",
       ".caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}",
       ".tag{padding:36px 58px 0}",
-      ".items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 56px}")
+      ".items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 0}",
+      ".cta{display:flex;justify-content:center;padding:36px 58px 56px}")
     body <- paste0(
       '<div class="tarjeta">',
       '<div class="hd"><img class="lg" src="', logo, '"/>', badge, '</div>',
@@ -563,6 +589,7 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       '<div class="caja">', caja, '</div>',
       '<div class="tag">', he(d$tagline), '</div>',
       '<div class="items">', items_html, '</div>',
+      cta_btn,
       '</div>')
   } else {
     layout_css <- paste0(
@@ -572,13 +599,16 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       ".tt{font-size:74px}",
       ".caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}",
       ".tag{padding:6px 0 0}",
-      ".items{display:flex;flex-direction:column;gap:24px;padding:30px 0 0}")
+      ".items{display:flex;flex-direction:column;gap:20px;padding:26px 0 0}",
+      ".cols>div:last-child{display:flex;flex-direction:column}",
+      ".cta{margin-top:auto;padding:0 0 52px}",
+      ".cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}")
     body <- paste0(
       '<div class="tarjeta">',
       '<div class="hd"><span></span><img class="lg" src="', logo, '"/></div>',
       '<div class="cols">',
       '<div><div class="tt">', he(d$titulo), '</div><div class="caja">', caja, '</div></div>',
-      '<div><div class="tag">', he(d$tagline), '</div><div class="items">', items_html, '</div></div>',
+      '<div><div class="tag">', he(d$tagline), '</div><div class="items">', items_html, '</div>', cta_btn, '</div>',
       '</div></div>')
   }
 
@@ -803,24 +833,26 @@ ui <- page_navbar(
                 buttonLabel = "Elegir imagen...",
                 placeholder = "Sin imagen: isotipo de ER"),
               checkboxInput("ig_t_solo_45",
-                "Solo generar la de 4:5 (feed)", value = FALSE)
+                "Solo generar la de 4:5 (feed)", value = FALSE),
+              tags$span("Texto del botón CTA (vacío = sin botón)", class = "section-label"),
+              textInput("ig_t_cta", NULL, value = "Sumate")
             ),
 
             accordion_panel("Ítems destacados (4)", value = "titems",
-              tags$span("Ítem 1 — emoji / negrita / texto", class = "section-label"),
-              textInput("ig_t_i1_emoji", NULL, value = "🖥️"),
+              tags$span("Ítem 1 — ícono / negrita / texto", class = "section-label"),
+              selectInput("ig_t_i1_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-laptop"),
               textInput("ig_t_i1_strong", NULL, value = "Modalidad:"),
               textInput("ig_t_i1_text", NULL, value = "Sincrónica/Asincrónica"),
               tags$span("Ítem 2", class = "section-label"),
-              textInput("ig_t_i2_emoji", NULL, value = "💬"),
+              selectInput("ig_t_i2_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-chat"),
               textInput("ig_t_i2_strong", NULL, value = "Foro de intercambio"),
               textInput("ig_t_i2_text", NULL, value = "y seguimiento 24/7"),
               tags$span("Ítem 3", class = "section-label"),
-              textInput("ig_t_i3_emoji", NULL, value = "📅"),
+              selectInput("ig_t_i3_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-calendar-check"),
               textInput("ig_t_i3_strong", NULL, value = "4 semanas"),
               textInput("ig_t_i3_text", NULL, value = "(10 hs. totales)"),
               tags$span("Ítem 4", class = "section-label"),
-              textInput("ig_t_i4_emoji", NULL, value = "🎓"),
+              selectInput("ig_t_i4_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-certification"),
               textInput("ig_t_i4_strong", NULL, value = "Certificación"),
               textInput("ig_t_i4_text", NULL, value = "con examen final")
             )
@@ -1022,7 +1054,7 @@ server <- function(input, output, session) {
   ig_tarjeta_data <- reactive({
     items <- lapply(1:4, function(i) {
       list(
-        emoji  = input[[paste0("ig_t_i", i, "_emoji")]] %||% "",
+        icon   = input[[paste0("ig_t_i", i, "_icon")]] %||% "bx-star",
         strong = input[[paste0("ig_t_i", i, "_strong")]] %||% "",
         text   = input[[paste0("ig_t_i", i, "_text")]] %||% ""
       )
@@ -1031,7 +1063,8 @@ server <- function(input, output, session) {
       fondo   = input$ig_t_fondo %||% "negro",
       titulo  = input$ig_t_titulo %||% "",
       tagline = input$ig_t_tagline %||% "",
-      items   = items
+      items   = items,
+      cta     = input$ig_t_cta %||% ""
     )
   })
 
@@ -1129,6 +1162,7 @@ server <- function(input, output, session) {
           titulo       = d$titulo,
           tagline      = d$tagline,
           items        = d$items,
+          cta          = d$cta,
           solo_45      = isTRUE(input$ig_t_solo_45),
           imagen_curso = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL
         )

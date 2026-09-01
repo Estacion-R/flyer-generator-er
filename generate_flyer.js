@@ -70,11 +70,12 @@
  *   "titulo": "R para el tratamiento de Hojas de Cálculo",
  *   "tagline": "El remedio para tus datos...",
  *   "items": [
- *     {"emoji":"🖥️","strong":"Modalidad:","text":"Sincrónica/Asincrónica"},
- *     {"emoji":"💬","strong":"Foro de intercambio","text":"y seguimiento 24/7"},
- *     {"emoji":"📅","strong":"4 semanas","text":"(10 hs. totales)"},
- *     {"emoji":"🎓","strong":"Certificación","text":"con examen final"}
+ *     {"icon":"bx-laptop","strong":"Modalidad:","text":"Sincrónica/Asincrónica"},
+ *     {"icon":"bx-chat","strong":"Foro de intercambio","text":"y seguimiento 24/7"},
+ *     {"icon":"bx-calendar-check","strong":"4 semanas","text":"(10 hs. totales)"},
+ *     {"icon":"bx-certification","strong":"Certificación","text":"con examen final"}
  *   ],
+ *   "cta": "Sumate",
  *   "solo_45": false,
  *   "imagen_curso": "/ruta/caja.png"
  * }
@@ -898,11 +899,20 @@ async function generateCarousel(config, logoB64) {
 // ============================================================
 
 const TARJETA_FONDOS = {
-  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919' },
-  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919' },
-  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF' },
-  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF' }
+  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
+  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
+  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' },
+  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' }
 };
+
+// Ícono Boxicons inline con fill según fondo (los SVG viven en www/icons/)
+function tarjetaIconSvg(icon, fill, assets) {
+  const svg = assets.icons && assets.icons[icon];
+  if (!svg) return '';
+  return String(svg)
+    .replace('width="24" height="24" ', '')
+    .replace('<svg ', `<svg fill="${fill}" `);
+}
 
 function buildTarjetaHTML(config, formato, assets) {
   const f = TARJETA_FONDOS[config.fondo] || TARJETA_FONDOS.negro;
@@ -914,9 +924,14 @@ function buildTarjetaHTML(config, formato, assets) {
     return (String(it.strong || '') + String(it.text || '')).trim().length > 0;
   });
   const itemsHTML = items.map(it =>
-    `<div class="it"><div class="circ">${escapeHtml(it.emoji || '')}</div>` +
+    `<div class="it"><div class="circ">${tarjetaIconSvg(it.icon || '', f.circ_fg, assets)}</div>` +
     `<div class="tx"><strong>${escapeHtml(it.strong || '')}</strong>${escapeHtml(it.text || '')}</div></div>`
   ).join('');
+
+  const ctaTxt = String(config.cta || '').trim();
+  const ctaBtn = ctaTxt
+    ? `<div class="cta"><div class="cta-btn">${escapeHtml(ctaTxt)}</div></div>`
+    : '';
 
   let caja;
   if (typeof config.imagen_curso === 'string' && config.imagen_curso && fs.existsSync(config.imagen_curso)) {
@@ -944,7 +959,9 @@ function buildTarjetaHTML(config, formato, assets) {
     `.caja img.iso{width:280px;height:auto;object-fit:contain}` +
     `.tag{font-size:31px;line-height:1.45;color:${f.tag};white-space:pre-wrap}` +
     `.it{display:flex;gap:18px;align-items:flex-start}` +
-    `.circ{width:54px;height:54px;border-radius:50%;background:${f.circ_bg};color:${f.circ_fg};display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;font-family:'Noto Color Emoji','Segoe UI Emoji',sans-serif}` +
+    `.circ{width:54px;height:54px;border-radius:50%;background:${f.circ_bg};display:flex;align-items:center;justify-content:center;flex-shrink:0}` +
+    `.circ svg{width:30px;height:30px;display:block}` +
+    `.cta-btn{display:inline-block;background:${f.btn_bg};color:${f.btn_fg};font-family:'Ubuntu',sans-serif;font-weight:700;font-size:34px;line-height:1;padding:22px 64px;border-radius:14px}` +
     `.it .tx{font-size:27px;line-height:1.32;color:${f.ink}}` +
     `.it .tx strong{display:block;font-weight:700}`;
 
@@ -955,7 +972,8 @@ function buildTarjetaHTML(config, formato, assets) {
       `.tt{font-size:70px;padding:52px 58px 0}` +
       `.caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}` +
       `.tag{padding:36px 58px 0}` +
-      `.items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 56px}`;
+      `.items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 0}` +
+      `.cta{display:flex;justify-content:center;padding:36px 58px 56px}`;
     body =
       `<div class="tarjeta">` +
       `<div class="hd"><img class="lg" src="${logo}"/>${badge}</div>` +
@@ -963,6 +981,7 @@ function buildTarjetaHTML(config, formato, assets) {
       `<div class="caja">${caja}</div>` +
       `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +
       `<div class="items">${itemsHTML}</div>` +
+      ctaBtn +
       `</div>`;
   } else {
     layoutCSS =
@@ -972,13 +991,16 @@ function buildTarjetaHTML(config, formato, assets) {
       `.tt{font-size:74px}` +
       `.caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}` +
       `.tag{padding:6px 0 0}` +
-      `.items{display:flex;flex-direction:column;gap:24px;padding:30px 0 0}`;
+      `.items{display:flex;flex-direction:column;gap:20px;padding:26px 0 0}` +
+      `.cols>div:last-child{display:flex;flex-direction:column}` +
+      `.cta{margin-top:auto;padding:0 0 52px}` +
+      `.cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}`;
     body =
       `<div class="tarjeta">` +
       `<div class="hd"><span></span><img class="lg" src="${logo}"/></div>` +
       `<div class="cols">` +
       `<div><div class="tt">${escapeHtml(config.titulo || '')}</div><div class="caja">${caja}</div></div>` +
-      `<div><div class="tag">${escapeHtml(config.tagline || '')}</div><div class="items">${itemsHTML}</div></div>` +
+      `<div><div class="tag">${escapeHtml(config.tagline || '')}</div><div class="items">${itemsHTML}</div>${ctaBtn}</div>` +
       `</div></div>`;
   }
 
@@ -1054,8 +1076,16 @@ async function main() {
     logoB64 = 'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
   }
 
-  // Assets tarjeta clásica: logos por tinta, isotipo, fuente Array
-  const tarjAssets = { logos: {} };
+  // Assets tarjeta clásica: logos por tinta, isotipo, fuente Array, íconos Boxicons
+  const tarjAssets = { logos: {}, icons: {} };
+  const iconsDir = path.join(scriptDir, 'www', 'icons');
+  if (fs.existsSync(iconsDir)) {
+    for (const f of fs.readdirSync(iconsDir)) {
+      if (f.endsWith('.svg')) {
+        tarjAssets.icons[f.replace(/\.svg$/, '')] = fs.readFileSync(path.join(iconsDir, f), 'utf-8');
+      }
+    }
+  }
   for (const v of ['negro', 'blanco', 'azul']) {
     const p = path.join(scriptDir, 'www', `logo_er_${v}.png`);
     if (fs.existsSync(p)) tarjAssets.logos[v] = 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
