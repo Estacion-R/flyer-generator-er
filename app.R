@@ -32,20 +32,38 @@ TARJETA_FONDOS <- list(
   negro    = list(bg = "#191919", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
                   circ_bg = "#FFFFFF", circ_fg = "#191919",
-                  btn_bg = "#EAFF38", btn_fg = "#191919"),
+                  btn_bg = "#EAFF38", btn_fg = "#191919", shadow = "#EAFF38"),
   azul     = list(bg = "#405BFF", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
                   circ_bg = "#FFFFFF", circ_fg = "#191919",
-                  btn_bg = "#EAFF38", btn_fg = "#191919"),
+                  btn_bg = "#EAFF38", btn_fg = "#191919", shadow = "#EAFF38"),
   amarillo = list(bg = "#EAFF38", ink = "#191919", tag = "rgba(25,25,25,0.92)",
                   logo = "azul", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
                   circ_bg = "#405BFF", circ_fg = "#FFFFFF",
-                  btn_bg = "#405BFF", btn_fg = "#FFFFFF"),
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF", shadow = "#405BFF"),
   blanco   = list(bg = "#FFFFFF", ink = "#191919", tag = "rgba(25,25,25,0.85)",
                   logo = "negro", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
                   circ_bg = "#405BFF", circ_fg = "#FFFFFF",
-                  btn_bg = "#405BFF", btn_fg = "#FFFFFF")
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF", shadow = "#EAFF38")
 )
+
+# Tamaño de ítems (16:9) según cantidad: n=4 preserva los valores originales (v2.3.0).
+TARJETA_ITEM_SIZING <- list(
+  `1` = list(gap = 0,  font = 34, circle = 74, svg = 40),
+  `2` = list(gap = 34, font = 31, circle = 66, svg = 36),
+  `3` = list(gap = 26, font = 29, circle = 60, svg = 32),
+  `4` = list(gap = 20, font = 27, circle = 54, svg = 30),
+  `5` = list(gap = 16, font = 25, circle = 48, svg = 26),
+  `6` = list(gap = 13, font = 23, circle = 44, svg = 24)
+)
+tarjeta_item_sizing <- function(n) {
+  k <- max(1, min(6, if (is.null(n) || is.na(n)) 4 else n))
+  TARJETA_ITEM_SIZING[[as.character(k)]]
+}
+
+# Sombra dura neobrutalist (16:9): offset sólido, sin blur, dentro del mismo lienzo 1920×1080.
+TARJETA_SHADOW <- 16
+TARJETA_BORDE  <- 6
 
 # Íconos Boxicons (set basic/regular, free) para los ítems de la tarjeta
 TARJETA_ICON_DIR  <- "www/icons"
@@ -547,9 +565,13 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
   formato <- match.arg(formato)
   f <- TARJETA_FONDOS[[d$fondo %||% "negro"]]
   logo <- TARJETA_LOGOS[[f$logo]]
+  items_ok <- Filter(function(it) nchar(trimws(paste0(it$strong, it$text))) > 0, d$items)
   items_html <- paste(vapply(d$items, tarjeta_item_html, character(1), f$circ_fg), collapse = "")
   cta_btn <- if (nchar(trimws(d$cta %||% "")) > 0)
     paste0('<div class="cta"><div class="cta-btn">', he(d$cta), '</div></div>') else ""
+  insc_html <- if (nchar(trimws(d$inscripcion_texto %||% "")) > 0)
+    paste0('<div class="insc"><div class="ico">\U0001F4E3</div><div class="txt">',
+      gsub("\n", "<br>", he(d$inscripcion_texto)), '</div></div>') else ""
   caja <- if (!is.null(img_b64))
     paste0('<img src="', img_b64, '" alt=""/>')
   else
@@ -592,24 +614,39 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       cta_btn,
       '</div>')
   } else {
+    # 16:9 — grid con filas explícitas: título/tagline comparten fila 1, imagen/ítems
+    # comparten fila 2 (mismo grid-row), así el primer ítem queda siempre alineado con
+    # el borde superior de la imagen sin importar cuánto ocupe el título o el tagline.
+    sz <- tarjeta_item_sizing(length(items_ok))
     layout_css <- paste0(
-      ".tarjeta{width:1920px;height:1080px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative}",
-      ".cols{display:grid;grid-template-columns:1fr 690px;gap:36px;padding:30px 64px 0}",
-      ".cols>div:first-child{display:flex;flex-direction:column}",
-      ".tt{font-size:74px}",
-      ".caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}",
-      ".tag{padding:6px 0 0}",
-      ".items{display:flex;flex-direction:column;gap:20px;padding:26px 0 0}",
-      ".cols>div:last-child{display:flex;flex-direction:column}",
-      ".cta{margin-top:auto;padding:0 0 52px}",
+      ".card-frame{width:1920px;height:1080px;position:relative;background:", f$shadow, "}",
+      ".tarjeta{width:", 1920 - TARJETA_SHADOW, "px;height:", 1080 - TARJETA_SHADOW,
+      "px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;",
+      "display:flex;flex-direction:column;border:", TARJETA_BORDE, "px solid #151515;",
+      "box-shadow:", TARJETA_SHADOW, "px ", TARJETA_SHADOW, "px 0 ", f$shadow, "}",
+      ".cols{display:grid;grid-template-columns:1fr 690px;grid-template-rows:auto 1fr;column-gap:36px;padding:30px 64px 44px;flex:1 1 auto;min-height:0}",
+      ".tt{font-size:74px;grid-column:1;grid-row:1}",
+      ".tag{padding:6px 0 0;grid-column:2;grid-row:1}",
+      ".caja{margin:34px 0 0;grid-column:1;grid-row:2;min-height:0}",
+      ".items-cta{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-height:0}",
+      ".items{display:flex;flex-direction:column;gap:", sz$gap, "px;padding:26px 0 0}",
+      ".it .tx{font-size:", sz$font, "px}",
+      ".circ{width:", sz$circle, "px;height:", sz$circle, "px}",
+      ".circ svg{width:", sz$svg, "px;height:", sz$svg, "px}",
+      ".insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:18px}",
+      ".insc .ico{font-size:30px;line-height:1;flex-shrink:0}",
+      ".insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}",
+      ".cta{margin-top:auto;padding:0}",
       ".cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}")
     body <- paste0(
-      '<div class="tarjeta">',
+      '<div class="card-frame"><div class="tarjeta">',
       '<div class="hd"><span></span><img class="lg" src="', logo, '"/></div>',
       '<div class="cols">',
-      '<div><div class="tt">', he(d$titulo), '</div><div class="caja">', caja, '</div></div>',
-      '<div><div class="tag">', he(d$tagline), '</div><div class="items">', items_html, '</div>', cta_btn, '</div>',
-      '</div></div>')
+      '<div class="tt">', he(d$titulo), '</div>',
+      '<div class="tag">', he(d$tagline), '</div>',
+      '<div class="caja">', caja, '</div>',
+      '<div class="items-cta"><div class="items">', items_html, '</div>', insc_html, cta_btn, '</div>',
+      '</div></div></div>')
   }
 
   paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>',
@@ -835,26 +872,51 @@ ui <- page_navbar(
               checkboxInput("ig_t_solo_45",
                 "Solo generar la de 4:5 (feed)", value = FALSE),
               tags$span("Texto del botón CTA (vacío = sin botón)", class = "section-label"),
-              textInput("ig_t_cta", NULL, value = "Sumate")
+              textInput("ig_t_cta", NULL, value = "Sumate"),
+              tags$span("Recuadro de inscripción (vacío = sin recuadro; solo 16:9)", class = "section-label"),
+              textAreaInput("ig_t_inscripcion", NULL, rows = 2,
+                value = "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO")
             ),
 
-            accordion_panel("Ítems destacados (4)", value = "titems",
+            accordion_panel("Ítems destacados (hasta 6)", value = "titems",
+              tags$span("Cantidad de ítems a mostrar", class = "section-label"),
+              selectInput("ig_t_n_items", NULL,
+                choices = setNames(1:6, ifelse(1:6 == 1, "1 ítem", paste0(1:6, " ítems"))),
+                selected = 4),
               tags$span("Ítem 1 — ícono / negrita / texto", class = "section-label"),
               selectInput("ig_t_i1_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-laptop"),
               textInput("ig_t_i1_strong", NULL, value = "Modalidad:"),
               textInput("ig_t_i1_text", NULL, value = "Sincrónica/Asincrónica"),
-              tags$span("Ítem 2", class = "section-label"),
-              selectInput("ig_t_i2_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-chat"),
-              textInput("ig_t_i2_strong", NULL, value = "Foro de intercambio"),
-              textInput("ig_t_i2_text", NULL, value = "y seguimiento 24/7"),
-              tags$span("Ítem 3", class = "section-label"),
-              selectInput("ig_t_i3_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-calendar-check"),
-              textInput("ig_t_i3_strong", NULL, value = "4 semanas"),
-              textInput("ig_t_i3_text", NULL, value = "(10 hs. totales)"),
-              tags$span("Ítem 4", class = "section-label"),
-              selectInput("ig_t_i4_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-certification"),
-              textInput("ig_t_i4_strong", NULL, value = "Certificación"),
-              textInput("ig_t_i4_text", NULL, value = "con examen final")
+              conditionalPanel(condition = "input.ig_t_n_items >= 2",
+                tags$span("Ítem 2", class = "section-label"),
+                selectInput("ig_t_i2_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-chat"),
+                textInput("ig_t_i2_strong", NULL, value = "Foro de intercambio"),
+                textInput("ig_t_i2_text", NULL, value = "y seguimiento 24/7")
+              ),
+              conditionalPanel(condition = "input.ig_t_n_items >= 3",
+                tags$span("Ítem 3", class = "section-label"),
+                selectInput("ig_t_i3_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-calendar-check"),
+                textInput("ig_t_i3_strong", NULL, value = "4 semanas"),
+                textInput("ig_t_i3_text", NULL, value = "(10 hs. totales)")
+              ),
+              conditionalPanel(condition = "input.ig_t_n_items >= 4",
+                tags$span("Ítem 4", class = "section-label"),
+                selectInput("ig_t_i4_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-certification"),
+                textInput("ig_t_i4_strong", NULL, value = "Certificación"),
+                textInput("ig_t_i4_text", NULL, value = "con examen final")
+              ),
+              conditionalPanel(condition = "input.ig_t_n_items >= 5",
+                tags$span("Ítem 5", class = "section-label"),
+                selectInput("ig_t_i5_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-globe"),
+                textInput("ig_t_i5_strong", NULL, value = "Comunidad"),
+                textInput("ig_t_i5_text", NULL, value = "acceso internacional")
+              ),
+              conditionalPanel(condition = "input.ig_t_n_items >= 6",
+                tags$span("Ítem 6", class = "section-label"),
+                selectInput("ig_t_i6_icon", NULL, choices = TARJETA_ICON_OPTS, selected = "bx-award"),
+                textInput("ig_t_i6_strong", NULL, value = "Becas"),
+                textInput("ig_t_i6_text", NULL, value = "disponibles")
+              )
             )
           )
         ),
@@ -1052,7 +1114,8 @@ server <- function(input, output, session) {
   })
 
   ig_tarjeta_data <- reactive({
-    items <- lapply(1:4, function(i) {
+    n <- as.integer(input$ig_t_n_items %||% 4)
+    items <- lapply(1:n, function(i) {
       list(
         icon   = input[[paste0("ig_t_i", i, "_icon")]] %||% "bx-star",
         strong = input[[paste0("ig_t_i", i, "_strong")]] %||% "",
@@ -1064,7 +1127,8 @@ server <- function(input, output, session) {
       titulo  = input$ig_t_titulo %||% "",
       tagline = input$ig_t_tagline %||% "",
       items   = items,
-      cta     = input$ig_t_cta %||% ""
+      cta     = input$ig_t_cta %||% "",
+      inscripcion_texto = input$ig_t_inscripcion %||% ""
     )
   })
 
@@ -1163,6 +1227,7 @@ server <- function(input, output, session) {
           tagline      = d$tagline,
           items        = d$items,
           cta          = d$cta,
+          inscripcion_texto = d$inscripcion_texto,
           solo_45      = isTRUE(input$ig_t_solo_45),
           imagen_curso = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL
         )

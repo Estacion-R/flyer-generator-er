@@ -76,12 +76,18 @@
  *     {"icon":"bx-certification","strong":"Certificación","text":"con examen final"}
  *   ],
  *   "cta": "Sumate",
+ *   "inscripcion_texto": "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO",
  *   "solo_45": false,
  *   "imagen_curso": "/ruta/caja.png"
  * }
  *
  * Genera tarjeta_4x5.png (+ tarjeta_16x9.png si !solo_45). "imagen_curso" opcional
- * (caja central); sin ella va el isotipo de ER sobre celeste #DFF5FF.
+ * (caja central); sin ella va el isotipo de ER sobre celeste #DFF5FF. "items" acepta
+ * de 1 a 6 elementos: el tamaño de ícono/texto de la lista (16:9) se recalcula según
+ * la cantidad para una distribución vertical armónica. "inscripcion_texto" es opcional
+ * (vacío = sin recuadro); solo se renderiza en 16:9, con ícono de megáfono y fondo
+ * amarillo fijo. El 16:9 también suma un borde negro + sombra dura offset (sin blur):
+ * amarilla en fondos negro/azul/blanco, azul en fondo amarillo (para no perder contraste).
  */
 
 const { chromium } = require('playwright');
@@ -899,11 +905,29 @@ async function generateCarousel(config, logoB64) {
 // ============================================================
 
 const TARJETA_FONDOS = {
-  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
-  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
-  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' },
-  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' }
+  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919', shadow: '#EAFF38' },
+  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919', shadow: '#EAFF38' },
+  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF', shadow: '#405BFF' },
+  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF', shadow: '#EAFF38' }
 };
+
+// Tamaño de ítems (16:9) según cantidad: n=4 preserva los valores originales (v2.3.0).
+const TARJETA_ITEM_SIZING = {
+  1: { gap: 0,  font: 34, circle: 74, svg: 40 },
+  2: { gap: 34, font: 31, circle: 66, svg: 36 },
+  3: { gap: 26, font: 29, circle: 60, svg: 32 },
+  4: { gap: 20, font: 27, circle: 54, svg: 30 },
+  5: { gap: 16, font: 25, circle: 48, svg: 26 },
+  6: { gap: 13, font: 23, circle: 44, svg: 24 }
+};
+function tarjetaItemSizing(n) {
+  const k = Math.max(1, Math.min(6, n || 4));
+  return TARJETA_ITEM_SIZING[k];
+}
+
+// Sombra dura neobrutalist (16:9): offset sólido, sin blur, dentro del mismo lienzo 1920×1080.
+const TARJETA_SHADOW = 16;
+const TARJETA_BORDE = 6;
 
 // Ícono Boxicons inline con fill según fondo (los SVG viven en www/icons/)
 function tarjetaIconSvg(icon, fill, assets) {
@@ -931,6 +955,11 @@ function buildTarjetaHTML(config, formato, assets) {
   const ctaTxt = String(config.cta || '').trim();
   const ctaBtn = ctaTxt
     ? `<div class="cta"><div class="cta-btn">${escapeHtml(ctaTxt)}</div></div>`
+    : '';
+
+  const inscTxt = String(config.inscripcion_texto || '').trim();
+  const inscHTML = inscTxt
+    ? `<div class="insc"><div class="ico">📣</div><div class="txt">${escapeHtml(inscTxt).replace(/\n/g, '<br>')}</div></div>`
     : '';
 
   let caja;
@@ -984,24 +1013,36 @@ function buildTarjetaHTML(config, formato, assets) {
       ctaBtn +
       `</div>`;
   } else {
+    // 16:9 — grid con filas explícitas: título/tagline comparten fila 1, imagen/ítems
+    // comparten fila 2 (mismo grid-row), así el primer ítem queda siempre alineado con
+    // el borde superior de la imagen sin importar cuánto ocupe el título o el tagline.
+    const sz = tarjetaItemSizing(items.length);
     layoutCSS =
-      `.tarjeta{width:1920px;height:1080px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative}` +
-      `.cols{display:grid;grid-template-columns:1fr 690px;gap:36px;padding:30px 64px 0}` +
-      `.cols>div:first-child{display:flex;flex-direction:column}` +
-      `.tt{font-size:74px}` +
-      `.caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}` +
-      `.tag{padding:6px 0 0}` +
-      `.items{display:flex;flex-direction:column;gap:20px;padding:26px 0 0}` +
-      `.cols>div:last-child{display:flex;flex-direction:column}` +
-      `.cta{margin-top:auto;padding:0 0 52px}` +
+      `.card-frame{width:1920px;height:1080px;position:relative;background:${f.shadow}}` +
+      `.tarjeta{width:${1920 - TARJETA_SHADOW}px;height:${1080 - TARJETA_SHADOW}px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column;border:${TARJETA_BORDE}px solid #151515;box-shadow:${TARJETA_SHADOW}px ${TARJETA_SHADOW}px 0 ${f.shadow}}` +
+      `.cols{display:grid;grid-template-columns:1fr 690px;grid-template-rows:auto 1fr;column-gap:36px;padding:30px 64px 44px;flex:1 1 auto;min-height:0}` +
+      `.tt{font-size:74px;grid-column:1;grid-row:1}` +
+      `.tag{padding:6px 0 0;grid-column:2;grid-row:1}` +
+      `.caja{margin:34px 0 0;grid-column:1;grid-row:2;min-height:0}` +
+      `.items-cta{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-height:0}` +
+      `.items{display:flex;flex-direction:column;gap:${sz.gap}px;padding:26px 0 0}` +
+      `.it .tx{font-size:${sz.font}px}` +
+      `.circ{width:${sz.circle}px;height:${sz.circle}px}` +
+      `.circ svg{width:${sz.svg}px;height:${sz.svg}px}` +
+      `.insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:18px}` +
+      `.insc .ico{font-size:30px;line-height:1;flex-shrink:0}` +
+      `.insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}` +
+      `.cta{margin-top:auto;padding:0}` +
       `.cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}`;
     body =
-      `<div class="tarjeta">` +
+      `<div class="card-frame"><div class="tarjeta">` +
       `<div class="hd"><span></span><img class="lg" src="${logo}"/></div>` +
       `<div class="cols">` +
-      `<div><div class="tt">${escapeHtml(config.titulo || '')}</div><div class="caja">${caja}</div></div>` +
-      `<div><div class="tag">${escapeHtml(config.tagline || '')}</div><div class="items">${itemsHTML}</div>${ctaBtn}</div>` +
-      `</div></div>`;
+      `<div class="tt">${escapeHtml(config.titulo || '')}</div>` +
+      `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +
+      `<div class="caja">${caja}</div>` +
+      `<div class="items-cta"><div class="items">${itemsHTML}</div>${inscHTML}${ctaBtn}</div>` +
+      `</div></div></div>`;
   }
 
   return `<!DOCTYPE html>
@@ -1041,7 +1082,8 @@ async function generateTarjeta(config, assets) {
       await page.waitForTimeout(500);
 
       const outPNG = path.join(outputDir, `tarjeta_${fmt}.png`);
-      await page.locator('.tarjeta').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      const shotSelector = fmt === '16x9' ? '.card-frame' : '.tarjeta';
+      await page.locator(shotSelector).screenshot({ path: outPNG, scale: 'css', type: 'png' });
       await page.close();
       fs.unlinkSync(tmpHTML);
       console.log(`Tarjeta ${fmt}: ${outPNG}`);
