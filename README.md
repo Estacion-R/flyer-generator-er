@@ -8,7 +8,7 @@ App Shiny para generar piezas de difusión de Estación R (minimalista neobrutal
 
 ## Características
 
-- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides, sin precio) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS (solo 4:5), caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y botón CTA opcional que se adapta al fondo (amarillo/tinta negra sobre negro-azul, azul/tinta blanca sobre amarillo-blanco). El 16:9 suma además borde negro + sombra dura neobrutalist (offset, sin blur; amarilla en negro/azul/blanco, azul en amarillo para no perder contraste) y un recuadro "INSCRIPCIÓN ABIERTA" opcional (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable)
+- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides, sin precio) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS (solo 4:5), píldora "Sumate!" en la esquina superior (izquierda en 4:5, izquierda también en 16:9), caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y botón CTA opcional que se adapta al fondo (amarillo/tinta negra sobre negro-azul, azul/tinta blanca sobre amarillo-blanco; solo en 4:5). El 16:9 suma además borde negro y un recuadro "INSCRIPCIÓN ABIERTA" opcional anclado al pie de la columna de ítems (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; reemplaza al botón CTA en ese formato)
 - Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
 - Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
 - Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
@@ -87,6 +87,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Tarjeta clásica de curso como tercer tipo~~ ✅ `v2.2.0` (4:5 + 16:9, 4 fondos)
 - ~~Íconos Boxicons en ítems + botón CTA adaptativo~~ ✅ `v2.3.0`
 - ~~Tarjeta 16:9: alineación del primer ítem con la imagen, CTA integrado al layout, cantidad de ítems configurable (1-6) y sombra/recuadro de inscripción neobrutalist~~ ✅ `v2.4.0`
+- ~~Tarjeta 16:9: quitar la sombra dura neobrutalist, anclar el recuadro "INSCRIPCIÓN ABIERTA" al pie en lugar del botón CTA, y mover la píldora "Sumate!" de la esquina superior a la izquierda~~ ✅ `v2.4.1`
 - Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story)
 
 ## Convenciones de desarrollo

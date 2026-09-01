@@ -32,19 +32,19 @@ TARJETA_FONDOS <- list(
   negro    = list(bg = "#191919", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
                   circ_bg = "#FFFFFF", circ_fg = "#191919",
-                  btn_bg = "#EAFF38", btn_fg = "#191919", shadow = "#EAFF38"),
+                  btn_bg = "#EAFF38", btn_fg = "#191919"),
   azul     = list(bg = "#405BFF", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
                   logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
                   circ_bg = "#FFFFFF", circ_fg = "#191919",
-                  btn_bg = "#EAFF38", btn_fg = "#191919", shadow = "#EAFF38"),
+                  btn_bg = "#EAFF38", btn_fg = "#191919"),
   amarillo = list(bg = "#EAFF38", ink = "#191919", tag = "rgba(25,25,25,0.92)",
                   logo = "azul", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
                   circ_bg = "#405BFF", circ_fg = "#FFFFFF",
-                  btn_bg = "#405BFF", btn_fg = "#FFFFFF", shadow = "#405BFF"),
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF"),
   blanco   = list(bg = "#FFFFFF", ink = "#191919", tag = "rgba(25,25,25,0.85)",
                   logo = "negro", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
                   circ_bg = "#405BFF", circ_fg = "#FFFFFF",
-                  btn_bg = "#405BFF", btn_fg = "#FFFFFF", shadow = "#EAFF38")
+                  btn_bg = "#405BFF", btn_fg = "#FFFFFF")
 )
 
 # Tamaño de ítems (16:9) según cantidad: n=4 preserva los valores originales (v2.3.0).
@@ -61,9 +61,7 @@ tarjeta_item_sizing <- function(n) {
   TARJETA_ITEM_SIZING[[as.character(k)]]
 }
 
-# Sombra dura neobrutalist (16:9): offset sólido, sin blur, dentro del mismo lienzo 1920×1080.
-TARJETA_SHADOW <- 16
-TARJETA_BORDE  <- 6
+TARJETA_BORDE <- 6
 
 # Íconos Boxicons (set basic/regular, free) para los ítems de la tarjeta
 TARJETA_ICON_DIR  <- "www/icons"
@@ -619,11 +617,8 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
     # el borde superior de la imagen sin importar cuánto ocupe el título o el tagline.
     sz <- tarjeta_item_sizing(length(items_ok))
     layout_css <- paste0(
-      ".card-frame{width:1920px;height:1080px;position:relative;background:", f$shadow, "}",
-      ".tarjeta{width:", 1920 - TARJETA_SHADOW, "px;height:", 1080 - TARJETA_SHADOW,
-      "px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;",
-      "display:flex;flex-direction:column;border:", TARJETA_BORDE, "px solid #151515;",
-      "box-shadow:", TARJETA_SHADOW, "px ", TARJETA_SHADOW, "px 0 ", f$shadow, "}",
+      ".tarjeta{width:1920px;height:1080px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;",
+      "display:flex;flex-direction:column;border:", TARJETA_BORDE, "px solid #151515}",
       ".cols{display:grid;grid-template-columns:1fr 690px;grid-template-rows:auto 1fr;column-gap:36px;padding:30px 64px 44px;flex:1 1 auto;min-height:0}",
       ".tt{font-size:74px;grid-column:1;grid-row:1}",
       ".tag{padding:6px 0 0;grid-column:2;grid-row:1}",
@@ -633,20 +628,18 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       ".it .tx{font-size:", sz$font, "px}",
       ".circ{width:", sz$circle, "px;height:", sz$circle, "px}",
       ".circ svg{width:", sz$svg, "px;height:", sz$svg, "px}",
-      ".insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:18px}",
+      ".insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:auto}",
       ".insc .ico{font-size:30px;line-height:1;flex-shrink:0}",
-      ".insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}",
-      ".cta{margin-top:auto;padding:0}",
-      ".cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}")
+      ".insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}")
     body <- paste0(
-      '<div class="card-frame"><div class="tarjeta">',
-      '<div class="hd"><span></span><img class="lg" src="', logo, '"/></div>',
+      '<div class="tarjeta">',
+      '<div class="hd"><img class="lg" src="', logo, '"/><span></span></div>',
       '<div class="cols">',
       '<div class="tt">', he(d$titulo), '</div>',
       '<div class="tag">', he(d$tagline), '</div>',
       '<div class="caja">', caja, '</div>',
-      '<div class="items-cta"><div class="items">', items_html, '</div>', insc_html, cta_btn, '</div>',
-      '</div></div></div>')
+      '<div class="items-cta"><div class="items">', items_html, '</div>', insc_html, '</div>',
+      '</div></div>')
   }
 
   paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>',

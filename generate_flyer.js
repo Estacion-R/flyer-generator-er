@@ -86,8 +86,7 @@
  * de 1 a 6 elementos: el tamaño de ícono/texto de la lista (16:9) se recalcula según
  * la cantidad para una distribución vertical armónica. "inscripcion_texto" es opcional
  * (vacío = sin recuadro); solo se renderiza en 16:9, con ícono de megáfono y fondo
- * amarillo fijo. El 16:9 también suma un borde negro + sombra dura offset (sin blur):
- * amarilla en fondos negro/azul/blanco, azul en fondo amarillo (para no perder contraste).
+ * amarillo fijo, anclado al pie de la columna de ítems. El 16:9 también suma un borde negro.
  */
 
 const { chromium } = require('playwright');
@@ -905,10 +904,10 @@ async function generateCarousel(config, logoB64) {
 // ============================================================
 
 const TARJETA_FONDOS = {
-  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919', shadow: '#EAFF38' },
-  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919', shadow: '#EAFF38' },
-  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF', shadow: '#405BFF' },
-  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF', shadow: '#EAFF38' }
+  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
+  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919', btn_bg: '#EAFF38', btn_fg: '#191919' },
+  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' },
+  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF', btn_bg: '#405BFF', btn_fg: '#FFFFFF' }
 };
 
 // Tamaño de ítems (16:9) según cantidad: n=4 preserva los valores originales (v2.3.0).
@@ -925,8 +924,6 @@ function tarjetaItemSizing(n) {
   return TARJETA_ITEM_SIZING[k];
 }
 
-// Sombra dura neobrutalist (16:9): offset sólido, sin blur, dentro del mismo lienzo 1920×1080.
-const TARJETA_SHADOW = 16;
 const TARJETA_BORDE = 6;
 
 // Ícono Boxicons inline con fill según fondo (los SVG viven en www/icons/)
@@ -1018,8 +1015,7 @@ function buildTarjetaHTML(config, formato, assets) {
     // el borde superior de la imagen sin importar cuánto ocupe el título o el tagline.
     const sz = tarjetaItemSizing(items.length);
     layoutCSS =
-      `.card-frame{width:1920px;height:1080px;position:relative;background:${f.shadow}}` +
-      `.tarjeta{width:${1920 - TARJETA_SHADOW}px;height:${1080 - TARJETA_SHADOW}px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column;border:${TARJETA_BORDE}px solid #151515;box-shadow:${TARJETA_SHADOW}px ${TARJETA_SHADOW}px 0 ${f.shadow}}` +
+      `.tarjeta{width:1920px;height:1080px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column;border:${TARJETA_BORDE}px solid #151515}` +
       `.cols{display:grid;grid-template-columns:1fr 690px;grid-template-rows:auto 1fr;column-gap:36px;padding:30px 64px 44px;flex:1 1 auto;min-height:0}` +
       `.tt{font-size:74px;grid-column:1;grid-row:1}` +
       `.tag{padding:6px 0 0;grid-column:2;grid-row:1}` +
@@ -1029,20 +1025,18 @@ function buildTarjetaHTML(config, formato, assets) {
       `.it .tx{font-size:${sz.font}px}` +
       `.circ{width:${sz.circle}px;height:${sz.circle}px}` +
       `.circ svg{width:${sz.svg}px;height:${sz.svg}px}` +
-      `.insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:18px}` +
+      `.insc{background:#EAFF38;border:3px solid #151515;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-top:auto}` +
       `.insc .ico{font-size:30px;line-height:1;flex-shrink:0}` +
-      `.insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}` +
-      `.cta{margin-top:auto;padding:0}` +
-      `.cta-btn{font-size:30px;padding:18px 56px;border-radius:13px}`;
+      `.insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}`;
     body =
-      `<div class="card-frame"><div class="tarjeta">` +
-      `<div class="hd"><span></span><img class="lg" src="${logo}"/></div>` +
+      `<div class="tarjeta">` +
+      `<div class="hd"><img class="lg" src="${logo}"/><span></span></div>` +
       `<div class="cols">` +
       `<div class="tt">${escapeHtml(config.titulo || '')}</div>` +
       `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +
       `<div class="caja">${caja}</div>` +
-      `<div class="items-cta"><div class="items">${itemsHTML}</div>${inscHTML}${ctaBtn}</div>` +
-      `</div></div></div>`;
+      `<div class="items-cta"><div class="items">${itemsHTML}</div>${inscHTML}</div>` +
+      `</div></div>`;
   }
 
   return `<!DOCTYPE html>
@@ -1082,8 +1076,7 @@ async function generateTarjeta(config, assets) {
       await page.waitForTimeout(500);
 
       const outPNG = path.join(outputDir, `tarjeta_${fmt}.png`);
-      const shotSelector = fmt === '16x9' ? '.card-frame' : '.tarjeta';
-      await page.locator(shotSelector).screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.locator('.tarjeta').screenshot({ path: outPNG, scale: 'css', type: 'png' });
       await page.close();
       fs.unlinkSync(tmpHTML);
       console.log(`Tarjeta ${fmt}: ${outPNG}`);
