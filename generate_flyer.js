@@ -75,7 +75,6 @@
  *     {"icon":"bx-calendar-check","strong":"4 semanas","text":"(10 hs. totales)"},
  *     {"icon":"bx-certification","strong":"Certificación","text":"con examen final"}
  *   ],
- *   "cta": "Sumate",
  *   "inscripcion_texto": "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO",
  *   "solo_45": false,
  *   "imagen_curso": "/ruta/caja.png"
@@ -85,8 +84,10 @@
  * (caja central); sin ella va el isotipo de ER sobre celeste #DFF5FF. "items" acepta
  * de 1 a 6 elementos: el tamaño de ícono/texto de la lista (16:9) se recalcula según
  * la cantidad para una distribución vertical armónica. "inscripcion_texto" es opcional
- * (vacío = sin recuadro); solo se renderiza en 16:9, con ícono de megáfono y fondo
- * amarillo fijo, anclado al pie de la columna de ítems. El 16:9 también suma un borde negro.
+ * (vacío = sin recuadro); se renderiza igual en ambos formatos, con ícono de megáfono
+ * y fondo amarillo fijo, al pie de la tarjeta (16:9: anclado a la columna de ítems;
+ * 4:5: ancho completo debajo de los ítems). La etiqueta "CURSOS" aparece arriba a la
+ * derecha en ambos formatos. El 16:9 también suma un borde negro.
  */
 
 const { chromium } = require('playwright');
@@ -949,11 +950,6 @@ function buildTarjetaHTML(config, formato, assets) {
     `<div class="tx"><strong>${escapeHtml(it.strong || '')}</strong>${escapeHtml(it.text || '')}</div></div>`
   ).join('');
 
-  const ctaTxt = String(config.cta || '').trim();
-  const ctaBtn = ctaTxt
-    ? `<div class="cta"><div class="cta-btn">${escapeHtml(ctaTxt)}</div></div>`
-    : '';
-
   const inscTxt = String(config.inscripcion_texto || '').trim();
   const inscHTML = inscTxt
     ? `<div class="insc"><div class="ico">📣</div><div class="txt">${escapeHtml(inscTxt).replace(/\n/g, '<br>')}</div></div>`
@@ -968,7 +964,7 @@ function buildTarjetaHTML(config, formato, assets) {
   } else {
     caja = `<img class="iso" src="${assets.isotipo}" alt="ER"/>`;
   }
-  const badge = es45 ? `<div class="badge">CURSOS</div>` : '';
+  const badge = `<div class="badge">CURSOS</div>`;
 
   const fontsCSS =
     `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');` +
@@ -999,7 +995,9 @@ function buildTarjetaHTML(config, formato, assets) {
       `.caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}` +
       `.tag{padding:36px 58px 0}` +
       `.items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 0}` +
-      `.cta{display:flex;justify-content:center;padding:36px 58px 56px}`;
+      `.insc{background:#EAFF38;border:3px solid #151515;padding:26px 34px;display:flex;align-items:center;gap:22px;margin:36px 58px 56px}` +
+      `.insc .ico{font-size:36px;line-height:1;flex-shrink:0}` +
+      `.insc .txt{font-size:25px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}`;
     body =
       `<div class="tarjeta">` +
       `<div class="hd"><img class="lg" src="${logo}"/>${badge}</div>` +
@@ -1007,7 +1005,7 @@ function buildTarjetaHTML(config, formato, assets) {
       `<div class="caja">${caja}</div>` +
       `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +
       `<div class="items">${itemsHTML}</div>` +
-      ctaBtn +
+      inscHTML +
       `</div>`;
   } else {
     // 16:9 — grid con filas explícitas: título/tagline comparten fila 1, imagen/ítems
@@ -1030,7 +1028,7 @@ function buildTarjetaHTML(config, formato, assets) {
       `.insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}`;
     body =
       `<div class="tarjeta">` +
-      `<div class="hd"><img class="lg" src="${logo}"/><span></span></div>` +
+      `<div class="hd"><img class="lg" src="${logo}"/>${badge}</div>` +
       `<div class="cols">` +
       `<div class="tt">${escapeHtml(config.titulo || '')}</div>` +
       `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +

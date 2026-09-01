@@ -565,8 +565,6 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
   logo <- TARJETA_LOGOS[[f$logo]]
   items_ok <- Filter(function(it) nchar(trimws(paste0(it$strong, it$text))) > 0, d$items)
   items_html <- paste(vapply(d$items, tarjeta_item_html, character(1), f$circ_fg), collapse = "")
-  cta_btn <- if (nchar(trimws(d$cta %||% "")) > 0)
-    paste0('<div class="cta"><div class="cta-btn">', he(d$cta), '</div></div>') else ""
   insc_html <- if (nchar(trimws(d$inscripcion_texto %||% "")) > 0)
     paste0('<div class="insc"><div class="ico">\U0001F4E3</div><div class="txt">',
       gsub("\n", "<br>", he(d$inscripcion_texto)), '</div></div>') else ""
@@ -574,7 +572,7 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
     paste0('<img src="', img_b64, '" alt=""/>')
   else
     paste0('<img class="iso" src="', ISOTIPO_B64, '" alt="ER"/>')
-  badge <- if (identical(formato, "4x5")) '<div class="badge">CURSOS</div>' else ""
+  badge <- '<div class="badge">CURSOS</div>'
   es45 <- identical(formato, "4x5")
 
   base_css <- paste0(
@@ -601,7 +599,9 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       ".caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}",
       ".tag{padding:36px 58px 0}",
       ".items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 0}",
-      ".cta{display:flex;justify-content:center;padding:36px 58px 56px}")
+      ".insc{background:#EAFF38;border:3px solid #151515;padding:26px 34px;display:flex;align-items:center;gap:22px;margin:36px 58px 56px}",
+      ".insc .ico{font-size:36px;line-height:1;flex-shrink:0}",
+      ".insc .txt{font-size:25px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}")
     body <- paste0(
       '<div class="tarjeta">',
       '<div class="hd"><img class="lg" src="', logo, '"/>', badge, '</div>',
@@ -609,7 +609,7 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       '<div class="caja">', caja, '</div>',
       '<div class="tag">', he(d$tagline), '</div>',
       '<div class="items">', items_html, '</div>',
-      cta_btn,
+      insc_html,
       '</div>')
   } else {
     # 16:9 — grid con filas explícitas: título/tagline comparten fila 1, imagen/ítems
@@ -633,7 +633,7 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
       ".insc .txt{font-size:21px;font-weight:700;color:#151515;font-family:'Ubuntu',sans-serif;text-transform:uppercase;letter-spacing:0.03em;line-height:1.3;white-space:pre-wrap}")
     body <- paste0(
       '<div class="tarjeta">',
-      '<div class="hd"><img class="lg" src="', logo, '"/><span></span></div>',
+      '<div class="hd"><img class="lg" src="', logo, '"/>', badge, '</div>',
       '<div class="cols">',
       '<div class="tt">', he(d$titulo), '</div>',
       '<div class="tag">', he(d$tagline), '</div>',
@@ -864,9 +864,7 @@ ui <- page_navbar(
                 placeholder = "Sin imagen: isotipo de ER"),
               checkboxInput("ig_t_solo_45",
                 "Solo generar la de 4:5 (feed)", value = FALSE),
-              tags$span("Texto del botón CTA (vacío = sin botón)", class = "section-label"),
-              textInput("ig_t_cta", NULL, value = "Sumate"),
-              tags$span("Recuadro de inscripción (vacío = sin recuadro; solo 16:9)", class = "section-label"),
+              tags$span("Recuadro de inscripción (vacío = sin recuadro)", class = "section-label"),
               textAreaInput("ig_t_inscripcion", NULL, rows = 2,
                 value = "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO")
             ),
@@ -1120,7 +1118,6 @@ server <- function(input, output, session) {
       titulo  = input$ig_t_titulo %||% "",
       tagline = input$ig_t_tagline %||% "",
       items   = items,
-      cta     = input$ig_t_cta %||% "",
       inscripcion_texto = input$ig_t_inscripcion %||% ""
     )
   })
@@ -1219,7 +1216,6 @@ server <- function(input, output, session) {
           titulo       = d$titulo,
           tagline      = d$tagline,
           items        = d$items,
-          cta          = d$cta,
           inscripcion_texto = d$inscripcion_texto,
           solo_45      = isTRUE(input$ig_t_solo_45),
           imagen_curso = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL
