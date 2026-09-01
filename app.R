@@ -24,6 +24,40 @@ LOGO_PATH         <- "www/logo_er.png"
 NODE_BIN          <- "/home/linuxbrew/.linuxbrew/bin/node"
 LOGO_B64          <- paste0("data:image/png;base64,", base64enc::base64encode(LOGO_PATH))
 
+# ---- Tarjeta clásica de curso (4:5 + 16:9, 4 fondos) ----
+TARJETA_FONDO_OPTS <- c("Negro" = "negro", "Azul" = "azul",
+                        "Amarillo ER" = "amarillo", "Blanco" = "blanco")
+
+TARJETA_FONDOS <- list(
+  negro    = list(bg = "#191919", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
+                  logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
+                  circ_bg = "#FFFFFF", circ_fg = "#191919"),
+  azul     = list(bg = "#405BFF", ink = "#FFFFFF", tag = "rgba(255,255,255,0.9)",
+                  logo = "blanco", badge_bg = "#FFFFFF", badge_fg = "#191919",
+                  circ_bg = "#FFFFFF", circ_fg = "#191919"),
+  amarillo = list(bg = "#EAFF38", ink = "#191919", tag = "rgba(25,25,25,0.92)",
+                  logo = "azul", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
+                  circ_bg = "#405BFF", circ_fg = "#FFFFFF"),
+  blanco   = list(bg = "#FFFFFF", ink = "#191919", tag = "rgba(25,25,25,0.85)",
+                  logo = "negro", badge_bg = "#405BFF", badge_fg = "#FFFFFF",
+                  circ_bg = "#405BFF", circ_fg = "#FFFFFF")
+)
+
+TARJETA_LOGOS <- list(
+  blanco = paste0("data:image/png;base64,", base64enc::base64encode("www/logo_er_blanco.png")),
+  azul   = paste0("data:image/png;base64,", base64enc::base64encode("www/logo_er_azul.png")),
+  negro  = paste0("data:image/png;base64,", base64enc::base64encode("www/logo_er_negro.png"))
+)
+
+ISOTIPO_B64 <- paste0("data:image/svg+xml;base64,",
+  base64enc::base64encode("www/isotipo_estacion_r.svg"))
+
+TARJETA_FONTS <- paste0(
+  "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');",
+  "@font-face{font-family:'Array';src:url('data:font/woff2;base64,",
+  base64enc::base64encode("www/fonts/Array-Bold.woff2"),
+  "') format('woff2');font-weight:700;font-style:normal;font-display:block;}")
+
 # ---- SVG icons ----
 SVG_ICON <- function(path_d, extra_path = NULL) {
   paths <- paste0('<path d="', path_d, '"/>')
@@ -471,6 +505,88 @@ course_slide3_html <- function(cta, logo_b64 = LOGO_B64) {
 </div></body></html>')
 }
 
+# ---- HTML tarjeta clásica de curso (preview iframes) ----
+tarjeta_iframe <- function(html_str, w, h, wrap_w) {
+  scale <- round(wrap_w / w, 4)
+  div(style = paste0("width:", wrap_w, "px; height:", ceiling(h * scale),
+    "px; overflow:hidden; flex-shrink:0; border:2px solid #C2C2C4;"),
+    tags$iframe(srcdoc = html_str, scrolling = "no",
+      style = paste0("width:", w, "px; height:", h, "px; border:none; display:block;",
+        "transform:scale(", scale, "); transform-origin:top left;")))
+}
+
+tarjeta_item_html <- function(it) {
+  if (nchar(trimws(paste0(it$strong, it$text))) == 0) return("")
+  paste0(
+    '<div class="it"><div class="circ">', he(it$emoji), '</div>',
+    '<div class="tx"><strong>', he(it$strong), '</strong>', he(it$text), '</div></div>')
+}
+
+tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
+  formato <- match.arg(formato)
+  f <- TARJETA_FONDOS[[d$fondo %||% "negro"]]
+  logo <- TARJETA_LOGOS[[f$logo]]
+  items_html <- paste(vapply(d$items, tarjeta_item_html, character(1)), collapse = "")
+  caja <- if (!is.null(img_b64))
+    paste0('<img src="', img_b64, '" alt=""/>')
+  else
+    paste0('<img class="iso" src="', ISOTIPO_B64, '" alt="ER"/>')
+  badge <- if (identical(formato, "4x5")) '<div class="badge">CURSOS</div>' else ""
+  es45 <- identical(formato, "4x5")
+
+  base_css <- paste0(
+    "*{margin:0;padding:0;box-sizing:border-box}",
+    ".hd{display:flex;justify-content:space-between;align-items:center;padding:", if (es45) "56px" else "52px 64px 0", "}",
+    ".hd .lg{height:", if (es45) "58px" else "56px", ";display:block}",
+    ".badge{background:", f$badge_bg, ";color:", f$badge_fg, ";font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 26px}",
+    ".tt{font-family:'Array',sans-serif;font-weight:700;line-height:1.05;color:", f$ink, ";white-space:pre-wrap}",
+    ".caja{border:5px solid #191919;background:#DFF5FF;overflow:hidden;display:flex;align-items:center;justify-content:center}",
+    ".caja img{width:100%;height:100%;object-fit:cover;display:block}",
+    ".caja img.iso{width:280px;height:auto;object-fit:contain}",
+    ".tag{font-size:31px;line-height:1.45;color:", f$tag, ";white-space:pre-wrap}",
+    ".it{display:flex;gap:18px;align-items:flex-start}",
+    ".circ{width:54px;height:54px;border-radius:50%;background:", f$circ_bg, ";color:", f$circ_fg, ";display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;font-family:'Noto Color Emoji','Segoe UI Emoji',sans-serif}",
+    ".it .tx{font-size:27px;line-height:1.32;color:", f$ink, "}",
+    ".it .tx strong{display:block;font-weight:700}")
+
+  if (es45) {
+    layout_css <- paste0(
+      ".tarjeta{width:1080px;height:1350px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column}",
+      ".tt{font-size:70px;padding:52px 58px 0}",
+      ".caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}",
+      ".tag{padding:36px 58px 0}",
+      ".items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 56px}")
+    body <- paste0(
+      '<div class="tarjeta">',
+      '<div class="hd"><img class="lg" src="', logo, '"/>', badge, '</div>',
+      '<div class="tt">', he(d$titulo), '</div>',
+      '<div class="caja">', caja, '</div>',
+      '<div class="tag">', he(d$tagline), '</div>',
+      '<div class="items">', items_html, '</div>',
+      '</div>')
+  } else {
+    layout_css <- paste0(
+      ".tarjeta{width:1920px;height:1080px;background:", f$bg, ";font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative}",
+      ".cols{display:grid;grid-template-columns:1fr 690px;gap:36px;padding:30px 64px 0}",
+      ".cols>div:first-child{display:flex;flex-direction:column}",
+      ".tt{font-size:74px}",
+      ".caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}",
+      ".tag{padding:6px 0 0}",
+      ".items{display:flex;flex-direction:column;gap:24px;padding:30px 0 0}")
+    body <- paste0(
+      '<div class="tarjeta">',
+      '<div class="hd"><span></span><img class="lg" src="', logo, '"/></div>',
+      '<div class="cols">',
+      '<div><div class="tt">', he(d$titulo), '</div><div class="caja">', caja, '</div></div>',
+      '<div><div class="tag">', he(d$tagline), '</div><div class="items">', items_html, '</div></div>',
+      '</div></div>')
+  }
+
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>',
+    TARJETA_FONTS, base_css, layout_css,
+    '</style></head><body>', body, '</body></html>')
+}
+
 # ---- build_flyer_tag para LinkedIn/X ----
 build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL, dims = NULL,
                              badge, titulo, subtitulo, bullets_txt, col1, col2, col3, footer_icon, footer_texto) {
@@ -574,7 +690,8 @@ ui <- page_navbar(
 
         tags$span("Tipo de carrusel", class = "section-label"),
         selectInput("ig_tipo_carrusel", NULL,
-          choices = c("📦 Paquete de R" = "paquete", "🎓 Anuncio de curso" = "curso"),
+          choices = c("📦 Paquete de R" = "paquete", "🎓 Anuncio de curso" = "curso",
+                      "🎴 Tarjeta clásica" = "tarjeta"),
           selected = "paquete"),
 
         conditionalPanel(
@@ -664,6 +781,52 @@ ui <- page_navbar(
           )
         ),
 
+        conditionalPanel(
+          condition = "input.ig_tipo_carrusel == 'tarjeta'",
+          accordion(
+            open = c("tbase"),
+            multiple = TRUE,
+
+            accordion_panel("🎴 Tarjeta", value = "tbase",
+              tags$span("Fondo", class = "section-label"),
+              selectInput("ig_t_fondo", NULL,
+                choices = TARJETA_FONDO_OPTS, selected = "negro"),
+              tags$span("Título del curso", class = "section-label"),
+              textAreaInput("ig_t_titulo", NULL, rows = 2,
+                value = "R para el tratamiento de Hojas de Cálculo"),
+              tags$span("Tagline", class = "section-label"),
+              textAreaInput("ig_t_tagline", NULL, rows = 3,
+                value = "El remedio para tus datos. Aprendé a trabajar con R y Excel, Googlesheets o LibreOffice sin perder la calma (ni información)."),
+              tags$span("Imagen (opcional — ocupa la caja central)", class = "section-label"),
+              fileInput("ig_t_img", NULL,
+                accept = c("image/png", "image/jpeg"),
+                buttonLabel = "Elegir imagen...",
+                placeholder = "Sin imagen: isotipo de ER"),
+              checkboxInput("ig_t_solo_45",
+                "Solo generar la de 4:5 (feed)", value = FALSE)
+            ),
+
+            accordion_panel("Ítems destacados (4)", value = "titems",
+              tags$span("Ítem 1 — emoji / negrita / texto", class = "section-label"),
+              textInput("ig_t_i1_emoji", NULL, value = "🖥️"),
+              textInput("ig_t_i1_strong", NULL, value = "Modalidad:"),
+              textInput("ig_t_i1_text", NULL, value = "Sincrónica/Asincrónica"),
+              tags$span("Ítem 2", class = "section-label"),
+              textInput("ig_t_i2_emoji", NULL, value = "💬"),
+              textInput("ig_t_i2_strong", NULL, value = "Foro de intercambio"),
+              textInput("ig_t_i2_text", NULL, value = "y seguimiento 24/7"),
+              tags$span("Ítem 3", class = "section-label"),
+              textInput("ig_t_i3_emoji", NULL, value = "📅"),
+              textInput("ig_t_i3_strong", NULL, value = "4 semanas"),
+              textInput("ig_t_i3_text", NULL, value = "(10 hs. totales)"),
+              tags$span("Ítem 4", class = "section-label"),
+              textInput("ig_t_i4_emoji", NULL, value = "🎓"),
+              textInput("ig_t_i4_strong", NULL, value = "Certificación"),
+              textInput("ig_t_i4_text", NULL, value = "con examen final")
+            )
+          )
+        ),
+
         downloadButton("descargar_zip",
           "⬇ Descargar ZIP",
           class = "btn-zip",
@@ -675,23 +838,46 @@ ui <- page_navbar(
         style = "padding: 1rem; overflow: auto;",
         div(
           style = "display: grid; grid-template-columns: 540px 540px; gap: 1.25rem;",
-          div(
-            div(class = "slide-label", "Slide 1 — Portada"),
-            uiOutput("preview_s1")
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel != 'tarjeta'",
+            div(
+              div(class = "slide-label", "Slide 1 — Portada"),
+              uiOutput("preview_s1")
+            )
           ),
-          div(
-            uiOutput("label_s2"),
-            uiOutput("preview_s2")
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel != 'tarjeta'",
+            div(
+              uiOutput("label_s2"),
+              uiOutput("preview_s2")
+            )
           ),
-          div(
-            uiOutput("label_s3"),
-            uiOutput("preview_s3")
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel != 'tarjeta'",
+            div(
+              uiOutput("label_s3"),
+              uiOutput("preview_s3")
+            )
           ),
           conditionalPanel(
             condition = "input.ig_tipo_carrusel == 'paquete'",
             div(
               div(class = "slide-label", "Slide 4 — Cierre"),
               uiOutput("preview_s4")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel == 'tarjeta'",
+            div(
+              div(class = "slide-label", "Feed — 4:5 (1080×1350)"),
+              uiOutput("preview_t45")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel == 'tarjeta'",
+            div(
+              div(class = "slide-label", "Horizontal — 16:9 (1920×1080)"),
+              uiOutput("preview_t169")
             )
           )
         )
@@ -833,6 +1019,40 @@ server <- function(input, output, session) {
     paste0("data:", mime, ";base64,", base64enc::base64encode(input$ig_c_img$datapath))
   })
 
+  ig_tarjeta_data <- reactive({
+    items <- lapply(1:4, function(i) {
+      list(
+        emoji  = input[[paste0("ig_t_i", i, "_emoji")]] %||% "",
+        strong = input[[paste0("ig_t_i", i, "_strong")]] %||% "",
+        text   = input[[paste0("ig_t_i", i, "_text")]] %||% ""
+      )
+    })
+    list(
+      fondo   = input$ig_t_fondo %||% "negro",
+      titulo  = input$ig_t_titulo %||% "",
+      tagline = input$ig_t_tagline %||% "",
+      items   = items
+    )
+  })
+
+  ig_t_img_b64 <- reactive({
+    req(input$ig_t_img)
+    ext <- tools::file_ext(input$ig_t_img$name)
+    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
+    paste0("data:", mime, ";base64,", base64enc::base64encode(input$ig_t_img$datapath))
+  })
+
+  output$preview_t45 <- renderUI({
+    d <- ig_tarjeta_data()
+    img_b64 <- if (!is.null(input$ig_t_img)) ig_t_img_b64() else NULL
+    tarjeta_iframe(tarjeta_html(d, "4x5", img_b64), 1080, 1350, 540)
+  })
+  output$preview_t169 <- renderUI({
+    d <- ig_tarjeta_data()
+    img_b64 <- if (!is.null(input$ig_t_img)) ig_t_img_b64() else NULL
+    tarjeta_iframe(tarjeta_html(d, "16x9", img_b64), 1920, 1080, 540)
+  })
+
   output$preview_s1 <- renderUI({
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
@@ -888,13 +1108,31 @@ server <- function(input, output, session) {
 
   # -- Instagram: descarga ZIP --
   output$descargar_zip <- downloadHandler(
-    filename = function() paste0("carrusel_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    filename = function() {
+      pref <- switch(ig_tipo(),
+        tarjeta = "tarjeta_er_",
+        curso   = "carrusel_curso_er_",
+        "carrusel_er_")
+      paste0(pref, format(Sys.Date(), "%Y%m%d"), ".zip")
+    },
     content = function(file) {
       slide_dir <- tempfile(pattern = "carousel_")
       dir.create(slide_dir)
       on.exit(unlink(slide_dir, recursive = TRUE), add = TRUE)
 
-      if (identical(ig_tipo(), "curso")) {
+      if (identical(ig_tipo(), "tarjeta")) {
+        d <- ig_tarjeta_data()
+        config <- list(
+          template     = "tarjeta_curso",
+          output_dir   = slide_dir,
+          fondo        = d$fondo,
+          titulo       = d$titulo,
+          tagline      = d$tagline,
+          items        = d$items,
+          solo_45      = isTRUE(input$ig_t_solo_45),
+          imagen_curso = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL
+        )
+      } else if (identical(ig_tipo(), "curso")) {
         d <- ig_curso_data()
         config <- list(
           template     = "carousel_curso",

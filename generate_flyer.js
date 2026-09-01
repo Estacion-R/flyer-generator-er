@@ -61,6 +61,26 @@
  * }
  *
  * "imagen_curso" es opcional: banda superior (~40%) del slide 1; sin ella el slide se adapta.
+ *
+ * config.json (template "tarjeta_curso" — tarjeta clásica, 4:5 1080×1350 + 16:9 1920×1080):
+ * {
+ *   "template": "tarjeta_curso",
+ *   "output_dir": "/tmp/tarjeta_xxx/",
+ *   "fondo": "negro|azul|amarillo|blanco",
+ *   "titulo": "R para el tratamiento de Hojas de Cálculo",
+ *   "tagline": "El remedio para tus datos...",
+ *   "items": [
+ *     {"emoji":"🖥️","strong":"Modalidad:","text":"Sincrónica/Asincrónica"},
+ *     {"emoji":"💬","strong":"Foro de intercambio","text":"y seguimiento 24/7"},
+ *     {"emoji":"📅","strong":"4 semanas","text":"(10 hs. totales)"},
+ *     {"emoji":"🎓","strong":"Certificación","text":"con examen final"}
+ *   ],
+ *   "solo_45": false,
+ *   "imagen_curso": "/ruta/caja.png"
+ * }
+ *
+ * Genera tarjeta_4x5.png (+ tarjeta_16x9.png si !solo_45). "imagen_curso" opcional
+ * (caja central); sin ella va el isotipo de ER sobre celeste #DFF5FF.
  */
 
 const { chromium } = require('playwright');
@@ -873,6 +893,142 @@ async function generateCarousel(config, logoB64) {
   }
 }
 
+// ============================================================
+// ---- Tarjeta clásica de curso (4:5 1080×1350 + 16:9 1920×1080) ----
+// ============================================================
+
+const TARJETA_FONDOS = {
+  negro:    { bg: '#191919', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919' },
+  azul:     { bg: '#405BFF', ink: '#FFFFFF', tag: 'rgba(255,255,255,0.9)',  logo: 'blanco', badge_bg: '#FFFFFF', badge_fg: '#191919', circ_bg: '#FFFFFF', circ_fg: '#191919' },
+  amarillo: { bg: '#EAFF38', ink: '#191919', tag: 'rgba(25,25,25,0.92)',   logo: 'azul',   badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF' },
+  blanco:   { bg: '#FFFFFF', ink: '#191919', tag: 'rgba(25,25,25,0.85)',   logo: 'negro',  badge_bg: '#405BFF', badge_fg: '#FFFFFF', circ_bg: '#405BFF', circ_fg: '#FFFFFF' }
+};
+
+function buildTarjetaHTML(config, formato, assets) {
+  const f = TARJETA_FONDOS[config.fondo] || TARJETA_FONDOS.negro;
+  const logo = (assets.logos && assets.logos[f.logo]) || '';
+  const es45 = formato === '4x5';
+
+  const items = (config.items || []).filter(it => {
+    if (!it) return false;
+    return (String(it.strong || '') + String(it.text || '')).trim().length > 0;
+  });
+  const itemsHTML = items.map(it =>
+    `<div class="it"><div class="circ">${escapeHtml(it.emoji || '')}</div>` +
+    `<div class="tx"><strong>${escapeHtml(it.strong || '')}</strong>${escapeHtml(it.text || '')}</div></div>`
+  ).join('');
+
+  let caja;
+  if (typeof config.imagen_curso === 'string' && config.imagen_curso && fs.existsSync(config.imagen_curso)) {
+    const imgData = fs.readFileSync(config.imagen_curso);
+    const ext = path.extname(config.imagen_curso).slice(1).toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    caja = `<img src="data:${mime};base64,${imgData.toString('base64')}" alt=""/>`;
+  } else {
+    caja = `<img class="iso" src="${assets.isotipo}" alt="ER"/>`;
+  }
+  const badge = es45 ? `<div class="badge">CURSOS</div>` : '';
+
+  const fontsCSS =
+    `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');` +
+    `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  const baseCSS =
+    `*{margin:0;padding:0;box-sizing:border-box}` +
+    `.hd{display:flex;justify-content:space-between;align-items:center;padding:${es45 ? '56px' : '52px 64px 0'}}` +
+    `.hd .lg{height:${es45 ? '58px' : '56px'};display:block}` +
+    `.badge{background:${f.badge_bg};color:${f.badge_fg};font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 26px}` +
+    `.tt{font-family:'Array',sans-serif;font-weight:700;line-height:1.05;color:${f.ink};white-space:pre-wrap}` +
+    `.caja{border:5px solid #191919;background:#DFF5FF;overflow:hidden;display:flex;align-items:center;justify-content:center}` +
+    `.caja img{width:100%;height:100%;object-fit:cover;display:block}` +
+    `.caja img.iso{width:280px;height:auto;object-fit:contain}` +
+    `.tag{font-size:31px;line-height:1.45;color:${f.tag};white-space:pre-wrap}` +
+    `.it{display:flex;gap:18px;align-items:flex-start}` +
+    `.circ{width:54px;height:54px;border-radius:50%;background:${f.circ_bg};color:${f.circ_fg};display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0;font-family:'Noto Color Emoji','Segoe UI Emoji',sans-serif}` +
+    `.it .tx{font-size:27px;line-height:1.32;color:${f.ink}}` +
+    `.it .tx strong{display:block;font-weight:700}`;
+
+  let layoutCSS, body;
+  if (es45) {
+    layoutCSS =
+      `.tarjeta{width:1080px;height:1350px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column}` +
+      `.tt{font-size:70px;padding:52px 58px 0}` +
+      `.caja{margin:44px 58px 0;height:500px;flex:1 1 auto;min-height:360px}` +
+      `.tag{padding:36px 58px 0}` +
+      `.items{display:grid;grid-template-columns:1fr 1fr;gap:26px 24px;padding:42px 58px 56px}`;
+    body =
+      `<div class="tarjeta">` +
+      `<div class="hd"><img class="lg" src="${logo}"/>${badge}</div>` +
+      `<div class="tt">${escapeHtml(config.titulo || '')}</div>` +
+      `<div class="caja">${caja}</div>` +
+      `<div class="tag">${escapeHtml(config.tagline || '')}</div>` +
+      `<div class="items">${itemsHTML}</div>` +
+      `</div>`;
+  } else {
+    layoutCSS =
+      `.tarjeta{width:1920px;height:1080px;background:${f.bg};font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative}` +
+      `.cols{display:grid;grid-template-columns:1fr 690px;gap:36px;padding:30px 64px 0}` +
+      `.cols>div:first-child{display:flex;flex-direction:column}` +
+      `.tt{font-size:74px}` +
+      `.caja{margin:34px 0 0;height:640px;flex:1 1 auto;min-height:520px}` +
+      `.tag{padding:6px 0 0}` +
+      `.items{display:flex;flex-direction:column;gap:24px;padding:30px 0 0}`;
+    body =
+      `<div class="tarjeta">` +
+      `<div class="hd"><span></span><img class="lg" src="${logo}"/></div>` +
+      `<div class="cols">` +
+      `<div><div class="tt">${escapeHtml(config.titulo || '')}</div><div class="caja">${caja}</div></div>` +
+      `<div><div class="tag">${escapeHtml(config.tagline || '')}</div><div class="items">${itemsHTML}</div></div>` +
+      `</div></div>`;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${fontsCSS}${baseCSS}${layoutCSS}
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+async function generateTarjeta(config, assets) {
+  const outputDir = config.output_dir;
+  if (!outputDir) throw new Error('output_dir requerido para template tarjeta_curso');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const formatos = config.solo_45 ? ['4x5'] : ['4x5', '16x9'];
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+
+  try {
+    for (const fmt of formatos) {
+      const html = buildTarjetaHTML(config, fmt, assets);
+      const tmpHTML = path.join(require('os').tmpdir(), `tarjeta_${fmt}_${Date.now()}.html`);
+      fs.writeFileSync(tmpHTML, html);
+
+      const page = await browser.newPage();
+      await page.setViewportSize(fmt === '4x5' ? { width: 1200, height: 1450 } : { width: 2000, height: 1200 });
+      await page.goto('file://' + tmpHTML, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+
+      const outPNG = path.join(outputDir, `tarjeta_${fmt}.png`);
+      await page.locator('.tarjeta').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.close();
+      fs.unlinkSync(tmpHTML);
+      console.log(`Tarjeta ${fmt}: ${outPNG}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // ---- Main ----
 async function main() {
   const args = process.argv.slice(2);
@@ -896,6 +1052,27 @@ async function main() {
   let logoB64 = null;
   if (fs.existsSync(logoPath)) {
     logoB64 = 'data:image/png;base64,' + fs.readFileSync(logoPath).toString('base64');
+  }
+
+  // Assets tarjeta clásica: logos por tinta, isotipo, fuente Array
+  const tarjAssets = { logos: {} };
+  for (const v of ['negro', 'blanco', 'azul']) {
+    const p = path.join(scriptDir, 'www', `logo_er_${v}.png`);
+    if (fs.existsSync(p)) tarjAssets.logos[v] = 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
+  }
+  const isoPath = path.join(scriptDir, 'www', 'isotipo_estacion_r.svg');
+  if (fs.existsSync(isoPath)) {
+    tarjAssets.isotipo = 'data:image/svg+xml;base64,' + fs.readFileSync(isoPath).toString('base64');
+  }
+  const arrayPath = path.join(scriptDir, 'www', 'fonts', 'Array-Bold.woff2');
+  if (fs.existsSync(arrayPath)) {
+    tarjAssets.arrayFont = fs.readFileSync(arrayPath).toString('base64');
+  }
+
+  // Tarjeta clásica (4:5 + 16:9): genera PNGs en output_dir; no usa --output
+  if (config.template === 'tarjeta_curso') {
+    await generateTarjeta(config, tarjAssets);
+    return;
   }
 
   // Carousel (paquete 4 slides / curso 3 slides): genera PNGs en output_dir; no usa --output
