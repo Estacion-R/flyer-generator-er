@@ -47,20 +47,34 @@
  *   "slide4_tagline": "Seguinos para más tips de R"
  * }
  *
- * config.json (template "carousel_curso" — anuncio de curso, 3 slides 1080×1080, ZIP desde R):
+ * config.json (template "carousel_curso" — anuncio de curso, 1080×1080, ZIP desde R):
+ * Desde v2.8.0 los slides no son fijos: "plan" es un array con el tipo y
+ * orden de cada slide, armado en la UI con un picker drag&drop (sticker).
+ * Tipos válidos (cualquier combinación/orden, ver CURSO_SLIDE_LABELS):
+ *   "portada"  — nombre, badge, tagline, fecha_inicio, imagen_curso (opcional)
+ *   "aprender" — bullets en "s2_bullets"
+ *   "llevas"   — bullets en "llevas_bullets" (slide "¿Qué te llevás?")
+ *   "cta"      — texto en "cta"
+ *   "contacto" — "s4_instr", "s4_palabra", "s4_refuerzo"
  * {
  *   "template": "carousel_curso",
  *   "output_dir": "/tmp/carousel_xxx/",
+ *   "plan": ["portada", "aprender", "llevas", "cta", "contacto"],
  *   "nombre": "Introducción a R para Ciencias Sociales",
  *   "badge": "Curso virtual",
  *   "tagline": "Aprendé a analizar datos con R desde cero",
  *   "fecha_inicio": "22 de septiembre",
  *   "imagen_curso": "/ruta/portada.png",
  *   "s2_bullets": ["Introducción a R y RStudio", "Manejo de datos con tidyverse"],
- *   "cta": "INSCRIPCIÓN ABIERTA"
+ *   "llevas_bullets": ["Certificado de participación", "Acceso a la comunidad"],
+ *   "cta": "INSCRIPCIÓN ABIERTA",
+ *   "s4_instr": "Escribinos", "s4_palabra": "INFO", "s4_refuerzo": "y te contamos todo",
+ *   "redes": ["Instagram", "LinkedIn"]
  * }
  *
- * "imagen_curso" es opcional: banda superior (~40%) del slide 1; sin ella el slide se adapta.
+ * "imagen_curso" es opcional: banda superior (~40%) del slide "portada"; sin ella el slide se adapta.
+ * "redes" (opcional, claves de SOCIAL_ICONS: Instagram/X / Twitter/LinkedIn/Bluesky/Mastodon)
+ * arma las píldoras con ícono de marca; solo se muestran en el último slide del plan.
  *
  * config.json (template "tarjeta_curso" — tarjeta clásica, 4:5 1080×1350 + 16:9 1920×1080):
  * {
