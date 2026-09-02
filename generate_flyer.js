@@ -1364,25 +1364,11 @@ async function generateViz(config, assets) {
   }
 }
 
-// ---- Main ----
-async function main() {
-  const args = process.argv.slice(2);
-  let configFile = null;
-  let outputFile = 'flyer.png';
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--config' && args[i + 1]) configFile = args[i + 1];
-    if (args[i] === '--output' && args[i + 1]) outputFile = args[i + 1];
-  }
-
-  if (!configFile) {
-    console.error('Uso: node generate_flyer.js --config config.json [--output flyer.png]');
-    process.exit(1);
-  }
-
-  const config = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
-
-  const scriptDir = __dirname;
+// Carga los assets compartidos (logo, logos por tinta, íconos, isotipo, fuente
+// Array) desde www/, relativos a scriptDir. Extraída de main() para que
+// worker.js pueda cargarlos una sola vez al arrancar (ver Etapa 3 del plan de
+// mejoras: preview en vivo unificado con este mismo módulo).
+function loadAssets(scriptDir) {
   const logoPath = path.join(scriptDir, 'www', 'logo_er.png');
   let logoB64 = null;
   if (fs.existsSync(logoPath)) {
@@ -1411,6 +1397,30 @@ async function main() {
   if (fs.existsSync(arrayPath)) {
     tarjAssets.arrayFont = fs.readFileSync(arrayPath).toString('base64');
   }
+
+  return { logoB64, tarjAssets };
+}
+
+// ---- Main ----
+async function main() {
+  const args = process.argv.slice(2);
+  let configFile = null;
+  let outputFile = 'flyer.png';
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--config' && args[i + 1]) configFile = args[i + 1];
+    if (args[i] === '--output' && args[i + 1]) outputFile = args[i + 1];
+  }
+
+  if (!configFile) {
+    console.error('Uso: node generate_flyer.js --config config.json [--output flyer.png]');
+    process.exit(1);
+  }
+
+  const config = JSON.parse(fs.readFileSync(configFile, 'utf-8'));
+
+  const scriptDir = __dirname;
+  const { logoB64, tarjAssets } = loadAssets(scriptDir);
 
   // Tarjeta clásica (4:5 + 16:9): genera PNGs en output_dir; no usa --output
   if (config.template === 'tarjeta_curso') {
@@ -1460,7 +1470,26 @@ async function main() {
   console.log(`PNG generado: ${outputFile}`);
 }
 
-main().catch(err => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Exportado para worker.js (preview en vivo, Etapa 3): los builders puros de
+// HTML (sin Playwright) más loadAssets(), para no reimplementarlos en R.
+module.exports = {
+  loadAssets,
+  buildHTML,
+  buildTipHTML,
+  buildVizHTML,
+  buildTarjetaHTML,
+  buildSlide1,
+  buildSlide2,
+  buildSlide3,
+  buildSlide4,
+  buildCourseSlideByType
+};
+
+// Solo corre el CLI cuando este archivo se ejecuta directamente (node
+// generate_flyer.js ...), no cuando worker.js lo carga con require().
+if (require.main === module) {
+  main().catch(err => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

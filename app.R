@@ -27,6 +27,18 @@ ui <- build_ui()
 # ============================================================
 server <- function(input, output, session) {
 
+  # -- Worker de preview en vivo (Etapa 3, ver R/10_flyer_worker.R) --
+  # Un proceso node por sesión; si no arranca, flyer_worker_ensure() sigue
+  # devolviendo NULL y el llamador cae al último HTML bueno en cache.
+  flyer_worker <- flyer_worker_start()
+  session$onSessionEnded(function() {
+    if (!is.null(flyer_worker)) try(flyer_worker$proc$kill(), silent = TRUE)
+  })
+  flyer_worker_ensure <- function() {
+    if (!flyer_worker_alive(flyer_worker)) flyer_worker <<- flyer_worker_start()
+    flyer_worker
+  }
+
   # -- Instagram: reactivos --
   ig_tipo <- reactive(input$ig_tipo_carrusel %||% "paquete")
 
@@ -242,17 +254,39 @@ server <- function(input, output, session) {
     )
   })
 
-  viz_img_b64 <- reactive({
-    req(input$viz_img)
-    ext <- tools::file_ext(input$viz_img$name)
-    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
-    paste0("data:", mime, ";base64,", base64enc::base64encode(input$viz_img$datapath))
-  })
+  # Preview en vivo (Etapa 3): el HTML sale del worker (mismo builder JS que
+  # generate_flyer.js usa para el ZIP descargado, ver R/10_flyer_worker.R),
+  # no de un builder R espejado. debounce() evita pegarle al worker en cada
+  # tecla; viz_last_html cachea el último HTML bueno por formato para que,
+  # si el worker no respondió a tiempo, el preview no parpadee a blanco.
+  viz_debounced <- debounce(reactive({
+    list(d = viz_data(), imagen = if (!is.null(input$viz_img)) input$viz_img$datapath else NULL)
+  }), 400)
+
+  viz_last_html <- new.env(parent = emptyenv())
+
+  viz_render_fmt <- function(fmt) {
+    inp <- viz_debounced()
+    config <- list(
+      badge   = inp$d$badge,
+      titulo  = inp$d$titulo,
+      fuente  = inp$d$fuente,
+      handles = inp$d$handles,
+      imagen  = inp$imagen
+    )
+    html <- flyer_worker_render(flyer_worker_ensure(), "viz_redes", config, fmt)
+    if (is.null(html)) {
+      html <- viz_last_html[[fmt]]
+    } else {
+      viz_last_html[[fmt]] <- html
+    }
+    html
+  }
 
   viz_preview <- function(fmt, w, h) {
-    d <- viz_data()
-    img_b64 <- if (!is.null(input$viz_img)) viz_img_b64() else NULL
-    tarjeta_iframe(viz_html(d, fmt, img_b64, TARJETA_LOGOS$azul, TARJETA_LOGOS$negro), w, h, 540)
+    html <- viz_render_fmt(fmt)
+    req(html)
+    tarjeta_iframe(html, w, h, 540)
   }
 
   output$preview_viz_11  <- renderUI(viz_preview("1x1", 1080, 1080))
