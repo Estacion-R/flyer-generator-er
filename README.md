@@ -1,6 +1,6 @@
 # Generador de Flyers — Estación R
 
-App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Tres pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso en 3 slides y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos), **📊 Visuales para redes** (gráfico de datos enmarcado con branding ER en 1:1 + 4:5 + 16:9) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
+App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Tres pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso en 3 o 4 slides y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos), **📊 Visuales para redes** (gráfico de datos enmarcado con branding ER en 1:1 + 4:5 + 16:9) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
 
 **Deploy activo:** shiny-server local → `http://localhost:3838/flyer/` (en LAN: `http://192.168.0.74:3838/flyer/` — la IP cambia con la WiFi)
 
@@ -8,7 +8,7 @@ App Shiny para generar piezas de difusión de Estación R (minimalista neobrutal
 
 ## Características
 
-- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides, sin precio) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS y píldora "Sumate!" arriba a la izquierda en ambos formatos, caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y recuadro "INSCRIPCIÓN ABIERTA" opcional al pie de la tarjeta en ambos formatos (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; ancho completo en 4:5, anclado a la columna de ítems en 16:9). El 16:9 suma además borde negro
+- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides — portada, contenidos, CTA — o 4 con un slide extra de contacto "Comentá una palabra clave y te mandamos el programa", título/CTA en Array) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS y píldora "Sumate!" arriba a la izquierda en ambos formatos, caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y recuadro "INSCRIPCIÓN ABIERTA" opcional al pie de la tarjeta en ambos formatos (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; ancho completo en 4:5, anclado a la columna de ítems en 16:9). El 16:9 suma además borde negro
 - Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
 - Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
 - Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
@@ -90,6 +90,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Tarjeta 16:9: quitar la sombra dura neobrutalist, anclar el recuadro "INSCRIPCIÓN ABIERTA" al pie en lugar del botón CTA, y mover la píldora "Sumate!" de la esquina superior a la izquierda~~ ✅ `v2.4.1`
 - ~~Simetría 4:5 ↔ 16:9: agregar el badge "CURSOS" también al 16:9 (esquina liberada por la píldora en `v2.4.1`) y llevar el recuadro "INSCRIPCIÓN ABIERTA" también al 4:5, reemplazando ahí al botón CTA~~ ✅ `v2.4.2`
 - ~~Visuales de datos para redes: gráfico ggplot subido como PNG y enmarcado con branding ER en 1:1 + 4:5 + 16:9, descarga ZIP~~ ✅ `v2.5.0`
+- ~~Carrusel de curso: selector de 3 o 4 placas (slide 4 opcional "Comentá INFO y te mandamos el programa"), tipografía Array en portada/CTA para alinear con la tarjeta clásica~~ ✅ `v2.6.0`
 - Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story); visuales fase 2 (generar el chart dentro de la app, fondos dark, plantilla quote/estadística)
 
 ## Convenciones de desarrollo

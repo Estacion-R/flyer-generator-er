@@ -729,12 +729,13 @@ ${CSS_CAROUSEL_FONTS}
 // ---- Carrusel Anuncio de Curso (3 slides 1080×1080) ----
 // ============================================================
 
-function buildCourseSlide1(config, logoB64) {
+function buildCourseSlide1(config, logoB64, arrayFont, total) {
   const nombre  = escapeHtml(config.nombre || '');
   const badge   = escapeHtml(config.badge  || 'Curso virtual');
   const tagline = escapeHtml(config.tagline || '');
   const fecha   = escapeHtml(config.fecha_inicio || '');
   const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
+  const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
 
   let imgBand = '';
   let hasImg = '';
@@ -751,6 +752,7 @@ function buildCourseSlide1(config, logoB64) {
 <head><meta charset="UTF-8">
 <style>
 ${CSS_CAROUSEL_FONTS}
+${arrayFace}
 .slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
 .band{width:100%;height:430px;border-bottom:6px solid #151515;overflow:hidden;flex-shrink:0}
 .band img{width:100%;height:100%;object-fit:cover;display:block}
@@ -760,8 +762,8 @@ ${CSS_CAROUSEL_FONTS}
 .mc{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 90px;gap:44px;position:relative;z-index:1}
 .slide.has-img .mc{padding:48px 90px;gap:32px}
 .badge{display:inline-block;background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:12px 30px;border:3px solid #151515;width:fit-content}
-.cn{font-family:'Ubuntu',sans-serif;font-size:84px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.02em;max-width:900px}
-.slide.has-img .cn{font-size:64px}
+.cn{font-family:'Array',sans-serif;font-size:70px;font-weight:700;color:#fff;line-height:1.1;max-width:900px}
+.slide.has-img .cn{font-size:54px}
 .tl{font-family:'Ubuntu',sans-serif;font-size:32px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:820px}
 .slide.has-img .tl{font-size:28px}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
@@ -772,7 +774,7 @@ ${CSS_CAROUSEL_FONTS}
 <body>
 <div class="slide${hasImg}">
   <div class="wm">ER</div>
-  <div class="ctr">1 / 3</div>
+  <div class="ctr">1 / ${total}</div>
   ${imgBand}
   <div class="mc">
     <div class="badge">${badge}</div>
@@ -787,7 +789,7 @@ ${CSS_CAROUSEL_FONTS}
 </html>`;
 }
 
-function buildCourseSlide2(config, logoB64) {
+function buildCourseSlide2(config, logoB64, total) {
   const nombre  = escapeHtml(config.nombre || '');
   const bullets = (config.s2_bullets || []).filter(b => String(b).trim());
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:48px;display:block;"/>` : '';
@@ -818,7 +820,7 @@ ${CSS_CAROUSEL_FONTS}
 <body>
 <div class="slide">
   <div class="hdr">
-    <div class="ctr">2 / 3</div>
+    <div class="ctr">2 / ${total}</div>
     <div class="hl">Estación R</div>
     <div class="hn">${nombre}</div>
   </div>
@@ -834,19 +836,21 @@ ${CSS_CAROUSEL_FONTS}
 </html>`;
 }
 
-function buildCourseSlide3(config, logoB64) {
+function buildCourseSlide3(config, logoB64, arrayFont, total) {
   const cta     = escapeHtml(config.cta || 'INSCRIPCIÓN ABIERTA');
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
+  const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
 
   return `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8">
 <style>
 ${CSS_CAROUSEL_FONTS}
+${arrayFace}
 .slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
 .mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
-.cta{font-family:'Ubuntu',sans-serif;font-size:76px;font-weight:700;color:#151515;text-align:center;line-height:1.15;max-width:900px;text-transform:uppercase}
+.cta{font-family:'Array',sans-serif;font-size:64px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px;text-transform:uppercase}
 .bio{font-family:'Ubuntu',sans-serif;font-size:34px;color:#151515;background:#FFFFFF;border:3px solid #151515;padding:18px 44px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .pill{background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
@@ -854,7 +858,7 @@ ${CSS_CAROUSEL_FONTS}
 </head>
 <body>
 <div class="slide">
-  <div class="ctr">3 / 3</div>
+  <div class="ctr">3 / ${total}</div>
   <div class="mc">
     ${logoTag}
     <div class="cta">${cta}</div>
@@ -869,23 +873,67 @@ ${CSS_CAROUSEL_FONTS}
 </html>`;
 }
 
-async function generateCarousel(config, logoB64) {
+function buildCourseSlide4(config, arrayFont) {
+  const instr    = escapeHtml(config.s4_instr || '');
+  const palabra  = escapeHtml(config.s4_palabra || 'INFO');
+  const refuerzo = escapeHtml(config.s4_refuerzo || '');
+  const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${CSS_CAROUSEL_FONTS}
+${arrayFace}
+.slide{width:1080px;height:1080px;background:#151515;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.22);letter-spacing:0.15em}
+.mc{display:flex;flex-direction:column;align-items:center;gap:28px;padding:80px;text-align:center}
+.in{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#EAFF38;letter-spacing:0.14em;text-transform:uppercase}
+.pw{font-family:'Array',sans-serif;font-weight:700;font-size:160px;color:#fff;line-height:1;text-transform:uppercase}
+.rf{font-family:'Ubuntu',sans-serif;font-size:32px;color:rgba(255,255,255,0.82);line-height:1.4;max-width:780px}
+.handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.pill{background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="ctr">4 / 4</div>
+  <div class="mc">
+    ${instr ? `<div class="in">${instr}</div>` : ''}
+    <div class="pw">${palabra}</div>
+    ${refuerzo ? `<div class="rf">${refuerzo}</div>` : ''}
+    <div class="handles">
+      <div class="pill">@estacion_r</div>
+      <div class="pill">@estacionr.bsky.social</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+async function generateCarousel(config, logoB64, arrayFont) {
   const outputDir = config.output_dir;
   if (!outputDir) throw new Error('output_dir requerido para template carousel');
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-  const slides = config.template === 'carousel_curso'
-    ? [
-        buildCourseSlide1(config, logoB64),
-        buildCourseSlide2(config, logoB64),
-        buildCourseSlide3(config, logoB64)
-      ]
-    : [
-        buildSlide1(config, logoB64),
-        buildSlide2(config, logoB64),
-        buildSlide3(config, logoB64),
-        buildSlide4(config, logoB64)
-      ];
+  let slides;
+  if (config.template === 'carousel_curso') {
+    const total = parseInt(config.n_slides, 10) === 4 ? 4 : 3;
+    slides = [
+      buildCourseSlide1(config, logoB64, arrayFont, total),
+      buildCourseSlide2(config, logoB64, total),
+      buildCourseSlide3(config, logoB64, arrayFont, total)
+    ];
+    if (total === 4) slides.push(buildCourseSlide4(config, arrayFont));
+  } else {
+    slides = [
+      buildSlide1(config, logoB64),
+      buildSlide2(config, logoB64),
+      buildSlide3(config, logoB64),
+      buildSlide4(config, logoB64)
+    ];
+  }
 
   const browser = await chromium.launch({
     executablePath: '/usr/bin/google-chrome',
@@ -1267,9 +1315,9 @@ async function main() {
     return;
   }
 
-  // Carousel (paquete 4 slides / curso 3 slides): genera PNGs en output_dir; no usa --output
+  // Carousel (paquete 4 slides / curso 3-4 slides): genera PNGs en output_dir; no usa --output
   if (config.template === 'carousel' || config.template === 'carousel_curso') {
-    await generateCarousel(config, logoB64);
+    await generateCarousel(config, logoB64, tarjAssets.arrayFont);
     return;
   }
 

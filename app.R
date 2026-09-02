@@ -94,11 +94,14 @@ VIZ_FORMATOS_OPTS <- c("1:1 — Instagram (1080×1080)" = "1x1",
                        "4:5 — Instagram feed (1080×1350)" = "4x5",
                        "16:9 — LinkedIn / X (1920×1080)" = "16x9")
 
-TARJETA_FONTS <- paste0(
-  "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');",
+ARRAY_FONT_FACE <- paste0(
   "@font-face{font-family:'Array';src:url('data:font/woff2;base64,",
   base64enc::base64encode("www/fonts/Array-Bold.woff2"),
   "') format('woff2');font-weight:700;font-style:normal;font-display:block;}")
+
+TARJETA_FONTS <- paste0(
+  "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');",
+  ARRAY_FONT_FACE)
 
 # ---- SVG icons ----
 SVG_ICON <- function(path_d, extra_path = NULL) {
@@ -443,7 +446,7 @@ slide_iframe <- function(html_str) {
 }
 
 # ---- HTML de slides CURSO para preview (iframes) ----
-course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = LOGO_B64, img_b64 = NULL) {
+course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = LOGO_B64, img_b64 = NULL, total = 3) {
   logo <- if (nchar(logo_b64) > 10)
     paste0('<img src="', logo_b64, '" alt="ER" style="height:52px;display:block;"/>') else ""
   tagline_div <- if (nchar(trimws(tagline)) > 0)
@@ -451,7 +454,7 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
   img_band <- if (!is.null(img_b64))
     paste0('<div class="band"><img src="', img_b64, '" alt=""/></div>') else ""
   has_img <- if (!is.null(img_b64)) " has-img" else ""
-  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, ARRAY_FONT_FACE, '
 .slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
 .band{width:100%;height:430px;border-bottom:6px solid #151515;overflow:hidden;flex-shrink:0}
 .band img{width:100%;height:100%;object-fit:cover;display:block}
@@ -461,8 +464,8 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
 .mc{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 90px;gap:44px;position:relative;z-index:1}
 .slide.has-img .mc{padding:48px 90px;gap:32px}
 .badge{display:inline-block;background:#EAFF38;color:#151515;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:12px 30px;border:3px solid #151515;width:fit-content}
-.cn{font-family:"Ubuntu",sans-serif;font-size:84px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:-0.02em;max-width:900px}
-.slide.has-img .cn{font-size:64px}
+.cn{font-family:"Array",sans-serif;font-size:70px;font-weight:700;color:#fff;line-height:1.1;max-width:900px}
+.slide.has-img .cn{font-size:54px}
 .tl{font-family:"Ubuntu",sans-serif;font-size:32px;color:rgba(255,255,255,0.72);line-height:1.55;max-width:820px}
 .slide.has-img .tl{font-size:28px}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
@@ -470,7 +473,7 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
 .fi{font-family:"Ubuntu Mono",monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
 </style></head><body>
 <div class="slide', has_img, '">
-  <div class="wm">ER</div><div class="ctr">1 / 3</div>
+  <div class="wm">ER</div><div class="ctr">1 / ', total, '</div>
   ', img_band, '
   <div class="mc">
     <div class="badge">', he(badge), '</div>
@@ -483,7 +486,7 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
 </div></body></html>')
 }
 
-course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64) {
+course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64, total = 3) {
   logo <- if (nchar(logo_b64) > 10)
     paste0('<img src="', logo_b64, '" alt="ER" style="height:48px;display:block;"/>') else ""
   blist <- bullets[nchar(trimws(bullets)) > 0]
@@ -507,7 +510,7 @@ course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64) {
 </style></head><body>
 <div class="slide">
   <div class="hdr">
-    <div class="ctr">2 / 3</div>
+    <div class="ctr">2 / ', total, '</div>
     <div class="hl">Estación R</div>
     <div class="hn">', he(nombre), '</div>
   </div>
@@ -521,24 +524,53 @@ course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64) {
 </div></body></html>')
 }
 
-course_slide3_html <- function(cta, logo_b64 = LOGO_B64) {
+course_slide3_html <- function(cta, logo_b64 = LOGO_B64, total = 3) {
   logo <- if (nchar(logo_b64) > 10)
     paste0('<img src="', logo_b64, '" alt="Estación R" style="height:110px;display:block;"/>') else ""
-  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, '
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, ARRAY_FONT_FACE, '
 .slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
 .mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
-.cta{font-family:"Ubuntu",sans-serif;font-size:76px;font-weight:700;color:#151515;text-align:center;line-height:1.15;max-width:900px;text-transform:uppercase}
+.cta{font-family:"Array",sans-serif;font-size:64px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px;text-transform:uppercase}
 .bio{font-family:"Ubuntu",sans-serif;font-size:34px;color:#151515;background:#fff;border:3px solid #151515;padding:18px 44px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .pill{background:#151515;color:#EAFF38;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
 </style></head><body>
 <div class="slide">
-  <div class="ctr">3 / 3</div>
+  <div class="ctr">3 / ', total, '</div>
   <div class="mc">
     ', logo, '
     <div class="cta">', he(cta), '</div>
     <div class="bio">🔗 Link en bio</div>
+    <div class="handles">
+      <div class="pill">@estacion_r</div>
+      <div class="pill">@estacionr.bsky.social</div>
+    </div>
+  </div>
+</div></body></html>')
+}
+
+course_slide4_html <- function(instr, palabra, refuerzo) {
+  instr_div <- if (nchar(trimws(instr)) > 0)
+    paste0('<div class="in">', he(instr), '</div>') else ""
+  refuerzo_div <- if (nchar(trimws(refuerzo)) > 0)
+    paste0('<div class="rf">', he(refuerzo), '</div>') else ""
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, ARRAY_FONT_FACE, '
+.slide{width:1080px;height:1080px;background:#151515;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(255,255,255,0.22);letter-spacing:0.15em}
+.mc{display:flex;flex-direction:column;align-items:center;gap:28px;padding:80px;text-align:center}
+.in{font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;color:#EAFF38;letter-spacing:0.14em;text-transform:uppercase}
+.pw{font-family:"Array",sans-serif;font-weight:700;font-size:160px;color:#fff;line-height:1;text-transform:uppercase}
+.rf{font-family:"Ubuntu",sans-serif;font-size:32px;color:rgba(255,255,255,0.82);line-height:1.4;max-width:780px}
+.handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.pill{background:#EAFF38;color:#151515;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+</style></head><body>
+<div class="slide">
+  <div class="ctr">4 / 4</div>
+  <div class="mc">
+    ', instr_div, '
+    <div class="pw">', he(palabra), '</div>
+    ', refuerzo_div, '
     <div class="handles">
       <div class="pill">@estacion_r</div>
       <div class="pill">@estacionr.bsky.social</div>
@@ -866,6 +898,11 @@ ui <- page_navbar(
             multiple = TRUE,
 
             accordion_panel("🎓 Datos del curso", value = "cpkg",
+              tags$span("Cantidad de placas", class = "section-label"),
+              selectInput("ig_c_n_slides", NULL,
+                choices = c("3 — portada, contenido, CTA" = "3",
+                            "4 — + slide de contacto (INFO)" = "4"),
+                selected = "3"),
               tags$span("Tipo de evento (badge)", class = "section-label"),
               textInput("ig_c_badge", NULL, value = "Curso virtual"),
               tags$span("Nombre del curso", class = "section-label"),
@@ -892,6 +929,18 @@ ui <- page_navbar(
             accordion_panel("Slide 3 — CTA", value = "cs3",
               tags$span("Frase CTA", class = "section-label"),
               textInput("ig_c_cta", NULL, value = "Inscripción abierta")
+            ),
+            conditionalPanel(
+              condition = "input.ig_c_n_slides == '4'",
+              accordion_panel("Slide 4 — Contacto", value = "cs4",
+                tags$span("Instrucción", class = "section-label"),
+                textInput("ig_c_s4_instr", NULL, value = "Comentá esta palabra en el posteo"),
+                tags$span("Palabra clave (grande)", class = "section-label"),
+                textInput("ig_c_s4_palabra", NULL, value = "INFO"),
+                tags$span("Refuerzo", class = "section-label"),
+                textAreaInput("ig_c_s4_refuerzo", NULL, rows = 2,
+                  value = "Te mandamos el programa completo y todo lo que tenés que saber de la nueva edición")
+              )
             )
           )
         ),
@@ -1000,9 +1049,9 @@ ui <- page_navbar(
             )
           ),
           conditionalPanel(
-            condition = "input.ig_tipo_carrusel == 'paquete'",
+            condition = "input.ig_tipo_carrusel == 'paquete' || (input.ig_tipo_carrusel == 'curso' && input.ig_c_n_slides == '4')",
             div(
-              div(class = "slide-label", "Slide 4 — Cierre"),
+              uiOutput("label_s4"),
               uiOutput("preview_s4")
             )
           ),
@@ -1193,12 +1242,16 @@ server <- function(input, output, session) {
   ))
 
   ig_curso_data <- reactive(list(
+    n_slides     = as.integer(input$ig_c_n_slides %||% 3),
     nombre       = input$ig_c_nombre %||% "",
     badge        = input$ig_c_badge %||% "Curso virtual",
     tagline      = input$ig_c_tagline %||% "",
     fecha_inicio = input$ig_c_fecha_inicio %||% "",
     s2_bullets   = strsplit(input$ig_c_s2_bullets %||% "", "\n")[[1]],
-    cta          = input$ig_c_cta %||% "Inscripción abierta"
+    cta          = input$ig_c_cta %||% "Inscripción abierta",
+    s4_instr     = input$ig_c_s4_instr %||% "",
+    s4_palabra   = input$ig_c_s4_palabra %||% "INFO",
+    s4_refuerzo  = input$ig_c_s4_refuerzo %||% ""
   ))
 
   ig_c_img_b64 <- reactive({
@@ -1248,7 +1301,7 @@ server <- function(input, output, session) {
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
       img_b64 <- if (!is.null(input$ig_c_img)) ig_c_img_b64() else NULL
-      slide_iframe(course_slide1_html(d$nombre, d$badge, d$tagline, d$fecha_inicio, img_b64 = img_b64))
+      slide_iframe(course_slide1_html(d$nombre, d$badge, d$tagline, d$fecha_inicio, img_b64 = img_b64, total = d$n_slides))
     } else {
       d <- ig_data()
       slide_iframe(slide1_html(d$nombre, d$categoria, d$s1_tagline))
@@ -1257,7 +1310,7 @@ server <- function(input, output, session) {
   output$preview_s2 <- renderUI({
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
-      slide_iframe(course_slide2_html(d$nombre, d$s2_bullets))
+      slide_iframe(course_slide2_html(d$nombre, d$s2_bullets, total = d$n_slides))
     } else {
       d <- ig_data()
       slide_iframe(slide2_html(d$nombre, d$s2_titulo, d$s2_desc, d$s2_bullets))
@@ -1266,7 +1319,7 @@ server <- function(input, output, session) {
   output$preview_s3 <- renderUI({
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
-      slide_iframe(course_slide3_html(d$cta))
+      slide_iframe(course_slide3_html(d$cta, total = d$n_slides))
     } else {
       d <- ig_data()
       slide_iframe(slide3_html(d$nombre, d$s3_titulo, d$s3_codigo))
@@ -1274,7 +1327,9 @@ server <- function(input, output, session) {
   })
   output$preview_s4 <- renderUI({
     if (identical(ig_tipo(), "curso")) {
-      return(NULL)
+      d <- ig_curso_data()
+      if (d$n_slides < 4) return(NULL)
+      slide_iframe(course_slide4_html(d$s4_instr, d$s4_palabra, d$s4_refuerzo))
     } else {
       d <- ig_data()
       slide_iframe(slide4_html(d$s4_tagline, d$autor))
@@ -1294,6 +1349,13 @@ server <- function(input, output, session) {
       div(class = "slide-label", "Slide 3 — CTA")
     } else {
       div(class = "slide-label", "Slide 3 — Código")
+    }
+  })
+  output$label_s4 <- renderUI({
+    if (identical(ig_tipo(), "curso")) {
+      div(class = "slide-label", "Slide 4 — Contacto")
+    } else {
+      div(class = "slide-label", "Slide 4 — Cierre")
     }
   })
 
@@ -1329,12 +1391,16 @@ server <- function(input, output, session) {
         config <- list(
           template     = "carousel_curso",
           output_dir   = slide_dir,
+          n_slides     = d$n_slides,
           nombre       = d$nombre,
           badge        = d$badge,
           tagline      = d$tagline,
           fecha_inicio = d$fecha_inicio,
           s2_bullets   = d$s2_bullets,
           cta          = d$cta,
+          s4_instr     = d$s4_instr,
+          s4_palabra   = d$s4_palabra,
+          s4_refuerzo  = d$s4_refuerzo,
           imagen_curso = if (!is.null(input$ig_c_img)) input$ig_c_img$datapath else NULL
         )
       } else {
