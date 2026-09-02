@@ -1,4 +1,5 @@
 node_modules/
+rlibs/
 app_cache/
 restart.txt
 rsconnect/

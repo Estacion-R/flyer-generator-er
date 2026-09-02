@@ -760,13 +760,18 @@ ${CSS_CAROUSEL_FONTS}
 // ---- Carrusel Anuncio de Curso (3 slides 1080×1080) ----
 // ============================================================
 
-function buildCourseSlide1(config, logoB64, arrayFont, total) {
+function buildCourseSlidePortada(config, logoB64, arrayFont, position, total) {
   const nombre  = escapeHtml(config.nombre || '');
   const badge   = escapeHtml(config.badge  || 'Curso virtual');
   const tagline = escapeHtml(config.tagline || '');
   const fecha   = escapeHtml(config.fecha_inicio || '');
   const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
   const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+  const isLast = position === total;
+  const redes  = (config.redes || []).filter(r => String(r).trim());
+  const tailDiv = !isLast
+    ? `<div class="tail"><div class="swipe">👉</div></div>`
+    : (redes.length > 0 ? `<div class="tail"><div class="handles">${redes.map(r => socialPillHtml(r, '#EAFF38')).join('')}</div></div>` : '');
 
   let imgBand = '';
   let hasImg = '';
@@ -800,20 +805,23 @@ ${arrayFace}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fi{font-family:'Ubuntu Mono',monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
-.swipe{position:absolute;right:0;bottom:0;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))}
+.tail{position:absolute;right:52px;bottom:132px;z-index:2}
+.swipe{font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))}
+.handles{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end;max-width:800px}
+.pill{display:flex;align-items:center;gap:8px;background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:19px;font-weight:700;padding:10px 20px;letter-spacing:0.05em}
 </style>
 </head>
 <body>
 <div class="slide${hasImg}">
   <div class="wm">ER</div>
-  <div class="ctr">1 / ${total}</div>
+  <div class="ctr">${position} / ${total}</div>
   ${imgBand}
   <div class="mc">
     <div class="badge">${badge}</div>
     <div class="cn">${nombre}</div>
     ${tagline ? `<div class="tl">${tagline}</div>` : ''}
-    <div class="swipe">👉</div>
   </div>
+  ${tailDiv}
   <div class="foot">
     <div class="fb">Estación R</div>${logo}<div class="fi">Inicio: ${fecha}</div>
   </div>
@@ -822,13 +830,17 @@ ${arrayFace}
 </html>`;
 }
 
-function buildCourseSlide2(config, logoB64, total) {
+function buildCourseSlideBullets(config, tituloSeccion, bullets, logoB64, position, total) {
   const nombre  = escapeHtml(config.nombre || '');
-  const bullets = (config.s2_bullets || []).filter(b => String(b).trim());
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:48px;display:block;"/>` : '';
-  const bulletsHTML = bullets
+  const bulletsHTML = (bullets || []).filter(b => String(b).trim())
     .map(b => `<li><span class="dot">●</span><span>${escapeHtml(b)}</span></li>`)
     .join('');
+  const isLast = position === total;
+  const redes  = (config.redes || []).filter(r => String(r).trim());
+  const tailDiv = !isLast
+    ? `<div class="tail"><div class="swipe">👉</div></div>`
+    : (redes.length > 0 ? `<div class="tail"><div class="handles">${redes.map(r => socialPillHtml(r, '#EAFF38')).join('')}</div></div>` : '');
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -840,7 +852,7 @@ ${CSS_CAROUSEL_FONTS}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
 .hl{font-family:'Ubuntu Mono',monospace;font-size:20px;color:rgba(255,255,255,0.55);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px}
 .hn{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.1}
-.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px;position:relative}
+.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px}
 .stit{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#405BFF;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
 .bul{list-style:none;display:flex;flex-direction:column;gap:18px}
 .bul li{display:flex;align-items:flex-start;gap:20px;font-size:26px;color:#151515;font-family:'Ubuntu',sans-serif;line-height:1.45}
@@ -848,21 +860,24 @@ ${CSS_CAROUSEL_FONTS}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fu{font-family:'Ubuntu Mono',monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
-.swipe{position:absolute;right:0;bottom:0;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
+.tail{position:absolute;right:52px;bottom:120px;z-index:2}
+.swipe{font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
+.handles{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end;max-width:800px}
+.pill{display:flex;align-items:center;gap:8px;background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:19px;font-weight:700;padding:10px 20px;letter-spacing:0.05em}
 </style>
 </head>
 <body>
 <div class="slide">
   <div class="hdr">
-    <div class="ctr">2 / ${total}</div>
+    <div class="ctr">${position} / ${total}</div>
     <div class="hl">Estación R</div>
     <div class="hn">${nombre}</div>
   </div>
   <div class="bd">
-    <div class="stit">¿Qué vas a aprender?</div>
+    <div class="stit">${escapeHtml(tituloSeccion)}</div>
     ${bulletsHTML ? `<ul class="bul">${bulletsHTML}</ul>` : ''}
-    <div class="swipe">👉</div>
   </div>
+  ${tailDiv}
   <div class="foot">
     <div class="fb">Estación R</div>${logoTag}<div class="fu">estacion-r.com</div>
   </div>
@@ -871,11 +886,11 @@ ${CSS_CAROUSEL_FONTS}
 </html>`;
 }
 
-function buildCourseSlide3(config, logoB64, arrayFont, total) {
+function buildCourseSlideCta(config, logoB64, arrayFont, position, total) {
   const cta     = escapeHtml(config.cta || 'INSCRIPCIÓN ABIERTA');
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
   const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
-  const isLast  = total <= 3;
+  const isLast  = position === total;
   const swipeDiv = !isLast ? `<div class="swipe">👉</div>` : '';
   const redes   = (config.redes || []).filter(r => String(r).trim());
   const handlesDiv = isLast && redes.length > 0
@@ -900,7 +915,7 @@ ${arrayFace}
 </head>
 <body>
 <div class="slide">
-  <div class="ctr">3 / ${total}</div>
+  <div class="ctr">${position} / ${total}</div>
   <div class="mc">
     ${logoTag}
     <div class="cta">${cta}</div>
@@ -913,13 +928,15 @@ ${arrayFace}
 </html>`;
 }
 
-function buildCourseSlide4(config, arrayFont) {
+function buildCourseSlideContacto(config, arrayFont, position, total) {
   const instr    = escapeHtml(config.s4_instr || '');
   const palabra  = escapeHtml(config.s4_palabra || 'INFO');
   const refuerzo = escapeHtml(config.s4_refuerzo || '');
   const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+  const isLast  = position === total;
+  const swipeDiv = !isLast ? `<div class="swipe">👉</div>` : '';
   const redes   = (config.redes || []).filter(r => String(r).trim());
-  const handlesDiv = redes.length > 0
+  const handlesDiv = isLast && redes.length > 0
     ? `<div class="handles">${redes.map(r => socialPillHtml(r, '#151515')).join('')}</div>`
     : '';
 
@@ -937,20 +954,47 @@ ${arrayFace}
 .rf{font-family:'Ubuntu',sans-serif;font-size:32px;color:rgba(255,255,255,0.82);line-height:1.4;max-width:780px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin-top:12px}
 .pill{display:flex;align-items:center;gap:10px;background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+.swipe{position:absolute;right:52px;bottom:44px;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
 </style>
 </head>
 <body>
 <div class="slide">
-  <div class="ctr">4 / 4</div>
+  <div class="ctr">${position} / ${total}</div>
   <div class="mc">
     ${instr ? `<div class="in">${instr}</div>` : ''}
     <div class="pw">${palabra}</div>
     ${refuerzo ? `<div class="rf">${refuerzo}</div>` : ''}
     ${handlesDiv}
   </div>
+  ${swipeDiv}
 </div>
 </body>
 </html>`;
+}
+
+const CURSO_SLIDE_LABELS = {
+  portada: 'Portada',
+  aprender: '¿Qué vas a aprender?',
+  llevas: '¿Qué te llevás?',
+  cta: 'CTA de inscripción',
+  contacto: 'Contacto (INFO)'
+};
+
+function buildCourseSlideByType(tipo, config, logoB64, arrayFont, position, total) {
+  switch (tipo) {
+    case 'portada':
+      return buildCourseSlidePortada(config, logoB64, arrayFont, position, total);
+    case 'aprender':
+      return buildCourseSlideBullets(config, CURSO_SLIDE_LABELS.aprender, config.s2_bullets, logoB64, position, total);
+    case 'llevas':
+      return buildCourseSlideBullets(config, CURSO_SLIDE_LABELS.llevas, config.llevas_bullets, logoB64, position, total);
+    case 'cta':
+      return buildCourseSlideCta(config, logoB64, arrayFont, position, total);
+    case 'contacto':
+      return buildCourseSlideContacto(config, arrayFont, position, total);
+    default:
+      return null;
+  }
 }
 
 async function generateCarousel(config, logoB64, arrayFont) {
@@ -960,13 +1004,10 @@ async function generateCarousel(config, logoB64, arrayFont) {
 
   let slides;
   if (config.template === 'carousel_curso') {
-    const total = parseInt(config.n_slides, 10) === 4 ? 4 : 3;
-    slides = [
-      buildCourseSlide1(config, logoB64, arrayFont, total),
-      buildCourseSlide2(config, logoB64, total),
-      buildCourseSlide3(config, logoB64, arrayFont, total)
-    ];
-    if (total === 4) slides.push(buildCourseSlide4(config, arrayFont));
+    const plan = Array.isArray(config.plan) ? config.plan : (config.plan ? [config.plan] : []);
+    const total = plan.length;
+    slides = plan.map((tipo, i) => buildCourseSlideByType(tipo, config, logoB64, arrayFont, i + 1, total))
+      .filter(html => html !== null);
   } else {
     slides = [
       buildSlide1(config, logoB64),

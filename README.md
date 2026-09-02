@@ -1,6 +1,6 @@
 # Generador de Flyers — Estación R
 
-App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Tres pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso en 3 o 4 slides y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos), **📊 Visuales para redes** (gráfico de datos enmarcado con branding ER en 1:1 + 4:5 + 16:9) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
+App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Tres pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso con placas elegibles/reordenables por drag & drop y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos), **📊 Visuales para redes** (gráfico de datos enmarcado con branding ER en 1:1 + 4:5 + 16:9) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
 
 **Deploy activo:** shiny-server local → `http://localhost:3838/flyer/` (en LAN: `http://192.168.0.74:3838/flyer/` — la IP cambia con la WiFi)
 
@@ -8,7 +8,7 @@ App Shiny para generar piezas de difusión de Estación R (minimalista neobrutal
 
 ## Características
 
-- Instagram: carrusel de paquete (4 slides), carrusel de curso (3 slides — portada, contenidos, CTA — o 4 con un slide extra de contacto "Comentá una palabra clave y te mandamos el programa", título/CTA en Array) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS y píldora "Sumate!" arriba a la izquierda en ambos formatos, caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y recuadro "INSCRIPCIÓN ABIERTA" opcional al pie de la tarjeta en ambos formatos (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; ancho completo en 4:5, anclado a la columna de ítems en 16:9). El 16:9 suma además borde negro
+- Instagram: carrusel de paquete (4 slides), carrusel de curso (5 tipos de placa disponibles — Portada, ¿Qué vas a aprender?, ¿Qué te llevás?, CTA de inscripción, Contacto "Comentá una palabra clave y te mandamos el programa" — elegís cuáles usar y en qué orden arrastrando entre dos listas conectadas tipo sticker; título/CTA en Array; contador, 👉 de swipe y píldoras de redes se recalculan según la posición real de cada placa, no según su tipo) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS y píldora "Sumate!" arriba a la izquierda en ambos formatos, caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y recuadro "INSCRIPCIÓN ABIERTA" opcional al pie de la tarjeta en ambos formatos (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; ancho completo en 4:5, anclado a la columna de ítems en 16:9). El 16:9 suma además borde negro
 - Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
 - Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
 - Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
@@ -44,13 +44,13 @@ El schema del `config.json` está documentado en el header del archivo.
 
 ## Requisitos
 
-- R ≥ 4.3 con `shiny`, `bslib`, `htmltools`, `base64enc`, `jsonlite`
+- R ≥ 4.3 con `shiny`, `bslib`, `htmltools`, `base64enc`, `jsonlite`, `shinyjqui`
 - Node ≥ 20 (ver nota del entorno) y `npm install` en la raíz del repo (`playwright`)
 - Google Chrome instalado
 
 ## Cómo correr
 
-Desde el repo: `shiny::runApp()`. La app usa rutas relativas a su raíz, así que un clone fresco funciona directo.
+Desde el repo: `shiny::runApp()`. La app usa rutas relativas a su raíz, así que un clone fresco funciona directo (siempre que `shinyjqui` esté instalado — ver nota de `rlibs/` abajo).
 
 ## Deploy local (shiny-server)
 
@@ -67,6 +67,11 @@ Notas del entorno (notebook de Estación R):
 - `NODE_BIN` (en `app.R`) apunta a `/home/linuxbrew/.linuxbrew/bin/node` (v26): el `/usr/bin/node` del sistema (v18) no cumple el mínimo de `playwright`
 - Los paquetes R de apt pueden quedar compilados para otra ABI de R; los del runtime viven en `/usr/local/lib/R/site-library`
 - `app_cache/` va con permisos `1777` para que el usuario `shiny` escriba la cache de sass
+- **`rlibs/` (paquetes R sin apt/root, ej. `shinyjqui`):** shiny-server corre la app como usuario `shiny`, que no tiene acceso a `/usr/local/lib/R/site-library` (root) ni al home de otro usuario. Para paquetes que no están empaquetados en apt, se instalan en `rlibs/` dentro de la propia carpeta de la app (legible por cualquier usuario) y `app.R` antepone esa ruta a `.libPaths()` al arrancar. `rlibs/` no se trackea en git (como `node_modules/`) — reinstalar con:
+  ```r
+  install.packages("shinyjqui", lib = "rlibs", dependencies = FALSE)
+  ```
+  (sus dependencias — shiny/htmltools/htmlwidgets/jsonlite/rlang — ya están en las librerías del sistema)
 
 ## Estructura
 
@@ -74,7 +79,8 @@ Notas del entorno (notebook de Estación R):
 - `generate_flyer.js` — CLI de render (HTML y PNG)
 - `www/` — logos de ER (clásico + 3 tintas del branding 2026), isotipo, fuente Array (`fonts/`)
 - `design/` — referencias de diseño (bocetos de próximos formatos)
-- `.gitignore` — `node_modules/`, `app_cache/`, `restart.txt`, `rsconnect/`, etc.
+- `rlibs/` — paquetes R sin apt (`shinyjqui`), no trackeado en git — ver nota arriba
+- `.gitignore` — `node_modules/`, `rlibs/`, `app_cache/`, `restart.txt`, `rsconnect/`, etc.
 
 ## Branding
 
@@ -94,6 +100,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Fix azul off-brand (`#447099`) en el carrusel de curso → azul oficial `#405BFF`~~ ✅ `v2.6.1` — el mismo azul legacy sigue en el carrusel de paquete, la tarjeta tip y el flyer LinkedIn; pendiente decidir si se hace un sweep completo
 - ~~Indicador de swipe (👉) en los slides que no son la última placa del carrusel de curso; selector de redes tipo "sticker" (Instagram/X/LinkedIn/Bluesky/Mastodon) que solo aparecen en la última placa~~ ✅ `v2.7.0`
 - ~~Íconos de marca (Simple Icons, CC0) en las píldoras de redes del carrusel de curso, junto al handle~~ ✅ `v2.7.1`
+- ~~Picker tipo "sticker" (drag & drop, `shinyjqui::orderInput`) para elegir qué placas van en el carrusel de curso y en qué orden, sin límite fijo de 3/4. Placa nueva "¿Qué te llevás?" (bullets, mismo patrón que "¿Qué vas a aprender?"). El contador, el 👉 y las píldoras de redes ahora se calculan por posición real en el plan, no por tipo de placa fijo~~ ✅ `v2.8.0`
 - Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story); visuales fase 2 (generar el chart dentro de la app, fondos dark, plantilla quote/estadística)
 
 ## Convenciones de desarrollo
