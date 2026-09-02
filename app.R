@@ -76,6 +76,21 @@ PLAYWRIGHT_SCRIPT <- "generate_flyer.js"
 LOGO_PATH         <- "www/logo_er.png"
 NODE_BIN          <- "/home/linuxbrew/.linuxbrew/bin/node"
 LOGO_B64          <- paste0("data:image/png;base64,", base64enc::base64encode(LOGO_PATH))
+RENDER_TIMEOUT_S  <- 40
+
+# Corre el render de Playwright (generate_flyer.js) con timeout; devuelve NULL
+# y avisa con showNotification en español si el proceso falla o no responde,
+# en vez de dejar pasar el error crudo de R/Shiny a la UI.
+run_flyer_render <- function(args, label, session, timeout = RENDER_TIMEOUT_S) {
+  tryCatch({
+    system2(NODE_BIN, args = args, stdout = TRUE, stderr = TRUE, timeout = timeout)
+  }, error = function(e) {
+    showNotification(
+      paste0("No se pudo generar ", label, ": ", conditionMessage(e)),
+      type = "error", duration = 10, session = session)
+    NULL
+  })
+}
 
 # ---- Tarjeta clásica de curso (4:5 + 16:9, 4 fondos) ----
 TARJETA_FONDO_OPTS <- c("Negro" = "negro", "Azul" = "azul",
@@ -1540,13 +1555,15 @@ server <- function(input, output, session) {
       writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
       on.exit(unlink(cfg_file), add = TRUE)
 
-      result <- system2(NODE_BIN,
-        args = c(PLAYWRIGHT_SCRIPT, "--config", cfg_file),
-        stdout = TRUE, stderr = TRUE)
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "el carrusel", session)
+      if (is.null(result)) req(FALSE)
 
       pngs <- list.files(slide_dir, pattern = "\\.png$", full.names = FALSE)
-      if (length(pngs) == 0)
-        stop("Error generando carrusel: ", paste(result, collapse = "\n"))
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar el carrusel: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
 
       old_wd <- setwd(slide_dir)
       on.exit(setwd(old_wd), add = TRUE)
@@ -1606,13 +1623,15 @@ server <- function(input, output, session) {
       writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
       on.exit(unlink(cfg_file), add = TRUE)
 
-      result <- system2(NODE_BIN,
-        args = c(PLAYWRIGHT_SCRIPT, "--config", cfg_file),
-        stdout = TRUE, stderr = TRUE)
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "los visuales", session)
+      if (is.null(result)) req(FALSE)
 
       pngs <- list.files(viz_dir, pattern = "\\.png$", full.names = FALSE)
-      if (length(pngs) == 0)
-        stop("Error generando visuales: ", paste(result, collapse = "\n"))
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar los visuales: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
 
       old_wd <- setwd(viz_dir)
       on.exit(setwd(old_wd), add = TRUE)
@@ -1703,11 +1722,14 @@ server <- function(input, output, session) {
         )
         cfg_file <- tempfile(fileext = ".json")
         writeLines(jsonlite::toJSON(config, auto_unbox = TRUE), cfg_file)
-        result <- system2(NODE_BIN,
-          args = c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", file),
-          stdout = TRUE, stderr = TRUE)
+        result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", file), "el PNG", session)
         unlink(cfg_file)
-        if (!file.exists(file)) stop("Error generando PNG: ", paste(result, collapse = "\n"))
+        if (is.null(result)) req(FALSE)
+        if (!file.exists(file)) {
+          showNotification("No se pudo generar el PNG: el render no produjo ningún archivo (probá de nuevo).",
+            type = "error", duration = 10, session = session)
+          req(FALSE)
+        }
         return(invisible())
       }
       dims <- lnk_formato_dims()
@@ -1729,11 +1751,14 @@ server <- function(input, output, session) {
       )
       cfg_file <- tempfile(fileext = ".json")
       writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
-      result <- system2(NODE_BIN,
-        args = c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", file),
-        stdout = TRUE, stderr = TRUE)
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", file), "el PNG", session)
       unlink(cfg_file)
-      if (!file.exists(file)) stop("Error generando PNG: ", paste(result, collapse = "\n"))
+      if (is.null(result)) req(FALSE)
+      if (!file.exists(file)) {
+        showNotification("No se pudo generar el PNG: el render no produjo ningún archivo (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
     }
   )
 }
