@@ -753,7 +753,7 @@ function buildCourseSlide1(config, logoB64, arrayFont, total) {
 <style>
 ${CSS_CAROUSEL_FONTS}
 ${arrayFace}
-.slide{width:1080px;height:1080px;background:#447099;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
+.slide{width:1080px;height:1080px;background:#405BFF;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
 .band{width:100%;height:430px;border-bottom:6px solid #151515;overflow:hidden;flex-shrink:0}
 .band img{width:100%;height:100%;object-fit:cover;display:block}
 .wm{position:absolute;right:-10px;bottom:-30px;font-family:'Ubuntu',sans-serif;font-size:260px;font-weight:700;color:rgba(255,255,255,0.06);line-height:1;pointer-events:none;user-select:none}
@@ -803,12 +803,12 @@ function buildCourseSlide2(config, logoB64, total) {
 <style>
 ${CSS_CAROUSEL_FONTS}
 .slide{width:1080px;height:1080px;background:#FFFFFF;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;overflow:hidden}
-.hdr{background:#447099;padding:52px 80px 42px;position:relative}
+.hdr{background:#405BFF;padding:52px 80px 42px;position:relative}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
 .hl{font-family:'Ubuntu Mono',monospace;font-size:20px;color:rgba(255,255,255,0.55);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px}
 .hn{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.1}
 .bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px}
-.stit{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#447099;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
+.stit{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#405BFF;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
 .bul{list-style:none;display:flex;flex-direction:column;gap:18px}
 .bul li{display:flex;align-items:flex-start;gap:20px;font-size:26px;color:#151515;font-family:'Ubuntu',sans-serif;line-height:1.45}
 .dot{color:#EE6331;font-size:18px;margin-top:6px;flex-shrink:0}
@@ -847,7 +847,7 @@ function buildCourseSlide3(config, logoB64, arrayFont, total) {
 <style>
 ${CSS_CAROUSEL_FONTS}
 ${arrayFace}
-.slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #447099;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #405BFF;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
 .mc{display:flex;flex-direction:column;align-items:center;gap:44px;padding:80px}
 .cta{font-family:'Array',sans-serif;font-size:64px;font-weight:700;color:#151515;text-align:center;line-height:1.2;max-width:900px;text-transform:uppercase}
