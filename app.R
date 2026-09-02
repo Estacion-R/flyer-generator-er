@@ -1673,33 +1673,51 @@ server <- function(input, output, session) {
       paste0(pref, format(Sys.Date(), "%Y%m%d"), ".html")
     },
     content = function(file) {
+      tmp_html <- tempfile(fileext = ".html")
+      on.exit(unlink(tmp_html), add = TRUE)
+
       if (identical(input$lnk_template, "Tip / Paquete de R")) {
-        tip_tag <- build_flyer_tip_tag(
-          input$lnk_tip_categoria, input$lnk_tip_nombre, input$lnk_tip_version,
-          input$lnk_tip_desc, input$lnk_tip_codigo, input$lnk_tip_autor)
-        html <- paste0(
-          "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
-          "<style>", css_tip, "</style>\n</head>\n",
-          "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
-          as.character(tip_tag), "\n</body>\n</html>")
-        writeLines(html, file)
-        return(invisible())
+        config <- list(
+          template     = "tip",
+          categoria    = input$lnk_tip_categoria,
+          pkg_nombre   = input$lnk_tip_nombre,
+          version_line = input$lnk_tip_version,
+          descripcion  = input$lnk_tip_desc,
+          codigo       = input$lnk_tip_codigo,
+          autor_line   = input$lnk_tip_autor
+        )
+      } else {
+        dims <- lnk_formato_dims()
+        img_path <- if (!is.null(input$lnk_course_image)) input$lnk_course_image$datapath else NULL
+        config <- list(
+          template     = "curso",
+          formato      = dims$key,
+          imagen_curso = img_path,
+          badge_texto  = input$lnk_badge,
+          badge_color  = input$lnk_badge_color,
+          titulo       = input$lnk_titulo,
+          subtitulo    = input$lnk_subtitulo,
+          bullets      = strsplit(input$lnk_bullets, "\n")[[1]],
+          col1_texto   = input$lnk_col1,
+          col2_texto   = input$lnk_col2,
+          col3_texto   = input$lnk_col3,
+          footer_texto = input$lnk_footer_texto,
+          footer_icon  = input$lnk_footer_icon
+        )
       }
-      logo_b64 <- paste0("data:image/png;base64,", base64enc::base64encode(LOGO_PATH))
-      img_src <- if (!is.null(input$lnk_course_image)) lnk_img_b64() else NULL
-      flyer_tag <- build_flyer_tag(
-        lnk_badge_hex(), logo_b64 = logo_b64, course_img_src = img_src,
-        dims = lnk_formato_dims(),
-        badge = input$lnk_badge, titulo = input$lnk_titulo,
-        subtitulo = input$lnk_subtitulo, bullets_txt = input$lnk_bullets,
-        col1 = input$lnk_col1, col2 = input$lnk_col2, col3 = input$lnk_col3,
-        footer_icon = input$lnk_footer_icon, footer_texto = input$lnk_footer_texto)
-      html <- paste0(
-        "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
-        "<style>", css_flyer, "</style>\n</head>\n",
-        "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
-        as.character(flyer_tag), "\n</body>\n</html>")
-      writeLines(html, file)
+
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", tmp_html), "el HTML", session)
+      if (is.null(result)) req(FALSE)
+      if (!file.exists(tmp_html)) {
+        showNotification("No se pudo generar el HTML: el render no produjo ningún archivo (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+      file.copy(tmp_html, file, overwrite = TRUE)
     }
   )
 
