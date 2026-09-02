@@ -97,7 +97,7 @@
  *   "badge": "DATOS",
  *   "titulo": "La ropa bajó, los paquetes turísticos subieron",
  *   "fuente": "Fuente: INDEC · IPC julio 2026",
- *   "handles": "@estacion_r · @estacionr.bsky.social",
+ *   "handles": "@estacion.erre · @estacion_erre",
  *   "formatos": ["1x1", "4x5", "16x9"],
  *   "imagen": "/ruta/chart.png"
  * "imagen" es opcional. Título/fuente/handles vacíos se omiten del diseño.
@@ -746,8 +746,8 @@ ${CSS_CAROUSEL_FONTS}
     ${logoTag}
     <div class="cta-title">${tagline}</div>
     <div class="handles">
-      <div class="handle-pill">@estacion_r</div>
-      <div class="handle-pill">@estacionr.bsky.social</div>
+      <div class="handle-pill">@estacion.erre</div>
+      <div class="handle-pill">@estacion_erre</div>
     </div>
     ${autor ? `<div class="pkg-credit">${autor}</div>` : ''}
   </div>

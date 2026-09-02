@@ -483,8 +483,8 @@ slide4_html <- function(tagline, autor, logo_b64 = LOGO_B64) {
     ', logo, '
     <div class="cta">', he(tagline), '</div>
     <div class="handles">
-      <div class="pill">@estacion_r</div>
-      <div class="pill">@estacionr.bsky.social</div>
+      <div class="pill">@estacion.erre</div>
+      <div class="pill">@estacion_erre</div>
     </div>
     ', autor_div, '
   </div>
@@ -1222,7 +1222,7 @@ ui <- page_navbar(
 
         tags$span("Redes (footer)", class = "section-label"),
         textInput("viz_handles", NULL,
-          value = "@estacion_r · @estacionr.bsky.social"),
+          value = "@estacion.erre · @estacion_erre"),
 
         tags$hr(),
         tags$span("Formatos a descargar", class = "section-label"),
