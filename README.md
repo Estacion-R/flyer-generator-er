@@ -89,7 +89,8 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Tarjeta 16:9: alineación del primer ítem con la imagen, CTA integrado al layout, cantidad de ítems configurable (1-6) y sombra/recuadro de inscripción neobrutalist~~ ✅ `v2.4.0`
 - ~~Tarjeta 16:9: quitar la sombra dura neobrutalist, anclar el recuadro "INSCRIPCIÓN ABIERTA" al pie en lugar del botón CTA, y mover la píldora "Sumate!" de la esquina superior a la izquierda~~ ✅ `v2.4.1`
 - ~~Simetría 4:5 ↔ 16:9: agregar el badge "CURSOS" también al 16:9 (esquina liberada por la píldora en `v2.4.1`) y llevar el recuadro "INSCRIPCIÓN ABIERTA" también al 4:5, reemplazando ahí al botón CTA~~ ✅ `v2.4.2`
-- Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story)
+- ~~Visuales de datos para redes: gráfico ggplot subido como PNG y enmarcado con branding ER en 1:1 + 4:5 + 16:9, descarga ZIP~~ ✅ `v2.5.0`
+- Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story); visuales fase 2 (generar el chart dentro de la app, fondos dark, plantilla quote/estadística)
 
 ## Convenciones de desarrollo
 
