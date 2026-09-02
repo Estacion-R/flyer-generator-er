@@ -769,6 +769,7 @@ ${arrayFace}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fi{font-family:'Ubuntu Mono',monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
+.swipe{position:absolute;right:0;bottom:0;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35))}
 </style>
 </head>
 <body>
@@ -780,6 +781,7 @@ ${arrayFace}
     <div class="badge">${badge}</div>
     <div class="cn">${nombre}</div>
     ${tagline ? `<div class="tl">${tagline}</div>` : ''}
+    <div class="swipe">👉</div>
   </div>
   <div class="foot">
     <div class="fb">Estación R</div>${logo}<div class="fi">Inicio: ${fecha}</div>
@@ -807,7 +809,7 @@ ${CSS_CAROUSEL_FONTS}
 .ctr{position:absolute;top:44px;right:52px;font-family:'Ubuntu Mono',monospace;font-size:24px;color:rgba(255,255,255,0.28);letter-spacing:0.15em}
 .hl{font-family:'Ubuntu Mono',monospace;font-size:20px;color:rgba(255,255,255,0.55);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:14px}
 .hn{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.1}
-.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px}
+.bd{flex:1;padding:56px 80px;display:flex;flex-direction:column;gap:28px;position:relative}
 .stit{font-family:'Ubuntu',sans-serif;font-size:52px;font-weight:700;color:#405BFF;line-height:1.1;border-left:14px solid #EAFF38;padding-left:28px}
 .bul{list-style:none;display:flex;flex-direction:column;gap:18px}
 .bul li{display:flex;align-items:flex-start;gap:20px;font-size:26px;color:#151515;font-family:'Ubuntu',sans-serif;line-height:1.45}
@@ -815,6 +817,7 @@ ${CSS_CAROUSEL_FONTS}
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fu{font-family:'Ubuntu Mono',monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+.swipe{position:absolute;right:0;bottom:0;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
 </style>
 </head>
 <body>
@@ -827,6 +830,7 @@ ${CSS_CAROUSEL_FONTS}
   <div class="bd">
     <div class="stit">¿Qué vas a aprender?</div>
     ${bulletsHTML ? `<ul class="bul">${bulletsHTML}</ul>` : ''}
+    <div class="swipe">👉</div>
   </div>
   <div class="foot">
     <div class="fb">Estación R</div>${logoTag}<div class="fu">estacion-r.com</div>
@@ -840,6 +844,12 @@ function buildCourseSlide3(config, logoB64, arrayFont, total) {
   const cta     = escapeHtml(config.cta || 'INSCRIPCIÓN ABIERTA');
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
   const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+  const isLast  = total <= 3;
+  const swipeDiv = !isLast ? `<div class="swipe">👉</div>` : '';
+  const redes   = (config.redes || []).filter(r => String(r).trim());
+  const handlesDiv = isLast && redes.length > 0
+    ? `<div class="handles">${redes.map(r => `<div class="pill">${escapeHtml(r)}</div>`).join('')}</div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -854,6 +864,7 @@ ${arrayFace}
 .bio{font-family:'Ubuntu',sans-serif;font-size:34px;color:#151515;background:#FFFFFF;border:3px solid #151515;padding:18px 44px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .pill{background:#151515;color:#EAFF38;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+.swipe{position:absolute;right:52px;bottom:44px;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
 </style>
 </head>
 <body>
@@ -863,11 +874,9 @@ ${arrayFace}
     ${logoTag}
     <div class="cta">${cta}</div>
     <div class="bio">🔗 Link en bio</div>
-    <div class="handles">
-      <div class="pill">@estacion_r</div>
-      <div class="pill">@estacionr.bsky.social</div>
-    </div>
+    ${handlesDiv}
   </div>
+  ${swipeDiv}
 </div>
 </body>
 </html>`;
@@ -878,6 +887,10 @@ function buildCourseSlide4(config, arrayFont) {
   const palabra  = escapeHtml(config.s4_palabra || 'INFO');
   const refuerzo = escapeHtml(config.s4_refuerzo || '');
   const arrayFace = `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+  const redes   = (config.redes || []).filter(r => String(r).trim());
+  const handlesDiv = redes.length > 0
+    ? `<div class="handles">${redes.map(r => `<div class="pill">${escapeHtml(r)}</div>`).join('')}</div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -902,10 +915,7 @@ ${arrayFace}
     ${instr ? `<div class="in">${instr}</div>` : ''}
     <div class="pw">${palabra}</div>
     ${refuerzo ? `<div class="rf">${refuerzo}</div>` : ''}
-    <div class="handles">
-      <div class="pill">@estacion_r</div>
-      <div class="pill">@estacionr.bsky.social</div>
-    </div>
+    ${handlesDiv}
   </div>
 </div>
 </body>

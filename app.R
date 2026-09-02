@@ -19,6 +19,18 @@ FORMATOS_LNK <- list(
   "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675,  key = "story")
 )
 
+# Redes sociales oficiales de Estación R (confirmado con redes, 2026-09-02).
+# Instagram/X/LinkedIn están en el footer del sitio; Bluesky/Mastodon son cuenta
+# personal de Pablo con voz de marca, activas pero no oficializadas en el sitio.
+SOCIAL_HANDLES <- c(
+  "Instagram"   = "@estacion.erre",
+  "X / Twitter" = "@estacion_erre",
+  "LinkedIn"    = "Estación R",
+  "Bluesky"     = "@pablote.bsky.social",
+  "Mastodon"    = "@pablote@mastodon.social"
+)
+SOCIAL_HANDLES_DEFAULT <- c("Instagram", "X / Twitter", "LinkedIn")
+
 PLAYWRIGHT_SCRIPT <- "generate_flyer.js"
 LOGO_PATH         <- "www/logo_er.png"
 NODE_BIN          <- "/home/linuxbrew/.linuxbrew/bin/node"
@@ -471,6 +483,7 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:30px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:"Ubuntu Mono",monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fi{font-family:"Ubuntu Mono",monospace;font-size:21px;color:#404041;letter-spacing:0.08em}
+.swipe{position:absolute;right:52px;bottom:132px;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));z-index:2}
 </style></head><body>
 <div class="slide', has_img, '">
   <div class="wm">ER</div><div class="ctr">1 / ', total, '</div>
@@ -480,6 +493,7 @@ course_slide1_html <- function(nombre, badge, tagline, fecha_inicio, logo_b64 = 
     <div class="cn">', he(nombre), '</div>
     ', tagline_div, '
   </div>
+  <div class="swipe">👉</div>
   <div class="foot">
     <div class="fb">Estación R</div>', logo, '<div class="fi">Inicio: ', he(fecha_inicio), '</div>
   </div>
@@ -507,6 +521,7 @@ course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64, total = 3) 
 .foot{background:#EAFF38;border-top:5px solid #151515;padding:28px 52px;display:flex;align-items:center;justify-content:space-between}
 .fb{font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.12em;text-transform:uppercase}
 .fu{font-family:"Ubuntu Mono",monospace;font-size:20px;color:#404041;letter-spacing:0.08em}
+.swipe{position:absolute;right:52px;bottom:120px;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25));z-index:2}
 </style></head><body>
 <div class="slide">
   <div class="hdr">
@@ -518,15 +533,21 @@ course_slide2_html <- function(nombre, bullets, logo_b64 = LOGO_B64, total = 3) 
     <div class="stit">¿Qué vas a aprender?</div>
     ', bullets_html, '
   </div>
+  <div class="swipe">👉</div>
   <div class="foot">
     <div class="fb">Estación R</div>', logo, '<div class="fu">estacion-r.com</div>
   </div>
 </div></body></html>')
 }
 
-course_slide3_html <- function(cta, logo_b64 = LOGO_B64, total = 3) {
+course_slide3_html <- function(cta, redes = SOCIAL_HANDLES[SOCIAL_HANDLES_DEFAULT], logo_b64 = LOGO_B64, total = 3) {
   logo <- if (nchar(logo_b64) > 10)
     paste0('<img src="', logo_b64, '" alt="Estación R" style="height:110px;display:block;"/>') else ""
+  is_last <- total <= 3
+  swipe_div <- if (!is_last) '<div class="swipe">👉</div>' else ""
+  handles_div <- if (is_last && length(redes) > 0)
+    paste0('<div class="handles">', paste0('<div class="pill">', he(redes), '</div>', collapse = ""), '</div>')
+  else ""
   paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, ARRAY_FONT_FACE, '
 .slide{width:1080px;height:1080px;background:#EAFF38;border:6px solid #151515;box-shadow:16px 16px 0 #405BFF;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(0,0,0,0.18);letter-spacing:0.15em}
@@ -535,6 +556,7 @@ course_slide3_html <- function(cta, logo_b64 = LOGO_B64, total = 3) {
 .bio{font-family:"Ubuntu",sans-serif;font-size:34px;color:#151515;background:#fff;border:3px solid #151515;padding:18px 44px}
 .handles{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .pill{background:#151515;color:#EAFF38;font-family:"Ubuntu Mono",monospace;font-size:24px;font-weight:700;padding:14px 30px;letter-spacing:0.06em}
+.swipe{position:absolute;right:52px;bottom:44px;font-size:48px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))}
 </style></head><body>
 <div class="slide">
   <div class="ctr">3 / ', total, '</div>
@@ -542,19 +564,20 @@ course_slide3_html <- function(cta, logo_b64 = LOGO_B64, total = 3) {
     ', logo, '
     <div class="cta">', he(cta), '</div>
     <div class="bio">🔗 Link en bio</div>
-    <div class="handles">
-      <div class="pill">@estacion_r</div>
-      <div class="pill">@estacionr.bsky.social</div>
-    </div>
+    ', handles_div, '
   </div>
+  ', swipe_div, '
 </div></body></html>')
 }
 
-course_slide4_html <- function(instr, palabra, refuerzo) {
+course_slide4_html <- function(instr, palabra, refuerzo, redes = SOCIAL_HANDLES[SOCIAL_HANDLES_DEFAULT]) {
   instr_div <- if (nchar(trimws(instr)) > 0)
     paste0('<div class="in">', he(instr), '</div>') else ""
   refuerzo_div <- if (nchar(trimws(refuerzo)) > 0)
     paste0('<div class="rf">', he(refuerzo), '</div>') else ""
+  handles_div <- if (length(redes) > 0)
+    paste0('<div class="handles">', paste0('<div class="pill">', he(redes), '</div>', collapse = ""), '</div>')
+  else ""
   paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>', CAROUSEL_BASE_CSS, ARRAY_FONT_FACE, '
 .slide{width:1080px;height:1080px;background:#151515;border:6px solid #151515;box-shadow:16px 16px 0 #EAFF38;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
 .ctr{position:absolute;top:44px;right:52px;font-family:"Ubuntu Mono",monospace;font-size:24px;color:rgba(255,255,255,0.22);letter-spacing:0.15em}
@@ -571,10 +594,7 @@ course_slide4_html <- function(instr, palabra, refuerzo) {
     ', instr_div, '
     <div class="pw">', he(palabra), '</div>
     ', refuerzo_div, '
-    <div class="handles">
-      <div class="pill">@estacion_r</div>
-      <div class="pill">@estacionr.bsky.social</div>
-    </div>
+    ', handles_div, '
   </div>
 </div></body></html>')
 }
@@ -926,6 +946,12 @@ ui <- page_navbar(
                 value = "Introducción a R y RStudio\nManejo de datos con tidyverse\nVisualización con ggplot2\nReportes con Quarto\nAnálisis estadístico aplicado\nProyecto integrador")
             ),
 
+            accordion_panel("📱 Redes (última placa)", value = "credes",
+              tags$span("Qué redes mostrar (van solo en la última placa)", class = "section-label"),
+              checkboxGroupInput("ig_c_redes", NULL,
+                choices = names(SOCIAL_HANDLES), selected = SOCIAL_HANDLES_DEFAULT)
+            ),
+
             accordion_panel("Slide 3 — CTA", value = "cs3",
               tags$span("Frase CTA", class = "section-label"),
               textInput("ig_c_cta", NULL, value = "Inscripción abierta")
@@ -1241,18 +1267,23 @@ server <- function(input, output, session) {
     s4_tagline = input$ig_s4_tagline
   ))
 
-  ig_curso_data <- reactive(list(
-    n_slides     = as.integer(input$ig_c_n_slides %||% 3),
-    nombre       = input$ig_c_nombre %||% "",
-    badge        = input$ig_c_badge %||% "Curso virtual",
-    tagline      = input$ig_c_tagline %||% "",
-    fecha_inicio = input$ig_c_fecha_inicio %||% "",
-    s2_bullets   = strsplit(input$ig_c_s2_bullets %||% "", "\n")[[1]],
-    cta          = input$ig_c_cta %||% "Inscripción abierta",
-    s4_instr     = input$ig_c_s4_instr %||% "",
-    s4_palabra   = input$ig_c_s4_palabra %||% "INFO",
-    s4_refuerzo  = input$ig_c_s4_refuerzo %||% ""
-  ))
+  ig_curso_data <- reactive({
+    redes_sel <- input$ig_c_redes
+    if (is.null(redes_sel)) redes_sel <- character(0)
+    list(
+      n_slides     = as.integer(input$ig_c_n_slides %||% 3),
+      nombre       = input$ig_c_nombre %||% "",
+      badge        = input$ig_c_badge %||% "Curso virtual",
+      tagline      = input$ig_c_tagline %||% "",
+      fecha_inicio = input$ig_c_fecha_inicio %||% "",
+      s2_bullets   = strsplit(input$ig_c_s2_bullets %||% "", "\n")[[1]],
+      cta          = input$ig_c_cta %||% "Inscripción abierta",
+      redes        = unname(SOCIAL_HANDLES[redes_sel]),
+      s4_instr     = input$ig_c_s4_instr %||% "",
+      s4_palabra   = input$ig_c_s4_palabra %||% "INFO",
+      s4_refuerzo  = input$ig_c_s4_refuerzo %||% ""
+    )
+  })
 
   ig_c_img_b64 <- reactive({
     req(input$ig_c_img)
@@ -1319,7 +1350,7 @@ server <- function(input, output, session) {
   output$preview_s3 <- renderUI({
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
-      slide_iframe(course_slide3_html(d$cta, total = d$n_slides))
+      slide_iframe(course_slide3_html(d$cta, redes = d$redes, total = d$n_slides))
     } else {
       d <- ig_data()
       slide_iframe(slide3_html(d$nombre, d$s3_titulo, d$s3_codigo))
@@ -1329,7 +1360,7 @@ server <- function(input, output, session) {
     if (identical(ig_tipo(), "curso")) {
       d <- ig_curso_data()
       if (d$n_slides < 4) return(NULL)
-      slide_iframe(course_slide4_html(d$s4_instr, d$s4_palabra, d$s4_refuerzo))
+      slide_iframe(course_slide4_html(d$s4_instr, d$s4_palabra, d$s4_refuerzo, redes = d$redes))
     } else {
       d <- ig_data()
       slide_iframe(slide4_html(d$s4_tagline, d$autor))
@@ -1398,6 +1429,7 @@ server <- function(input, output, session) {
           fecha_inicio = d$fecha_inicio,
           s2_bullets   = d$s2_bullets,
           cta          = d$cta,
+          redes        = I(d$redes),
           s4_instr     = d$s4_instr,
           s4_palabra   = d$s4_palabra,
           s4_refuerzo  = d$s4_refuerzo,
