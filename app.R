@@ -381,30 +381,56 @@ server <- function(input, output, session) {
   )
 
   # -- LinkedIn/X: reactivos --
-  lnk_badge_hex <- reactive(BADGE_COLORES[[input$lnk_badge_color]])
-
-  lnk_img_b64 <- reactive({
-    req(input$lnk_course_image)
-    ext <- tools::file_ext(input$lnk_course_image$name)
-    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
-    paste0("data:", mime, ";base64,", base64enc::base64encode(input$lnk_course_image$datapath))
-  })
-
   lnk_formato_dims <- reactive(FORMATOS_LNK[[input$lnk_formato]])
 
+  # Preview en vivo (Etapa 3, mismo patrón que las otras 2 pestañas): el HTML
+  # sale del worker (mismo builder JS que usan las descargas desde la Etapa 2,
+  # ver R/10_flyer_worker.R), con debounce() y cache del último HTML bueno.
+  lnk_last_html <- new.env(parent = emptyenv())
+
+  lnk_debounced <- debounce(reactive({
+    list(
+      template = input$lnk_template,
+      tip = list(
+        categoria    = input$lnk_tip_categoria,
+        pkg_nombre   = input$lnk_tip_nombre,
+        version_line = input$lnk_tip_version,
+        descripcion  = input$lnk_tip_desc,
+        codigo       = input$lnk_tip_codigo,
+        autor_line   = input$lnk_tip_autor
+      ),
+      curso = list(
+        formato      = lnk_formato_dims()$key,
+        imagen_curso = if (!is.null(input$lnk_course_image)) input$lnk_course_image$datapath else NULL,
+        badge_texto  = input$lnk_badge,
+        badge_color  = input$lnk_badge_color,
+        titulo       = input$lnk_titulo,
+        subtitulo    = input$lnk_subtitulo,
+        bullets      = I(strsplit(input$lnk_bullets %||% "", "\n")[[1]]),
+        col1_texto   = input$lnk_col1,
+        col2_texto   = input$lnk_col2,
+        col3_texto   = input$lnk_col3,
+        footer_texto = input$lnk_footer_texto,
+        footer_icon  = input$lnk_footer_icon
+      ),
+      w = lnk_formato_dims()$w
+    )
+  }), 400)
+
   output$preview_lnk <- renderUI({
-    if (identical(input$lnk_template, "Tip / Paquete de R")) {
-      return(build_flyer_tip_tag(
-        input$lnk_tip_categoria, input$lnk_tip_nombre, input$lnk_tip_version,
-        input$lnk_tip_desc, input$lnk_tip_codigo, input$lnk_tip_autor))
-    }
-    img_src <- if (!is.null(input$lnk_course_image)) lnk_img_b64() else NULL
-    build_flyer_tag(
-      lnk_badge_hex(), course_img_src = img_src, dims = lnk_formato_dims(),
-      badge = input$lnk_badge, titulo = input$lnk_titulo,
-      subtitulo = input$lnk_subtitulo, bullets_txt = input$lnk_bullets,
-      col1 = input$lnk_col1, col2 = input$lnk_col2, col3 = input$lnk_col3,
-      footer_icon = input$lnk_footer_icon, footer_texto = input$lnk_footer_texto)
+    inp <- lnk_debounced()
+    is_tip <- identical(inp$template, "Tip / Paquete de R")
+    key <- if (is_tip) "tip" else "curso"
+    config <- if (is_tip) inp$tip else inp$curso
+    html <- flyer_worker_render(flyer_worker_ensure(), key, config)
+    if (is.null(html)) html <- lnk_last_html[[key]] else lnk_last_html[[key]] <- html
+    req(html)
+    # isolate(): leemos la última altura reportada por el iframe anterior sin
+    # suscribirnos a sus cambios -- si no, cada Shiny.setInputValue() del
+    # onload (ver flyer_iframe en R/08_builders_linkedin.R) re-invalidaría
+    # este mismo renderUI y armaría un loop de re-renders.
+    last_h <- isolate(input$lnk_preview_h) %||% 520
+    flyer_iframe(html, if (is_tip) 540 else inp$w, last_h = last_h)
   })
 
   # -- LinkedIn/X: descarga HTML --
