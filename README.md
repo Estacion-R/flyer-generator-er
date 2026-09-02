@@ -93,6 +93,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Carrusel de curso: selector de 3 o 4 placas (slide 4 opcional "Comentá INFO y te mandamos el programa"), tipografía Array en portada/CTA para alinear con la tarjeta clásica~~ ✅ `v2.6.0`
 - ~~Fix azul off-brand (`#447099`) en el carrusel de curso → azul oficial `#405BFF`~~ ✅ `v2.6.1` — el mismo azul legacy sigue en el carrusel de paquete, la tarjeta tip y el flyer LinkedIn; pendiente decidir si se hace un sweep completo
 - ~~Indicador de swipe (👉) en los slides que no son la última placa del carrusel de curso; selector de redes tipo "sticker" (Instagram/X/LinkedIn/Bluesky/Mastodon) que solo aparecen en la última placa~~ ✅ `v2.7.0`
+- ~~Íconos de marca (Simple Icons, CC0) en las píldoras de redes del carrusel de curso, junto al handle~~ ✅ `v2.7.1`
 - Ideas: variantes de la tarjeta tip (dark mode), más formatos de salida para tips (cuadrado 1:1, story); visuales fase 2 (generar el chart dentro de la app, fondos dark, plantilla quote/estadística)
 
 ## Convenciones de desarrollo
