@@ -108,6 +108,19 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+// Ubuntu / Ubuntu Mono embebidas en base64 (offline, sin depender de Google Fonts).
+// Espejo del patrón de Array (ARRAY_FONT_FACE en app.R / arrayFont acá abajo).
+const UBUNTU_FONT_FACES = [
+  ['Ubuntu', 400, 'Ubuntu-Regular.woff2'],
+  ['Ubuntu', 500, 'Ubuntu-Medium.woff2'],
+  ['Ubuntu', 700, 'Ubuntu-Bold.woff2'],
+  ['Ubuntu Mono', 400, 'UbuntuMono-Regular.woff2'],
+  ['Ubuntu Mono', 700, 'UbuntuMono-Bold.woff2'],
+].map(([family, weight, file]) => {
+  const b64 = fs.readFileSync(path.join(__dirname, 'www', 'fonts', file)).toString('base64');
+  return `@font-face{font-family:'${family}';src:url('data:font/woff2;base64,${b64}') format('woff2');font-weight:${weight};font-style:normal;font-display:block;}`;
+}).join('');
+
 // ---- Colores ER ----
 const BADGE_COLORES = {
   'Azul ER': '#447099',
@@ -157,7 +170,7 @@ function highlightR(code) {
 
 // ---- CSS flyer (LinkedIn/Story) ----
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+${UBUNTU_FONT_FACES}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #f5f5f5; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
@@ -231,7 +244,7 @@ body { background: #f5f5f5; display: flex; justify-content: center; align-items:
 
 // ---- CSS tip ----
 const CSS_TIP = `
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+${UBUNTU_FONT_FACES}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #f5f5f5; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
@@ -296,7 +309,7 @@ function socialPillHtml(name, fg) {
 }
 
 // ---- CSS carrusel base (compartido entre slides, 1080×1080) ----
-const CSS_CAROUSEL_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+const CSS_CAROUSEL_FONTS = `${UBUNTU_FONT_FACES}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #f5f5f5; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; min-height: 100vh; }`;
 
@@ -1111,7 +1124,7 @@ function buildTarjetaHTML(config, formato, assets) {
   const badge = `<div class="badge">CURSOS</div>`;
 
   const fontsCSS =
-    `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');` +
+    UBUNTU_FONT_FACES +
     `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
 
   const baseCSS =
@@ -1260,7 +1273,7 @@ function buildVizHTML(config, formato, assets) {
   const ftLogo = logoFt ? `<img class="lgn" src="${logoFt}" alt="ER"/>` : '';
 
   const fontsCSS =
-    `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');` +
+    UBUNTU_FONT_FACES +
     `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
 
   const css =

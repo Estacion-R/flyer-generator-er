@@ -152,9 +152,21 @@ ARRAY_FONT_FACE <- paste0(
   base64enc::base64encode("www/fonts/Array-Bold.woff2"),
   "') format('woff2');font-weight:700;font-style:normal;font-display:block;}")
 
-TARJETA_FONTS <- paste0(
-  "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');",
-  ARRAY_FONT_FACE)
+# Ubuntu / Ubuntu Mono embebidas en base64 (offline, sin depender de Google Fonts).
+ubuntu_font_face <- function(family, weight, file) {
+  paste0("@font-face{font-family:'", family, "';src:url('data:font/woff2;base64,",
+    base64enc::base64encode(file.path("www/fonts", file)),
+    "') format('woff2');font-weight:", weight, ";font-style:normal;font-display:block;}")
+}
+UBUNTU_FONT_FACES <- paste0(
+  ubuntu_font_face("Ubuntu", 400, "Ubuntu-Regular.woff2"),
+  ubuntu_font_face("Ubuntu", 500, "Ubuntu-Medium.woff2"),
+  ubuntu_font_face("Ubuntu", 700, "Ubuntu-Bold.woff2"),
+  ubuntu_font_face("Ubuntu Mono", 400, "UbuntuMono-Regular.woff2"),
+  ubuntu_font_face("Ubuntu Mono", 700, "UbuntuMono-Bold.woff2")
+)
+
+TARJETA_FONTS <- paste0(UBUNTU_FONT_FACES, ARRAY_FONT_FACE)
 
 # ---- SVG icons ----
 SVG_ICON <- function(path_d, extra_path = NULL) {
@@ -173,9 +185,7 @@ SVG_SLACK <- SVG_ICON(
   "M20.935 12.646a1.617 1.617 0 0 0-2.022-1.034l-1.632.532c-.355-1.099-.735-2.268-1.092-3.365l.006-.002-.004-.008 1.613-.523a1.62 1.62 0 0 0 1.035-2.023 1.62 1.62 0 0 0-2.025-1.034l-1.621.527-.519-1.604a1.619 1.619 0 0 0-2.024-1.034 1.618 1.618 0 0 0-1.033 2.024l.522 1.609-3.368 1.092-.524-1.611a1.618 1.618 0 0 0-2.022-1.034 1.617 1.617 0 0 0-1.034 2.023l.524 1.616-1.662.541a1.602 1.602 0 0 0-.988 1.95c.25.856 1.152 1.373 1.979 1.092.006 0 .658-.209 1.665-.536l1.099 3.386h-.002v.002l-1.67.545a1.599 1.599 0 0 0-.987 1.949c.25.857 1.15 1.374 1.979 1.093.007 0 .659-.211 1.665-.538l.003.005a.024.024 0 0 0 .008-.002l.539 1.657a1.6 1.6 0 0 0 1.949.989c.857-.25 1.373-1.151 1.094-1.979 0-.006-.209-.654-.533-1.654l-.003-.009c1.104-.358 2.276-.739 3.376-1.098l.543 1.668a1.602 1.602 0 0 0 1.949.989c.856-.251 1.374-1.152 1.092-1.979 0-.007-.209-.659-.535-1.663l.019-.006-.003-.007 1.609-.522a1.62 1.62 0 0 0 1.035-2.024zM10.86 14.238l-1.097-3.377a.02.02 0 0 0 .005-.001v-.006c1.098-.356 2.268-.735 3.363-1.092l1.098 3.377-3.369 1.099z")
 
 # ---- CSS app ----
-css_app <- "
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
-
+css_app <- paste0(UBUNTU_FONT_FACES, "
 .panel-form {
   background: #FFFFFF;
   border: 2px solid #151515;
@@ -236,12 +246,10 @@ css_app <- "
 .flyer-wrap {
   display: flex; justify-content: center; align-items: flex-start; padding: 1rem;
 }
-"
+")
 
 # ---- CSS flyer LinkedIn/X ----
-css_flyer <- "
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
-
+css_flyer <- paste0(UBUNTU_FONT_FACES, "
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: #f5f5f5; }
 
@@ -284,11 +292,9 @@ body { background: #f5f5f5; }
 .flyer-footer-text { font-size: 0.88rem; font-weight: 700; color: #151515; font-family: 'Ubuntu', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1.4; }
 .flyer-brand { text-align: center; font-size: 0.75rem; color: #707073; font-family: 'Ubuntu', sans-serif; letter-spacing: 0.08em; border-top: 1.5px solid #C2C2C4; padding-top: 0.75rem; }
 .flyer-brand img { height: 28px; display: block; margin: 0 auto 0.3rem; }
-"
+")
 
-css_tip <- "
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
-
+css_tip <- paste0(UBUNTU_FONT_FACES, "
 * { margin: 0; padding: 0; box-sizing: border-box; }
 .tip-card { width: 540px; border: 3px solid #151515; box-shadow: 10px 10px 0 #EAFF38; overflow: hidden; background: #FFFFFF; font-family: 'Ubuntu', sans-serif; }
 .tip-header { background: #447099; padding: 2.2rem 2.5rem 2rem 2.5rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
@@ -309,12 +315,12 @@ css_tip <- "
 .tip-footer { background: #EAFF38; border-top: 2px solid #151515; padding: 0.65rem 2.5rem; display: flex; align-items: center; justify-content: space-between; }
 .tip-footer .brand { font-family: 'Ubuntu Mono', monospace; font-size: 0.72rem; font-weight: 700; color: #151515; letter-spacing: 0.1em; text-transform: uppercase; }
 .tip-footer .url { font-family: 'Ubuntu Mono', monospace; font-size: 0.68rem; color: #404041; letter-spacing: 0.06em; }
-"
+")
 
 # ---- CSS base para slides del carrusel (embebido en iframes) ----
-CAROUSEL_BASE_CSS <- "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');
+CAROUSEL_BASE_CSS <- paste0(UBUNTU_FONT_FACES, "
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #f5f5f5; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; min-height: 100vh; }"
+body { background: #f5f5f5; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; min-height: 100vh; }")
 
 # ---- Highlighter R ----
 highlight_r_code <- function(code) {
@@ -1654,7 +1660,6 @@ server <- function(input, output, session) {
           input$lnk_tip_desc, input$lnk_tip_codigo, input$lnk_tip_autor)
         html <- paste0(
           "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
-          "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap\">\n",
           "<style>", css_tip, "</style>\n</head>\n",
           "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
           as.character(tip_tag), "\n</body>\n</html>")
@@ -1672,7 +1677,6 @@ server <- function(input, output, session) {
         footer_icon = input$lnk_footer_icon, footer_texto = input$lnk_footer_texto)
       html <- paste0(
         "<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n<meta charset=\"UTF-8\">\n",
-        "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap\">\n",
         "<style>", css_flyer, "</style>\n</head>\n",
         "<body style=\"margin:0; padding:2rem; background:#f5f5f5;\">\n",
         as.character(flyer_tag), "\n</body>\n</html>")
