@@ -90,6 +90,20 @@
  * derecha en ambos formatos. El 16:9 también suma un borde negro.
  */
 
+/*
+ * config.json (template "viz_redes" — visuales de datos para redes, 1:1 + 4:5 + 16:9):
+ *   "template": "viz_redes",
+ *   "output_dir": "/tmp/viz_xxx/",
+ *   "badge": "DATOS",
+ *   "titulo": "La ropa bajó, los paquetes turísticos subieron",
+ *   "fuente": "Fuente: INDEC · IPC julio 2026",
+ *   "handles": "@estacion_r · @estacionr.bsky.social",
+ *   "formatos": ["1x1", "4x5", "16x9"],
+ *   "imagen": "/ruta/chart.png"
+ * "imagen" es opcional. Título/fuente/handles vacíos se omiten del diseño.
+ * Genera viz_1x1.png + viz_4x5.png + viz_16x9.png en output_dir.
+ */
+
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -1084,6 +1098,115 @@ async function generateTarjeta(config, assets) {
   }
 }
 
+// ---- Visuales para redes (1:1, 4:5, 16:9) — espejo de viz_html en app.R ----
+function buildVizHTML(config, formato, assets) {
+  const es169 = formato === '16x9';
+  const dims = formato === '1x1' ? { w: 1080, h: 1080 }
+    : formato === '4x5' ? { w: 1080, h: 1350 } : { w: 1920, h: 1080 };
+  const pad = es169 ? 64 : 58;
+  const logoHd = (assets.logos && assets.logos.azul) || '';
+  const logoFt = (assets.logos && assets.logos.negro) || '';
+
+  const badgeTxt = String(config.badge || '').trim();
+  const badge = badgeTxt ? `<div class="badge">${escapeHtml(badgeTxt)}</div>` : '';
+  const tituloTxt = String(config.titulo || '').trim();
+  const titulo = tituloTxt ? `<div class="tt">${escapeHtml(tituloTxt)}</div>` : '';
+
+  let chart;
+  if (typeof config.imagen === 'string' && config.imagen && fs.existsSync(config.imagen)) {
+    const imgData = fs.readFileSync(config.imagen);
+    const ext = path.extname(config.imagen).slice(1).toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    chart = `<img src="data:${mime};base64,${imgData.toString('base64')}" alt=""/>`;
+  } else {
+    chart = `<div class="ph">Subí tu gráfico</div>`;
+  }
+
+  const fuenteTxt = String(config.fuente || '').trim();
+  const handlesTxt = String(config.handles || '').trim();
+  const fuente = fuenteTxt ? `<div class="src">${escapeHtml(fuenteTxt)}</div>` : '';
+  const handles = handlesTxt ? `<div class="hand">${escapeHtml(handlesTxt)}</div>` : '';
+  const hdLogo = logoHd ? `<img class="lg" src="${logoHd}" alt="ER"/>` : '';
+  const ftLogo = logoFt ? `<img class="lgn" src="${logoFt}" alt="ER"/>` : '';
+
+  const fontsCSS =
+    `@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');` +
+    `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  const css =
+    `*{margin:0;padding:0;box-sizing:border-box}` +
+    `.viz{width:${dims.w}px;height:${dims.h}px;background:#FFFFFF;font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column}` +
+    `.hd{display:flex;justify-content:space-between;align-items:center;padding:${es169 ? '40px 64px 0' : '52px 58px 0'}}` +
+    `.hd .lg{height:${es169 ? '60px' : '64px'};display:block}` +
+    `.badge{background:#FFFFFF;color:#191919;border:3px solid #151515;font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 26px}` +
+    `.tt{font-family:'Array',sans-serif;font-weight:700;line-height:1.05;color:#191919;white-space:pre-wrap;font-size:${es169 ? '96px' : '88px'};padding:34px ${pad}px 0}` +
+    `.chart{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;padding:40px ${pad}px}` +
+    `.chart img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}` +
+    `.ph{border:4px dashed #C2C2C4;padding:60px;font-family:'Ubuntu Mono',monospace;font-size:30px;color:#707073}` +
+    `.ft{background:#EAFF38;border-top:5px solid #151515;display:flex;justify-content:space-between;align-items:center;gap:36px;padding:${es169 ? '30px' : '36px'}px ${pad}px}` +
+    `.src{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.03em;text-transform:uppercase;line-height:1.45;white-space:pre-wrap}` +
+    `.hand{font-family:'Ubuntu Mono',monospace;font-size:22px;font-weight:700;color:rgba(21,21,21,0.78);line-height:1.5;margin-top:10px}` +
+    `.lgn{height:72px;display:block}`;
+
+  const body =
+    `<div class="viz">` +
+    `<div class="hd">${hdLogo}${badge}</div>` +
+    titulo +
+    `<div class="chart">${chart}</div>` +
+    `<div class="ft"><div>${fuente}${handles}</div>${ftLogo}</div>` +
+    `</div>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${fontsCSS}${css}
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+async function generateViz(config, assets) {
+  const outputDir = config.output_dir;
+  if (!outputDir) throw new Error('output_dir requerido para template viz_redes');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const formatos = Array.isArray(config.formatos)
+    ? config.formatos
+    : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['1x1', '4x5', '16x9']);
+
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+
+  try {
+    for (const fmt of formatos) {
+      const html = buildVizHTML(config, fmt, assets);
+      const tmpHTML = path.join(require('os').tmpdir(), `viz_${fmt}_${Date.now()}.html`);
+      fs.writeFileSync(tmpHTML, html);
+
+      const page = await browser.newPage();
+      await page.setViewportSize(fmt === '4x5' ? { width: 1200, height: 1500 }
+        : fmt === '16x9' ? { width: 2000, height: 1200 } : { width: 1200, height: 1200 });
+      await page.goto('file://' + tmpHTML, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+
+      const outPNG = path.join(outputDir, `viz_${fmt}.png`);
+      await page.locator('.viz').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.close();
+      fs.unlinkSync(tmpHTML);
+      console.log(`Viz ${fmt}: ${outPNG}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // ---- Main ----
 async function main() {
   const args = process.argv.slice(2);
@@ -1135,6 +1258,12 @@ async function main() {
   // Tarjeta clásica (4:5 + 16:9): genera PNGs en output_dir; no usa --output
   if (config.template === 'tarjeta_curso') {
     await generateTarjeta(config, tarjAssets);
+    return;
+  }
+
+  // Visuales para redes (1:1 + 4:5 + 16:9): genera PNGs en output_dir; no usa --output
+  if (config.template === 'viz_redes') {
+    await generateViz(config, tarjAssets);
     return;
   }
 

@@ -89,6 +89,11 @@ TARJETA_LOGOS <- list(
 ISOTIPO_B64 <- paste0("data:image/svg+xml;base64,",
   base64enc::base64encode("www/isotipo_estacion_r.svg"))
 
+# ---- Visuales para redes (tab 📊): 1:1, 4:5 y 16:9 ----
+VIZ_FORMATOS_OPTS <- c("1:1 — Instagram (1080×1080)" = "1x1",
+                       "4:5 — Instagram feed (1080×1350)" = "4x5",
+                       "16:9 — LinkedIn / X (1920×1080)" = "16x9")
+
 TARJETA_FONTS <- paste0(
   "@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap');",
   "@font-face{font-family:'Array';src:url('data:font/woff2;base64,",
@@ -647,6 +652,56 @@ tarjeta_html <- function(d, formato = c("4x5", "16x9"), img_b64 = NULL) {
     '</style></head><body>', body, '</body></html>')
 }
 
+# ---- Visuales para redes: builder HTML (espejo de buildVizHTML en JS) ----
+viz_html <- function(d, formato = c("1x1", "4x5", "16x9"), img_b64 = NULL,
+                     logo_hd_b64 = NULL, logo_ft_b64 = NULL) {
+  formato <- match.arg(formato)
+  es169 <- identical(formato, "16x9")
+  dims <- switch(formato, "1x1" = c(1080L, 1080L), "4x5" = c(1080L, 1350L), c(1920L, 1080L))
+  pad <- if (es169) 64 else 58
+
+  badge <- if (nchar(trimws(d$badge %||% "")) > 0)
+    paste0('<div class="badge">', he(d$badge), '</div>') else ""
+  titulo_html <- if (nchar(trimws(d$titulo %||% "")) > 0)
+    paste0('<div class="tt">', he(d$titulo), '</div>') else ""
+  chart <- if (!is.null(img_b64))
+    paste0('<img src="', img_b64, '" alt=""/>') else
+    '<div class="ph">Subí tu gráfico</div>'
+  fuente_html <- if (nchar(trimws(d$fuente %||% "")) > 0)
+    paste0('<div class="src">', he(d$fuente), '</div>') else ""
+  handles_html <- if (nchar(trimws(d$handles %||% "")) > 0)
+    paste0('<div class="hand">', he(d$handles), '</div>') else ""
+  hd_logo <- if (!is.null(logo_hd_b64))
+    paste0('<img class="lg" src="', logo_hd_b64, '" alt="ER"/>') else ""
+  ft_logo <- if (!is.null(logo_ft_b64))
+    paste0('<img class="lgn" src="', logo_ft_b64, '" alt="ER"/>') else ""
+
+  css <- paste0(
+    "*{margin:0;padding:0;box-sizing:border-box}",
+    ".viz{width:", dims[1], "px;height:", dims[2], "px;background:#FFFFFF;font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column}",
+    ".hd{display:flex;justify-content:space-between;align-items:center;padding:", if (es169) "40px 64px 0" else "52px 58px 0", "}",
+    ".hd .lg{height:", if (es169) "60px" else "64px", ";display:block}",
+    ".badge{background:#FFFFFF;color:#191919;border:3px solid #151515;font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 26px}",
+    ".tt{font-family:'Array',sans-serif;font-weight:700;line-height:1.05;color:#191919;white-space:pre-wrap;font-size:", if (es169) "96px" else "88px", ";padding:34px ", pad, "px 0}",
+    ".chart{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;padding:40px ", pad, "px}",
+    ".chart img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}",
+    ".ph{border:4px dashed #C2C2C4;padding:60px;font-family:'Ubuntu Mono',monospace;font-size:30px;color:#707073}",
+    ".ft{background:#EAFF38;border-top:5px solid #151515;display:flex;justify-content:space-between;align-items:center;gap:36px;padding:", if (es169) "30px" else "36px", "px ", pad, "px}",
+    ".src{font-family:'Ubuntu Mono',monospace;font-size:26px;font-weight:700;color:#151515;letter-spacing:0.03em;text-transform:uppercase;line-height:1.45;white-space:pre-wrap}",
+    ".hand{font-family:'Ubuntu Mono',monospace;font-size:22px;font-weight:700;color:rgba(21,21,21,0.78);line-height:1.5;margin-top:10px}",
+    ".lgn{height:72px;display:block}"
+  )
+  body <- paste0(
+    '<div class="viz">',
+    '<div class="hd">', hd_logo, badge, '</div>',
+    titulo_html,
+    '<div class="chart">', chart, '</div>',
+    '<div class="ft"><div>', fuente_html, handles_html, '</div>', ft_logo, '</div>',
+    '</div>')
+  paste0('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>',
+    TARJETA_FONTS, css, '</style></head><body>', body, '</body></html>')
+}
+
 # ---- build_flyer_tag para LinkedIn/X ----
 build_flyer_tag <- function(badge_color_hex, logo_b64 = NULL, course_img_src = NULL, dims = NULL,
                              badge, titulo, subtitulo, bullets_txt, col1, col2, col3, footer_icon, footer_texto) {
@@ -970,6 +1025,55 @@ ui <- page_navbar(
     )
   ),
 
+  # ---- Tab Visuales para redes ----
+  nav_panel(
+    "📊 Visuales para redes",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 320,
+        class = "panel-form",
+
+        tags$span("Gráfico (PNG o JPG desde R)", class = "section-label"),
+        fileInput("viz_img", NULL,
+          accept = c("image/png", "image/jpeg"),
+          buttonLabel = "Elegir gráfico...",
+          placeholder = "Sin gráfico"),
+
+        tags$span("Badge", class = "section-label"),
+        textInput("viz_badge", NULL, value = "DATOS"),
+
+        tags$span("Título (opcional)", class = "section-label"),
+        textAreaInput("viz_titulo", NULL, rows = 2,
+          value = "La ropa bajó, los paquetes turísticos subieron"),
+
+        tags$span("Fuente de datos", class = "section-label"),
+        textAreaInput("viz_fuente", NULL, rows = 2,
+          value = "Fuente: INDEC · IPC julio 2026"),
+
+        tags$span("Redes (footer)", class = "section-label"),
+        textInput("viz_handles", NULL,
+          value = "@estacion_r · @estacionr.bsky.social"),
+
+        tags$hr(),
+        tags$span("Formatos a descargar", class = "section-label"),
+        checkboxGroupInput("viz_formatos", NULL,
+          choices = VIZ_FORMATOS_OPTS,
+          selected = unname(VIZ_FORMATOS_OPTS)),
+
+        downloadButton("descargar_viz_zip", "⬇ Descargar ZIP", class = "btn-zip")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "1:1 — Instagram (1080×1080)"),
+        uiOutput("preview_viz_11"),
+        div(class = "slide-label", "4:5 — Instagram feed (1080×1350)"),
+        uiOutput("preview_viz_45"),
+        div(class = "slide-label", "16:9 — LinkedIn / X (1920×1080)"),
+        uiOutput("preview_viz_169")
+      )
+    )
+  ),
+
   # ---- Tab LinkedIn / X ----
   nav_panel(
     "💼 LinkedIn · X",
@@ -1265,6 +1369,72 @@ server <- function(input, output, session) {
         stop("Error generando carrusel: ", paste(result, collapse = "\n"))
 
       old_wd <- setwd(slide_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
+
+  # -- Visuales para redes: reactivos --
+  viz_data <- reactive({
+    list(
+      badge   = input$viz_badge %||% "",
+      titulo  = input$viz_titulo %||% "",
+      fuente  = input$viz_fuente %||% "",
+      handles = input$viz_handles %||% ""
+    )
+  })
+
+  viz_img_b64 <- reactive({
+    req(input$viz_img)
+    ext <- tools::file_ext(input$viz_img$name)
+    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
+    paste0("data:", mime, ";base64,", base64enc::base64encode(input$viz_img$datapath))
+  })
+
+  viz_preview <- function(fmt, w, h) {
+    d <- viz_data()
+    img_b64 <- if (!is.null(input$viz_img)) viz_img_b64() else NULL
+    tarjeta_iframe(viz_html(d, fmt, img_b64, TARJETA_LOGOS$azul, TARJETA_LOGOS$negro), w, h, 540)
+  }
+
+  output$preview_viz_11  <- renderUI(viz_preview("1x1", 1080, 1080))
+  output$preview_viz_45  <- renderUI(viz_preview("4x5", 1080, 1350))
+  output$preview_viz_169 <- renderUI(viz_preview("16x9", 1920, 1080))
+
+  # -- Visuales para redes: descarga ZIP --
+  output$descargar_viz_zip <- downloadHandler(
+    filename = function() paste0("viz_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$viz_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- viz_data()
+      viz_dir <- tempfile(pattern = "viz_")
+      dir.create(viz_dir)
+      on.exit(unlink(viz_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template   = "viz_redes",
+        output_dir = viz_dir,
+        badge      = d$badge,
+        titulo     = d$titulo,
+        fuente     = d$fuente,
+        handles    = d$handles,
+        formatos   = fmts,
+        imagen     = if (!is.null(input$viz_img)) input$viz_img$datapath else NULL
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- system2(NODE_BIN,
+        args = c(PLAYWRIGHT_SCRIPT, "--config", cfg_file),
+        stdout = TRUE, stderr = TRUE)
+
+      pngs <- list.files(viz_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0)
+        stop("Error generando visuales: ", paste(result, collapse = "\n"))
+
+      old_wd <- setwd(viz_dir)
       on.exit(setwd(old_wd), add = TRUE)
       utils::zip(zipfile = file, files = pngs, flags = "-j9")
     }

@@ -1,6 +1,6 @@
 {
   "name": "flyer-generator-er",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "Generador de flyers de Estación R — render PNG server-side con Playwright",
   "main": "generate_flyer.js",
   "scripts": {

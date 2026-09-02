@@ -1,6 +1,6 @@
 # Generador de Flyers — Estación R
 
-App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Dos pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso en 3 slides y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
+App Shiny para generar piezas de difusión de Estación R (minimalista neobrutalist-light). Tres pestañas: **📸 Instagram** (carrusel de paquete de R en 4 slides 1080×1080, carrusel de anuncio de curso en 3 slides y **tarjeta clásica de curso** en 4:5 + 16:9 con 4 fondos), **📊 Visuales para redes** (gráfico de datos enmarcado con branding ER en 1:1 + 4:5 + 16:9) y **💼 LinkedIn/X** (flyer de curso y tarjeta de tip/paquete). Formulario en vivo, preview y descarga en HTML/PNG/ZIP.
 
 **Deploy activo:** shiny-server local → `http://localhost:3838/flyer/` (en LAN: `http://192.168.0.74:3838/flyer/` — la IP cambia con la WiFi)
 
