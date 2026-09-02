@@ -48,12 +48,17 @@ flyer_worker_alive <- function(worker) {
 # Pide HTML al worker. Devuelve el string HTML, o NULL si el worker no está
 # vivo, no respondió a tiempo, o devolvió un error -- nunca lanza un error
 # hacia el reactivo que lo llama (el fallback es responsabilidad de quien
-# llama, ver viz_render_fmt() en app.R).
-flyer_worker_render <- function(worker, template, config, formato = NULL) {
+# llama, ver viz_render_fmt() en app.R). tipo/position/total son solo para
+# el template "course_slide" (carrusel de curso, placas de tipo variable).
+flyer_worker_render <- function(worker, template, config, formato = NULL,
+                                 tipo = NULL, position = NULL, total = NULL) {
   if (!flyer_worker_alive(worker)) return(NULL)
 
   payload <- list(template = template, config = config)
-  if (!is.null(formato)) payload$formato <- formato
+  if (!is.null(formato))  payload$formato  <- formato
+  if (!is.null(tipo))     payload$tipo     <- tipo
+  if (!is.null(position)) payload$position <- position
+  if (!is.null(total))    payload$total    <- total
 
   resp <- tryCatch(
     httr::POST(

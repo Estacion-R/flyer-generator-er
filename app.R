@@ -77,13 +77,6 @@ server <- function(input, output, session) {
     )
   })
 
-  ig_c_img_b64 <- reactive({
-    req(input$ig_c_img)
-    ext <- tools::file_ext(input$ig_c_img$name)
-    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
-    paste0("data:", mime, ";base64,", base64enc::base64encode(input$ig_c_img$datapath))
-  })
-
   ig_tarjeta_data <- reactive({
     n <- as.integer(input$ig_t_n_items %||% 4)
     items <- lapply(1:n, function(i) {
@@ -102,56 +95,109 @@ server <- function(input, output, session) {
     )
   })
 
-  ig_t_img_b64 <- reactive({
-    req(input$ig_t_img)
-    ext <- tools::file_ext(input$ig_t_img$name)
-    mime <- if (tolower(ext) == "png") "image/png" else "image/jpeg"
-    paste0("data:", mime, ";base64,", base64enc::base64encode(input$ig_t_img$datapath))
-  })
+  # Preview en vivo (Etapa 3, mismo patrón que Visuales para redes, ver
+  # R/10_flyer_worker.R): el HTML sale del worker (misma fuente que el ZIP
+  # descargado), con debounce() y cache del último HTML bueno por slide para
+  # que un worker lento/reiniciándose no deje el preview en blanco.
+  ig_last_html <- new.env(parent = emptyenv())
 
-  output$preview_t45 <- renderUI({
-    d <- ig_tarjeta_data()
-    img_b64 <- if (!is.null(input$ig_t_img)) ig_t_img_b64() else NULL
-    tarjeta_iframe(tarjeta_html(d, "4x5", img_b64), 1080, 1350, 540)
-  })
-  output$preview_t169 <- renderUI({
-    d <- ig_tarjeta_data()
-    img_b64 <- if (!is.null(input$ig_t_img)) ig_t_img_b64() else NULL
-    tarjeta_iframe(tarjeta_html(d, "16x9", img_b64), 1920, 1080, 540)
-  })
+  # -- Carrusel de paquete (slides 1-4) --
+  ig_debounced <- debounce(ig_data, 400)
 
-  output$preview_s1 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide1_html(d$nombre, d$categoria, d$s1_tagline))
-  })
-  output$preview_s2 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide2_html(d$nombre, d$s2_titulo, d$s2_desc, d$s2_bullets))
-  })
-  output$preview_s3 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide3_html(d$nombre, d$s3_titulo, d$s3_codigo))
-  })
-  output$preview_s4 <- renderUI({
-    d <- ig_data()
-    slide_iframe(slide4_html(d$s4_tagline, d$autor))
-  })
+  ig_slide_render <- function(key, template) {
+    d <- ig_debounced()
+    config <- list(
+      pkg_nombre     = d$nombre,
+      categoria      = d$categoria,
+      version_line   = d$version,
+      autor_line     = d$autor,
+      slide1_tagline = d$s1_tagline,
+      slide2_titulo  = d$s2_titulo,
+      slide2_desc    = d$s2_desc,
+      slide2_bullets = I(d$s2_bullets),
+      slide3_titulo  = d$s3_titulo,
+      slide3_codigo  = d$s3_codigo,
+      slide4_tagline = d$s4_tagline
+    )
+    html <- flyer_worker_render(flyer_worker_ensure(), template, config)
+    if (is.null(html)) html <- ig_last_html[[key]] else ig_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_s1 <- renderUI({ html <- ig_slide_render("s1", "slide1"); req(html); slide_iframe(html) })
+  output$preview_s2 <- renderUI({ html <- ig_slide_render("s2", "slide2"); req(html); slide_iframe(html) })
+  output$preview_s3 <- renderUI({ html <- ig_slide_render("s3", "slide3"); req(html); slide_iframe(html) })
+  output$preview_s4 <- renderUI({ html <- ig_slide_render("s4", "slide4"); req(html); slide_iframe(html) })
 
   # -- Instagram: labels de slides (paquete de R) --
   output$label_s2 <- renderUI(div(class = "slide-label", "Slide 2 — ¿Qué hace?"))
   output$label_s3 <- renderUI(div(class = "slide-label", "Slide 3 — Código"))
   output$label_s4 <- renderUI(div(class = "slide-label", "Slide 4 — Cierre"))
 
+  # -- Tarjeta clásica de curso (4:5 + 16:9) --
+  ig_tarjeta_debounced <- debounce(reactive({
+    list(d = ig_tarjeta_data(), imagen = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL)
+  }), 400)
+
+  ig_tarjeta_render <- function(key, formato) {
+    inp <- ig_tarjeta_debounced()
+    config <- list(
+      fondo   = inp$d$fondo,
+      titulo  = inp$d$titulo,
+      tagline = inp$d$tagline,
+      items   = inp$d$items,
+      inscripcion_texto = inp$d$inscripcion_texto,
+      imagen_curso = inp$imagen
+    )
+    html <- flyer_worker_render(flyer_worker_ensure(), "tarjeta_curso", config, formato)
+    if (is.null(html)) html <- ig_last_html[[key]] else ig_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_t45 <- renderUI({
+    html <- ig_tarjeta_render("t45", "4x5")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_t169 <- renderUI({
+    html <- ig_tarjeta_render("t169", "16x9")
+    req(html)
+    tarjeta_iframe(html, 1920, 1080, 540)
+  })
+
   # -- Instagram: carrusel de curso — grid dinámico según el plan de placas --
+  ig_curso_debounced <- debounce(reactive({
+    list(d = ig_curso_data(), imagen = if (!is.null(input$ig_c_img)) input$ig_c_img$datapath else NULL)
+  }), 400)
+
   output$curso_preview_grid <- renderUI({
-    d <- ig_curso_data()
+    inp <- ig_curso_debounced()
+    d <- inp$d
     plan <- d$plan
     total <- length(plan)
-    img_b64 <- if (!is.null(input$ig_c_img)) ig_c_img_b64() else NULL
+    config <- list(
+      plan           = I(plan),
+      nombre         = d$nombre,
+      badge          = d$badge,
+      tagline        = d$tagline,
+      fecha_inicio   = d$fecha_inicio,
+      s2_bullets     = I(d$s2_bullets),
+      llevas_bullets = I(d$llevas_bullets),
+      cta            = d$cta,
+      redes          = I(d$redes),
+      s4_instr       = d$s4_instr,
+      s4_palabra     = d$s4_palabra,
+      s4_refuerzo    = d$s4_refuerzo,
+      imagen_curso   = inp$imagen
+    )
+    worker <- flyer_worker_ensure()
     tagList(lapply(seq_along(plan), function(i) {
       tipo <- plan[i]
       etiqueta <- CURSO_SLIDE_LABELS[[tipo]] %||% tipo
-      html <- course_slide_dispatch(tipo, d, position = i, total = total, img_b64 = img_b64)
+      key <- paste0("curso_", i, "_", tipo)
+      html <- flyer_worker_render(worker, "course_slide", config, tipo = tipo, position = i, total = total)
+      if (is.null(html)) html <- ig_last_html[[key]] else ig_last_html[[key]] <- html
+      if (is.null(html)) return(NULL)
       div(
         div(class = "slide-label", paste0(i, ". ", etiqueta)),
         slide_iframe(html)
