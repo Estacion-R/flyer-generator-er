@@ -34,7 +34,7 @@ build_ui <- function() {
         tags$span("Tipo de carrusel", class = "section-label"),
         selectInput("ig_tipo_carrusel", NULL,
           choices = c("📦 Paquete de R" = "paquete", "🎓 Anuncio de curso" = "curso",
-                      "🎴 Tarjeta clásica" = "tarjeta"),
+                      "🎴 Tarjeta clásica" = "tarjeta", "🏷️ Tarjeta de descuento" = "descuento"),
           selected = "paquete"),
 
         conditionalPanel(
@@ -229,6 +229,28 @@ build_ui <- function() {
           )
         ),
 
+        conditionalPanel(
+          condition = "input.ig_tipo_carrusel == 'descuento'",
+          accordion(
+            open = c("dbase"),
+            multiple = TRUE,
+
+            accordion_panel("🏷️ Descuento", value = "dbase",
+              tags$span("Descuento (elemento central)", class = "section-label"),
+              textInput("ig_d_descuento", NULL, value = "30% OFF"),
+              tags$span("Curso / paquete al que aplica (opcional)", class = "section-label"),
+              textAreaInput("ig_d_curso", NULL, rows = 2,
+                value = "Introducción a R para Ciencias Sociales"),
+              tags$span("Código de cupón (opcional)", class = "section-label"),
+              textInput("ig_d_codigo", NULL, value = "R2026"),
+              tags$span("Vigencia / fecha límite (opcional)", class = "section-label"),
+              textInput("ig_d_vigencia", NULL, value = "Válido hasta el 30/9"),
+              tags$span("CTA", class = "section-label"),
+              textInput("ig_d_cta", NULL, value = "Aprovechá ahora")
+            )
+          )
+        ),
+
         downloadButton("descargar_zip",
           "⬇ Descargar ZIP",
           class = "btn-zip",
@@ -284,6 +306,27 @@ build_ui <- function() {
             div(
               div(class = "slide-label", "Horizontal — 16:9 (1920×1080)"),
               uiOutput("preview_t169")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel == 'descuento'",
+            div(
+              div(class = "slide-label", "Feed — 4:5 (1080×1350)"),
+              uiOutput("preview_d45")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel == 'descuento'",
+            div(
+              div(class = "slide-label", "Cuadrado — 1:1 (1080×1080)"),
+              uiOutput("preview_d11")
+            )
+          ),
+          conditionalPanel(
+            condition = "input.ig_tipo_carrusel == 'descuento'",
+            div(
+              div(class = "slide-label", "Horizontal — 16:9 (1920×1080)"),
+              uiOutput("preview_d169")
             )
           )
         )

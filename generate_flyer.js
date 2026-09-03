@@ -118,6 +118,28 @@
  * Genera viz_1x1.png + viz_4x5.png + viz_16x9.png en output_dir.
  */
 
+/*
+ * config.json (template "descuento" — placa de descuento, 4:5 1080×1350 + 1:1 1080×1080 + 16:9 1920×1080):
+ * {
+ *   "template": "descuento",
+ *   "output_dir": "/tmp/descuento_xxx/",
+ *   "descuento": "30% OFF",
+ *   "curso": "Introducción a R para Ciencias Sociales",
+ *   "codigo": "R2026",
+ *   "vigencia": "Válido hasta el 30/9",
+ *   "cta": "Aprovechá ahora",
+ *   "formatos": ["4x5", "1x1", "16x9"]
+ * }
+ * "descuento" es el elemento central, en Array grande con sombra dura (obligatorio
+ * en la práctica: si viene vacío se muestra "OFF" de placeholder). "curso" (nombre
+ * del curso/paquete al que aplica), "codigo" (cupón) y "vigencia" (fecha límite,
+ * texto libre) son opcionales y se omiten del diseño si vienen vacíos. "cta" tiene
+ * default "APROVECHÁ AHORA" si viene vacío. El tamaño de fuente del descuento se
+ * recalcula según la longitud del texto (ver descuentoNumSize) para que textos
+ * largos ("HASTA 50% OFF EN TODOS LOS CURSOS") no desborden la placa.
+ * Genera descuento_4x5.png + descuento_1x1.png + descuento_16x9.png en output_dir.
+ */
+
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -1364,6 +1386,130 @@ async function generateViz(config, assets) {
   }
 }
 
+// ---- Placa de descuento (4:5 + 1:1 + 16:9) ----
+// Tamaño del número central según la longitud del texto: sin esto, un
+// "30% OFF" corto y un "HASTA 50% OFF EN TODOS LOS CURSOS" largo no pueden
+// compartir el mismo font-size fijo sin que uno se vea chico o el otro
+// desborde la placa (mismo criterio que tarjetaItemSizing() para los ítems
+// de la tarjeta clásica, pero indexado por longitud de texto en vez de
+// cantidad de ítems).
+function descuentoNumSize(text, es169) {
+  const len = String(text || '').length;
+  const tabla = es169
+    ? [[4, 300], [8, 240], [14, 180], [22, 130], [Infinity, 95]]
+    : [[4, 240], [8, 190], [14, 145], [22, 105], [Infinity, 78]];
+  for (const [maxLen, size] of tabla) if (len <= maxLen) return size;
+  return tabla[tabla.length - 1][1];
+}
+
+function buildDescuentoHTML(config, formato, assets) {
+  const es169 = formato === '16x9';
+  const es11 = formato === '1x1';
+  const dims = es169 ? { w: 1920, h: 1080 } : es11 ? { w: 1080, h: 1080 } : { w: 1080, h: 1350 };
+  const logo = (assets.logos && assets.logos.blanco) || '';
+
+  const descuentoTxt = String(config.descuento || '').trim() || 'OFF';
+  const cursoTxt = String(config.curso || '').trim();
+  const codigoTxt = String(config.codigo || '').trim();
+  const vigenciaTxt = String(config.vigencia || '').trim();
+  const ctaTxt = String(config.cta || '').trim() || 'Aprovechá ahora';
+
+  const cursoHTML = cursoTxt ? `<div class="curso">${escapeHtml(cursoTxt)}</div>` : '';
+  const codigoHTML = codigoTxt
+    ? `<div class="pill pill-codigo"><span class="pill-label">Cupón</span><span class="pill-val">${escapeHtml(codigoTxt)}</span></div>`
+    : '';
+  const vigenciaHTML = vigenciaTxt ? `<div class="pill pill-vigencia">${escapeHtml(vigenciaTxt)}</div>` : '';
+  const pillsHTML = (codigoHTML || vigenciaHTML) ? `<div class="pills">${codigoHTML}${vigenciaHTML}</div>` : '';
+
+  const fontsCSS =
+    UBUNTU_FONT_FACES +
+    `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  const numSize = descuentoNumSize(descuentoTxt, es169);
+  const shadowOff = es169 ? 10 : 8;
+  const padX = es169 ? 96 : 58;
+  const cursoSize = es169 ? 46 : 40;
+  const gap = es169 ? 30 : 34;
+
+  const css =
+    `*{margin:0;padding:0;box-sizing:border-box}` +
+    `.descuento{width:${dims.w}px;height:${dims.h}px;background:#151515;font-family:'Ubuntu',sans-serif;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:16px 16px 0 #EAFF38}` +
+    `.hd{display:flex;justify-content:space-between;align-items:center;padding:${es169 ? '48px 64px 0' : '52px 56px 0'}}` +
+    `.hd .lg{height:${es169 ? '58px' : '54px'};display:block}` +
+    `.badge{background:#EE6331;color:#FFFFFF;font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:10px 24px}` +
+    `.body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${gap}px;padding:24px ${padX}px}` +
+    `.num{font-family:'Array',sans-serif;font-weight:700;color:#EAFF38;text-shadow:${shadowOff}px ${shadowOff}px 0 #405BFF;line-height:0.95;text-align:center;white-space:pre-wrap;overflow-wrap:break-word;font-size:${numSize}px;max-width:100%}` +
+    `.curso{font-family:'Ubuntu',sans-serif;font-weight:700;color:#FFFFFF;text-align:center;font-size:${cursoSize}px;line-height:1.25;white-space:pre-wrap}` +
+    `.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:18px}` +
+    `.pill{background:#FFFFFF;border-radius:999px;padding:12px 28px;display:flex;align-items:center;gap:10px}` +
+    `.pill-codigo{border:3px solid #151515}` +
+    `.pill-label{font-family:'Ubuntu Mono',monospace;font-size:18px;font-weight:700;color:#707073;letter-spacing:0.1em;text-transform:uppercase}` +
+    `.pill-val{font-family:'Ubuntu Mono',monospace;font-size:24px;font-weight:700;color:#151515;letter-spacing:0.06em}` +
+    `.pill-vigencia{border:3px dashed #151515;font-family:'Ubuntu',sans-serif;font-size:22px;font-weight:700;color:#151515}` +
+    `.cta{background:#EAFF38;color:#151515;font-family:'Ubuntu',sans-serif;font-weight:700;font-size:${es169 ? '38px' : '32px'};text-transform:uppercase;letter-spacing:0.04em;padding:22px 56px;border:4px solid #151515;box-shadow:8px 8px 0 #419599;text-align:center}`;
+
+  const body =
+    `<div class="descuento">` +
+    `<div class="hd">${logo ? `<img class="lg" src="${logo}"/>` : '<span></span>'}<div class="badge">Descuento</div></div>` +
+    `<div class="body">` +
+    `<div class="num">${escapeHtml(descuentoTxt)}</div>` +
+    cursoHTML +
+    pillsHTML +
+    `<div class="cta">${escapeHtml(ctaTxt)}</div>` +
+    `</div>` +
+    `</div>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${fontsCSS}${css}
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+async function generateDescuento(config, assets) {
+  const outputDir = config.output_dir;
+  if (!outputDir) throw new Error('output_dir requerido para template descuento');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const formatos = Array.isArray(config.formatos)
+    ? config.formatos
+    : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['4x5', '1x1', '16x9']);
+
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+
+  try {
+    for (const fmt of formatos) {
+      const html = buildDescuentoHTML(config, fmt, assets);
+      const tmpHTML = path.join(require('os').tmpdir(), `descuento_${fmt}_${Date.now()}.html`);
+      fs.writeFileSync(tmpHTML, html);
+
+      const page = await browser.newPage();
+      await page.setViewportSize(fmt === '4x5' ? { width: 1200, height: 1500 }
+        : fmt === '16x9' ? { width: 2000, height: 1200 } : { width: 1200, height: 1200 });
+      await page.goto('file://' + tmpHTML, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+
+      const outPNG = path.join(outputDir, `descuento_${fmt}.png`);
+      await page.locator('.descuento').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.close();
+      fs.unlinkSync(tmpHTML);
+      console.log(`Descuento ${fmt}: ${outPNG}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Carga los assets compartidos (logo, logos por tinta, íconos, isotipo, fuente
 // Array) desde www/, relativos a scriptDir. Extraída de main() para que
 // worker.js pueda cargarlos una sola vez al arrancar (ver Etapa 3 del plan de
@@ -1434,6 +1580,12 @@ async function main() {
     return;
   }
 
+  // Placa de descuento (4:5 + 1:1 + 16:9): genera PNGs en output_dir; no usa --output
+  if (config.template === 'descuento') {
+    await generateDescuento(config, tarjAssets);
+    return;
+  }
+
   // Carousel (paquete 4 slides / curso 3-4 slides): genera PNGs en output_dir; no usa --output
   if (config.template === 'carousel' || config.template === 'carousel_curso') {
     await generateCarousel(config, logoB64, tarjAssets.arrayFont);
@@ -1478,6 +1630,7 @@ module.exports = {
   buildTipHTML,
   buildVizHTML,
   buildTarjetaHTML,
+  buildDescuentoHTML,
   buildSlide1,
   buildSlide2,
   buildSlide3,

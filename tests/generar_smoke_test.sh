@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Smoke test del CLI generate_flyer.js: genera los 6 builders de la app
+# Smoke test del CLI generate_flyer.js: genera los 7 builders de la app
 # (carrusel de paquete, carrusel de curso, tarjeta clásica de curso 4:5+16:9,
-# visual de datos para redes, flyer de curso LinkedIn/X, tarjeta de tip/paquete)
-# con datos de prueba fijos y verifica que cada uno termine sin error y
-# produzca un archivo no vacío. No compara contenido pixel a pixel: solo
-# "generó algo razonable sin crashear".
+# visual de datos para redes, flyer de curso LinkedIn/X, tarjeta de tip/paquete,
+# tarjeta de descuento 4:5+1:1+16:9) con datos de prueba fijos y verifica que
+# cada uno termine sin error y produzca un archivo no vacío. No compara
+# contenido pixel a pixel: solo "generó algo razonable sin crashear".
 #
 # Uso:
 #   tests/generar_smoke_test.sh
@@ -79,7 +79,7 @@ run_node() {
   fi
 }
 
-echo "== Smoke test: generate_flyer.js (6 builders) =="
+echo "== Smoke test: generate_flyer.js (7 builders) =="
 echo "Node: $NODE_BIN"
 echo "Workdir temporal: $WORKDIR"
 echo
@@ -254,6 +254,31 @@ OUT_HTML="$WORKDIR/tip.html"
 if run_node "tip: render HTML" generate_flyer.js --config "$CFG" --output "$OUT_HTML"; then
   check_file "$OUT_HTML" "$MIN_HTML_BYTES" "tip: tip.html"
   check_no_google_fonts "$OUT_HTML" "tip.html"
+fi
+echo
+
+# ---------------------------------------------------------------
+# 7. Tarjeta de descuento (4:5 + 1:1 + 16:9)
+# ---------------------------------------------------------------
+echo "-- 7. Tarjeta de descuento --"
+CFG="$WORKDIR/descuento.json"
+OUT_DIR="$WORKDIR/descuento"
+cat > "$CFG" <<JSON
+{
+  "template": "descuento",
+  "output_dir": "$OUT_DIR",
+  "descuento": "30% OFF",
+  "curso": "Introduccion a R para Ciencias Sociales",
+  "codigo": "R2026",
+  "vigencia": "Valido hasta el 30/9",
+  "cta": "Aprovecha ahora",
+  "formatos": ["4x5", "1x1", "16x9"]
+}
+JSON
+if run_node "descuento: render" generate_flyer.js --config "$CFG"; then
+  for fmt in 4x5 1x1 16x9; do
+    check_file "$OUT_DIR/descuento_$fmt.png" "$MIN_PNG_BYTES" "descuento: descuento_$fmt.png"
+  done
 fi
 echo
 

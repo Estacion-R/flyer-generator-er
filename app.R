@@ -165,6 +165,49 @@ server <- function(input, output, session) {
     tarjeta_iframe(html, 1920, 1080, 540)
   })
 
+  # -- Tarjeta de descuento (4:5 + 1:1 + 16:9) --
+  ig_descuento_data <- reactive({
+    list(
+      descuento = input$ig_d_descuento %||% "",
+      curso     = input$ig_d_curso %||% "",
+      codigo    = input$ig_d_codigo %||% "",
+      vigencia  = input$ig_d_vigencia %||% "",
+      cta       = input$ig_d_cta %||% "Aprovechá ahora"
+    )
+  })
+
+  ig_descuento_debounced <- debounce(ig_descuento_data, 400)
+
+  ig_descuento_render <- function(key, formato) {
+    d <- ig_descuento_debounced()
+    config <- list(
+      descuento = d$descuento,
+      curso     = d$curso,
+      codigo    = d$codigo,
+      vigencia  = d$vigencia,
+      cta       = d$cta
+    )
+    html <- flyer_worker_render(flyer_worker_ensure(), "descuento", config, formato)
+    if (is.null(html)) html <- ig_last_html[[key]] else ig_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_d45 <- renderUI({
+    html <- ig_descuento_render("d45", "4x5")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_d11 <- renderUI({
+    html <- ig_descuento_render("d11", "1x1")
+    req(html)
+    tarjeta_iframe(html, 1080, 1080, 540)
+  })
+  output$preview_d169 <- renderUI({
+    html <- ig_descuento_render("d169", "16x9")
+    req(html)
+    tarjeta_iframe(html, 1920, 1080, 540)
+  })
+
   # -- Instagram: carrusel de curso — grid dinámico según el plan de placas --
   ig_curso_debounced <- debounce(reactive({
     list(d = ig_curso_data(), imagen = if (!is.null(input$ig_c_img)) input$ig_c_img$datapath else NULL)
@@ -209,8 +252,9 @@ server <- function(input, output, session) {
   output$descargar_zip <- downloadHandler(
     filename = function() {
       pref <- switch(ig_tipo(),
-        tarjeta = "tarjeta_er_",
-        curso   = "carrusel_curso_er_",
+        tarjeta   = "tarjeta_er_",
+        curso     = "carrusel_curso_er_",
+        descuento = "descuento_er_",
         "carrusel_er_")
       paste0(pref, format(Sys.Date(), "%Y%m%d"), ".zip")
     },
@@ -231,6 +275,18 @@ server <- function(input, output, session) {
           inscripcion_texto = d$inscripcion_texto,
           solo_45      = isTRUE(input$ig_t_solo_45),
           imagen_curso = if (!is.null(input$ig_t_img)) input$ig_t_img$datapath else NULL
+        )
+      } else if (identical(ig_tipo(), "descuento")) {
+        d <- ig_descuento_data()
+        config <- list(
+          template  = "descuento",
+          output_dir = slide_dir,
+          descuento = d$descuento,
+          curso     = d$curso,
+          codigo    = d$codigo,
+          vigencia  = d$vigencia,
+          cta       = d$cta,
+          formatos  = I(c("4x5", "1x1", "16x9"))
         )
       } else if (identical(ig_tipo(), "curso")) {
         d <- ig_curso_data()
