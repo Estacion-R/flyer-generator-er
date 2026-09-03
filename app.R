@@ -42,19 +42,24 @@ server <- function(input, output, session) {
   # -- Instagram: reactivos --
   ig_tipo <- reactive(input$ig_tipo_carrusel %||% "paquete")
 
-  ig_data <- reactive(list(
-    nombre   = input$ig_nombre,
-    categoria = input$ig_categoria,
-    version  = input$ig_version,
-    autor    = input$ig_autor,
-    s1_tagline = input$ig_s1_tagline,
-    s2_titulo  = input$ig_s2_titulo,
-    s2_desc    = input$ig_s2_desc,
-    s2_bullets = strsplit(input$ig_s2_bullets %||% "", "\n")[[1]],
-    s3_titulo  = input$ig_s3_titulo,
-    s3_codigo  = input$ig_s3_codigo,
-    s4_tagline = input$ig_s4_tagline
-  ))
+  ig_data <- reactive({
+    redes_sel <- input$ig_pkg_redes
+    if (is.null(redes_sel)) redes_sel <- character(0)
+    list(
+      nombre   = input$ig_nombre,
+      categoria = input$ig_categoria,
+      version  = input$ig_version,
+      autor    = input$ig_autor,
+      s1_tagline = input$ig_s1_tagline,
+      s2_titulo  = input$ig_s2_titulo,
+      s2_desc    = input$ig_s2_desc,
+      s2_bullets = strsplit(input$ig_s2_bullets %||% "", "\n")[[1]],
+      s3_titulo  = input$ig_s3_titulo,
+      s3_codigo  = input$ig_s3_codigo,
+      s4_tagline = input$ig_s4_tagline,
+      redes      = redes_sel
+    )
+  })
 
   ig_curso_data <- reactive({
     redes_sel <- input$ig_c_redes
@@ -102,22 +107,27 @@ server <- function(input, output, session) {
   ig_last_html <- new.env(parent = emptyenv())
 
   # -- Carrusel de paquete (slides 1-4) --
-  ig_debounced <- debounce(ig_data, 400)
+  ig_debounced <- debounce(reactive({
+    list(d = ig_data(), imagen = if (!is.null(input$ig_pkg_img)) input$ig_pkg_img$datapath else NULL)
+  }), 400)
 
   ig_slide_render <- function(key, template) {
-    d <- ig_debounced()
+    inp <- ig_debounced()
+    d <- inp$d
     config <- list(
       pkg_nombre     = d$nombre,
       categoria      = d$categoria,
       version_line   = d$version,
       autor_line     = d$autor,
       slide1_tagline = d$s1_tagline,
+      slide1_imagen  = inp$imagen,
       slide2_titulo  = d$s2_titulo,
       slide2_desc    = d$s2_desc,
       slide2_bullets = I(d$s2_bullets),
       slide3_titulo  = d$s3_titulo,
       slide3_codigo  = d$s3_codigo,
-      slide4_tagline = d$s4_tagline
+      slide4_tagline = d$s4_tagline,
+      redes          = I(d$redes)
     )
     html <- flyer_worker_render(flyer_worker_ensure(), template, config)
     if (is.null(html)) html <- ig_last_html[[key]] else ig_last_html[[key]] <- html
@@ -317,12 +327,14 @@ server <- function(input, output, session) {
           version_line  = d$version,
           autor_line    = d$autor,
           slide1_tagline = d$s1_tagline,
+          slide1_imagen  = if (!is.null(input$ig_pkg_img)) input$ig_pkg_img$datapath else NULL,
           slide2_titulo  = d$s2_titulo,
           slide2_desc    = d$s2_desc,
           slide2_bullets = d$s2_bullets,
           slide3_titulo  = d$s3_titulo,
           slide3_codigo  = d$s3_codigo,
-          slide4_tagline = d$s4_tagline
+          slide4_tagline = d$s4_tagline,
+          redes          = I(d$redes)
         )
       }
 

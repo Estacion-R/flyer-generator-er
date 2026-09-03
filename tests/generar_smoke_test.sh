@@ -104,7 +104,8 @@ cat > "$CFG" <<JSON
   "slide2_bullets": ["Nombres de columnas consistentes", "Detecta filas/columnas vacias", "Tablas de frecuencia rapidas"],
   "slide3_titulo": "En la practica",
   "slide3_codigo": "datos <- datos |>\n  clean_names()",
-  "slide4_tagline": "Seguinos para mas tips de R"
+  "slide4_tagline": "Seguinos para mas tips de R",
+  "redes": ["Instagram", "X / Twitter", "LinkedIn"]
 }
 JSON
 if run_node "carousel: render" generate_flyer.js --config "$CFG"; then

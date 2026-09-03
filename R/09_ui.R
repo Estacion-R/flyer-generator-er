@@ -57,7 +57,12 @@ build_ui <- function() {
             accordion_panel("Slide 1 — Portada", value = "s1",
               tags$span("Tagline", class = "section-label"),
               textAreaInput("ig_s1_tagline", NULL, rows = 2,
-                value = "Limpieza de datos en R, sin esfuerzo")
+                value = "Limpieza de datos en R, sin esfuerzo"),
+              tags$span("Imagen (opcional — logo, screenshot o gráfico)", class = "section-label"),
+              fileInput("ig_pkg_img", NULL,
+                accept = c("image/png", "image/jpeg"),
+                buttonLabel = "Elegir imagen...",
+                placeholder = "Sin imagen: portada a fondo azul")
             ),
 
             accordion_panel("Slide 2 — ¿Qué hace?", value = "s2",
@@ -83,6 +88,12 @@ build_ui <- function() {
               tags$span("Tagline de cierre", class = "section-label"),
               textAreaInput("ig_s4_tagline", NULL, rows = 2,
                 value = "Seguinos para más tips de R")
+            ),
+
+            accordion_panel("📱 Redes (última placa)", value = "pkgredes",
+              tags$span("Qué redes mostrar (van solo en la última placa)", class = "section-label"),
+              checkboxGroupInput("ig_pkg_redes", NULL,
+                choices = names(SOCIAL_ICONS), selected = SOCIAL_ICONS_DEFAULT)
             )
           )
         ),

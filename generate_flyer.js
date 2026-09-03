@@ -39,13 +39,18 @@
  *   "version_line": "v2.2.0 · CRAN · Sam Firke",
  *   "autor_line": "📦 janitor · GitHub: sfirke/janitor",
  *   "slide1_tagline": "Limpieza de datos en R, sin esfuerzo",
+ *   "slide1_imagen": "/ruta/imagen.png",
  *   "slide2_titulo": "¿Para qué sirve?",
  *   "slide2_desc": "...",
  *   "slide2_bullets": ["Bullet 1", "Bullet 2", "Bullet 3"],
  *   "slide3_titulo": "En la práctica",
  *   "slide3_codigo": "datos <- datos |>\n  clean_names()",
- *   "slide4_tagline": "Seguinos para más tips de R"
+ *   "slide4_tagline": "Seguinos para más tips de R",
+ *   "redes": ["Instagram", "LinkedIn"]
  * }
+ * "slide1_imagen" es opcional: banda superior (~40%) del slide 1; sin ella el slide se
+ * adapta. "redes" (opcional, claves de SOCIAL_ICONS) arma las píldoras con ícono de
+ * marca en el slide 4 (cierre); si viene vacío, el slide 4 se muestra sin píldoras.
  *
  * config.json (template "carousel_curso" — anuncio de curso, 1080×1080, ZIP desde R):
  * Desde v2.8.0 los slides no son fijos: "plan" es un array con el tipo y
@@ -452,6 +457,16 @@ function buildSlide1(config, logoB64) {
   const tagline = escapeHtml(config.slide1_tagline || '');
   const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
 
+  let imgBand = '';
+  let hasImg = '';
+  if (typeof config.slide1_imagen === 'string' && config.slide1_imagen && fs.existsSync(config.slide1_imagen)) {
+    const imgData = fs.readFileSync(config.slide1_imagen);
+    const ext = path.extname(config.slide1_imagen).slice(1).toLowerCase();
+    const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+    imgBand = `<div class="band"><img src="data:${mime};base64,${imgData.toString('base64')}" alt=""/></div>`;
+    hasImg = ' has-img';
+  }
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8">
@@ -459,7 +474,7 @@ function buildSlide1(config, logoB64) {
 ${CSS_CAROUSEL_FONTS}
 .slide {
   width: 1080px; height: 1080px;
-  background: #447099;
+  background: #405BFF;
   border: 6px solid #151515;
   box-shadow: 16px 16px 0 #EAFF38;
   position: relative;
@@ -467,6 +482,8 @@ ${CSS_CAROUSEL_FONTS}
   flex-direction: column;
   overflow: hidden;
 }
+.band { width: 100%; height: 430px; border-bottom: 6px solid #151515; overflow: hidden; flex-shrink: 0; }
+.band img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .watermark {
   position: absolute;
   right: -20px; bottom: -40px;
@@ -480,11 +497,13 @@ ${CSS_CAROUSEL_FONTS}
   font-family: 'Ubuntu Mono', monospace; font-size: 24px;
   color: rgba(255,255,255,0.28); letter-spacing: 0.15em;
 }
+.slide.has-img .counter { top: 480px; }
 .main-content {
   flex: 1; display: flex; flex-direction: column;
   justify-content: center; padding: 80px 90px;
   gap: 44px; position: relative; z-index: 1;
 }
+.slide.has-img .main-content { padding: 48px 90px; gap: 32px; }
 .badge {
   display: inline-block;
   background: #EAFF38; color: #151515;
@@ -499,12 +518,15 @@ ${CSS_CAROUSEL_FONTS}
   font-size: 110px; font-weight: 700;
   color: #FFFFFF; line-height: 1.05; letter-spacing: -0.02em;
 }
+.slide.has-img .pkg-nombre { font-size: 84px; }
 .pkg-nombre .brace { color: #EAFF38; font-size: 78px; }
+.slide.has-img .pkg-nombre .brace { font-size: 60px; }
 .tagline {
   font-family: 'Ubuntu', sans-serif;
   font-size: 32px; color: rgba(255,255,255,0.72);
   line-height: 1.55; max-width: 820px;
 }
+.slide.has-img .tagline { font-size: 28px; }
 .footer-strip {
   background: #EAFF38; border-top: 5px solid #151515;
   padding: 30px 52px;
@@ -522,9 +544,10 @@ ${CSS_CAROUSEL_FONTS}
 </style>
 </head>
 <body>
-<div class="slide">
+<div class="slide${hasImg}">
   <div class="watermark">R</div>
   <div class="counter">1 / 4</div>
+  ${imgBand}
   <div class="main-content">
     <div class="badge">${categ}</div>
     <div class="pkg-nombre"><span class="brace">{</span>${nombre}<span class="brace">}</span></div>
@@ -565,7 +588,7 @@ ${CSS_CAROUSEL_FONTS}
   display: flex; flex-direction: column; overflow: hidden;
 }
 .header {
-  background: #447099; padding: 52px 80px 42px;
+  background: #405BFF; padding: 52px 80px 42px;
   position: relative;
 }
 .counter {
@@ -591,7 +614,7 @@ ${CSS_CAROUSEL_FONTS}
 .section-title {
   font-family: 'Ubuntu', sans-serif;
   font-size: 58px; font-weight: 700;
-  color: #447099; line-height: 1.1;
+  color: #405BFF; line-height: 1.1;
   border-left: 14px solid #EAFF38; padding-left: 28px;
 }
 .desc {
@@ -688,14 +711,14 @@ ${CSS_CAROUSEL_FONTS}
 }
 .code-block {
   background: #FFFFFF;
-  border: 3px solid #151515; border-left: 11px solid #447099;
+  border: 3px solid #151515; border-left: 11px solid #405BFF;
   padding: 42px 50px;
   font-family: 'Ubuntu Mono', monospace;
   font-size: 27px; color: #151515;
   line-height: 1.7; white-space: pre-wrap; word-break: break-word;
 }
 .code-block .code-comment { color: #707073; }
-.code-block .code-fn { color: #447099; font-weight: 700; }
+.code-block .code-fn { color: #405BFF; font-weight: 700; }
 .code-block .code-arg { color: #EE6331; }
 .code-block .code-str { color: #419599; }
 .code-note {
@@ -743,6 +766,10 @@ function buildSlide4(config, logoB64) {
   const tagline = escapeHtml(config.slide4_tagline || 'Seguinos para más tips de R');
   const autor   = escapeHtml(config.autor_line || '');
   const logoTag = logoB64 ? `<img src="${logoB64}" alt="Estación R" style="height:110px;display:block;"/>` : '';
+  const redes   = (config.redes || []).filter(r => String(r).trim());
+  const handlesDiv = redes.length > 0
+    ? `<div class="handles">${redes.map(r => socialPillHtml(r, '#EAFF38')).join('')}</div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -753,7 +780,7 @@ ${CSS_CAROUSEL_FONTS}
   width: 1080px; height: 1080px;
   background: #EAFF38;
   border: 6px solid #151515;
-  box-shadow: 16px 16px 0 #447099;
+  box-shadow: 16px 16px 0 #405BFF;
   position: relative;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -774,12 +801,13 @@ ${CSS_CAROUSEL_FONTS}
   color: #151515; text-align: center; line-height: 1.2;
   max-width: 900px;
 }
-.handles { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
-.handle-pill {
+.handles { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+.pill {
+  display: flex; align-items: center; gap: 10px;
   background: #151515; color: #EAFF38;
   font-family: 'Ubuntu Mono', monospace;
-  font-size: 26px; font-weight: 700;
-  padding: 16px 36px; letter-spacing: 0.06em;
+  font-size: 24px; font-weight: 700;
+  padding: 14px 30px; letter-spacing: 0.06em;
 }
 .pkg-credit {
   font-family: 'Ubuntu Mono', monospace;
@@ -794,10 +822,7 @@ ${CSS_CAROUSEL_FONTS}
   <div class="main-content">
     ${logoTag}
     <div class="cta-title">${tagline}</div>
-    <div class="handles">
-      <div class="handle-pill">@estacion.erre</div>
-      <div class="handle-pill">@estacion_erre</div>
-    </div>
+    ${handlesDiv}
     ${autor ? `<div class="pkg-credit">${autor}</div>` : ''}
   </div>
 </div>
