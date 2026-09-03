@@ -34,7 +34,7 @@ build_ui <- function() {
         tags$span("Tipo de carrusel", class = "section-label"),
         selectInput("ig_tipo_carrusel", NULL,
           choices = c("📦 Paquete de R" = "paquete", "🎓 Anuncio de curso" = "curso",
-                      "🎴 Tarjeta clásica" = "tarjeta", "🏷️ Tarjeta de descuento" = "descuento"),
+                      "🎴 Flyer curso" = "tarjeta", "🏷️ Tarjeta de descuento" = "descuento"),
           selected = "paquete"),
 
         conditionalPanel(
@@ -164,7 +164,7 @@ build_ui <- function() {
             open = c("tbase"),
             multiple = TRUE,
 
-            accordion_panel("🎴 Tarjeta", value = "tbase",
+            accordion_panel("🎴 Flyer curso", value = "tbase",
               tags$span("Fondo", class = "section-label"),
               selectInput("ig_t_fondo", NULL,
                 choices = TARJETA_FONDO_OPTS, selected = "negro"),
