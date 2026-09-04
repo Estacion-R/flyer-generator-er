@@ -457,13 +457,13 @@ function buildSlide1(config, logoB64) {
   const tagline = escapeHtml(config.slide1_tagline || '');
   const logo    = logoB64 ? `<img src="${logoB64}" alt="ER" style="height:52px;display:block;"/>` : '';
 
-  let imgBand = '';
+  let hexlogo = '';
   let hasImg = '';
   if (typeof config.slide1_imagen === 'string' && config.slide1_imagen && fs.existsSync(config.slide1_imagen)) {
     const imgData = fs.readFileSync(config.slide1_imagen);
     const ext = path.extname(config.slide1_imagen).slice(1).toLowerCase();
     const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
-    imgBand = `<div class="band"><img src="data:${mime};base64,${imgData.toString('base64')}" alt=""/></div>`;
+    hexlogo = `<img class="hexlogo" src="data:${mime};base64,${imgData.toString('base64')}" alt=""/>`;
     hasImg = ' has-img';
   }
 
@@ -482,8 +482,6 @@ ${CSS_CAROUSEL_FONTS}
   flex-direction: column;
   overflow: hidden;
 }
-.band { width: 100%; height: 430px; border-bottom: 6px solid #151515; overflow: hidden; flex-shrink: 0; }
-.band img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .watermark {
   position: absolute;
   right: -20px; bottom: -40px;
@@ -497,13 +495,17 @@ ${CSS_CAROUSEL_FONTS}
   font-family: 'Ubuntu Mono', monospace; font-size: 24px;
   color: rgba(255,255,255,0.28); letter-spacing: 0.15em;
 }
-.slide.has-img .counter { top: 480px; }
 .main-content {
   flex: 1; display: flex; flex-direction: column;
   justify-content: center; padding: 80px 90px;
   gap: 44px; position: relative; z-index: 1;
 }
-.slide.has-img .main-content { padding: 48px 90px; gap: 32px; }
+.top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
+.hexlogo {
+  width: 180px; height: auto; object-fit: contain;
+  filter: drop-shadow(0 8px 0 rgba(0,0,0,0.22));
+  flex-shrink: 0;
+}
 .badge {
   display: inline-block;
   background: #EAFF38; color: #151515;
@@ -518,15 +520,12 @@ ${CSS_CAROUSEL_FONTS}
   font-size: 110px; font-weight: 700;
   color: #FFFFFF; line-height: 1.05; letter-spacing: -0.02em;
 }
-.slide.has-img .pkg-nombre { font-size: 84px; }
 .pkg-nombre .brace { color: #EAFF38; font-size: 78px; }
-.slide.has-img .pkg-nombre .brace { font-size: 60px; }
 .tagline {
   font-family: 'Ubuntu', sans-serif;
   font-size: 32px; color: rgba(255,255,255,0.72);
   line-height: 1.55; max-width: 820px;
 }
-.slide.has-img .tagline { font-size: 28px; }
 .footer-strip {
   background: #EAFF38; border-top: 5px solid #151515;
   padding: 30px 52px;
@@ -547,9 +546,11 @@ ${CSS_CAROUSEL_FONTS}
 <div class="slide${hasImg}">
   <div class="watermark">R</div>
   <div class="counter">1 / 4</div>
-  ${imgBand}
   <div class="main-content">
-    <div class="badge">${categ}</div>
+    <div class="top-row">
+      <div class="badge">${categ}</div>
+      ${hexlogo}
+    </div>
     <div class="pkg-nombre"><span class="brace">{</span>${nombre}<span class="brace">}</span></div>
     ${tagline ? `<div class="tagline">${tagline}</div>` : ''}
   </div>
