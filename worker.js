@@ -23,6 +23,7 @@ const {
   buildVizHTML,
   buildTarjetaHTML,
   buildDescuentoHTML,
+  buildCatalogoHTML,
   buildSlide1,
   buildSlide2,
   buildSlide3,
@@ -41,6 +42,8 @@ function render(body) {
       return buildTarjetaHTML(config, formato, tarjAssets);
     case 'descuento':
       return buildDescuentoHTML(config, formato, tarjAssets);
+    case 'catalogo':
+      return buildCatalogoHTML(config, formato, tarjAssets);
     case 'slide1':
       return buildSlide1(config, logoB64);
     case 'slide2':

@@ -145,6 +145,30 @@
  * Genera descuento_4x5.png + descuento_1x1.png + descuento_16x9.png en output_dir.
  */
 
+/*
+ * config.json (template "catalogo" — placa de catálogo de paquetes, 1200×630 "redes"
+ * horizontal + 1080×1350 "feed" + 1080×1920 "story"):
+ * {
+ *   "template": "catalogo",
+ *   "output_dir": "/tmp/catalogo_xxx/",
+ *   "paquetes": [
+ *     {"nombre": "geoAr", "pais": "Argentina", "descripcion": "Toolbox de datos espaciales de Argentina"},
+ *     {"nombre": "geobr", "pais": "Brasil", "descripcion": "Descarga datos espaciales oficiales de Brasil"},
+ *     {"nombre": "ech", "pais": "Uruguay", "descripcion": "Procesamiento de la Encuesta Continua de Hogares"}
+ *   ],
+ *   "total_paquetes": 134,
+ *   "total_paises": 15,
+ *   "formatos": ["redes", "feed", "story"]
+ * }
+ * "paquetes" son los 3 destacados que se muestran con nombre+bandera+descripción
+ * (solo se usan los primeros 3 elementos del array). "total_paquetes"/"total_paises"
+ * son los agregados del catálogo vigente (no necesariamente iguales a los 3
+ * destacados) y se muestran como número grande en el bloque amarillo. La bandera
+ * por país sale de PAIS_BANDERAS (15 países de Latinoamérica + 🌎 de fallback si
+ * el país no está en la tabla). Genera catalogo_redes.png + catalogo_feed.png +
+ * catalogo_story.png en output_dir.
+ */
+
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -1536,6 +1560,142 @@ async function generateDescuento(config, assets) {
   }
 }
 
+// ---- Catálogo de Paquetes R (1200×630 "redes" + 1080×1350 "feed" + 1080×1920 "story") ----
+// Banderas por país (15 países de Latinoamérica + fallback 🌎) — mapeo confirmado
+// con redes el 2026-09-04, espejo del que usa la skill estacion-r-post-paquetes-semanal.
+const PAIS_BANDERAS = {
+  'Argentina': '🇦🇷', 'Brasil': '🇧🇷', 'Chile': '🇨🇱', 'Colombia': '🇨🇴',
+  'México': '🇲🇽', 'Uruguay': '🇺🇾', 'Paraguay': '🇵🇾', 'Perú': '🇵🇪',
+  'Bolivia': '🇧🇴', 'Ecuador': '🇪🇨', 'Venezuela': '🇻🇪', 'Cuba': '🇨🇺',
+  'Costa Rica': '🇨🇷', 'Guatemala': '🇬🇹', 'Panamá': '🇵🇦',
+  'Puerto Rico': '🇵🇷', 'República Dominicana': '🇩🇴'
+};
+function banderaPais(pais) {
+  return PAIS_BANDERAS[String(pais || '').trim()] || '🌎';
+}
+
+// Tamaños por formato: "redes" es horizontal y bajo (630px de alto), "feed" y
+// "story" son verticales con "story" bastante más alto -- los 3 comparten
+// estructura (bloque azul 67% + bloque amarillo 33%) pero cada uno necesita su
+// propia escala tipográfica para que los 3 paquetes entren con claridad.
+const CATALOGO_SIZES = {
+  redes: { pad: 44, badge: 19, titulo: 36, tagline: 18, pkgNombre: 24, pkgDesc: 16, pkgGap: 12, num: 120, numLabel: 20, numSub: 17, logo: 38 },
+  feed:  { pad: 56, badge: 22, titulo: 50, tagline: 23, pkgNombre: 31, pkgDesc: 20, pkgGap: 20, num: 175, numLabel: 27, numSub: 21, logo: 46 },
+  story: { pad: 60, badge: 24, titulo: 56, tagline: 25, pkgNombre: 33, pkgDesc: 21, pkgGap: 24, num: 195, numLabel: 29, numSub: 23, logo: 50 }
+};
+
+function catalogoPaqueteHtml(p) {
+  const nombre = escapeHtml((p && p.nombre) || '');
+  const bandera = banderaPais(p && p.pais);
+  const desc = escapeHtml((p && p.descripcion) || '');
+  return `<div class="pkg">` +
+    `<div class="pkg-hd"><span class="pkg-flag">${bandera}</span><span class="pkg-nombre">${nombre}</span></div>` +
+    `<div class="pkg-desc">${desc}</div>` +
+    `</div>`;
+}
+
+function buildCatalogoHTML(config, formato, assets) {
+  const fmt = (formato === 'feed' || formato === 'story') ? formato : 'redes';
+  const dims = fmt === 'redes' ? { w: 1200, h: 630 } : fmt === 'feed' ? { w: 1080, h: 1350 } : { w: 1080, h: 1920 };
+  const sz = CATALOGO_SIZES[fmt];
+  const esRow = fmt === 'redes';
+  const logo = (assets.logos && assets.logos.blanco) || '';
+
+  const paquetes = (Array.isArray(config.paquetes) ? config.paquetes : []).slice(0, 3);
+  const totalPaquetes = String(config.total_paquetes != null ? config.total_paquetes : '').trim();
+  const totalPaises = String(config.total_paises != null ? config.total_paises : '').trim();
+  const pkgsHTML = paquetes.map(catalogoPaqueteHtml).join('');
+
+  const fontsCSS =
+    UBUNTU_FONT_FACES +
+    `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  const css =
+    `*{margin:0;padding:0;box-sizing:border-box}` +
+    `.catalogo{width:${dims.w}px;height:${dims.h}px;background:#151515;font-family:'Ubuntu',sans-serif;overflow:hidden;display:flex;flex-direction:${esRow ? 'row' : 'column'}}` +
+    `.bloque-azul{flex:2 1 0;background:#405BFF;display:flex;flex-direction:column;padding:${sz.pad}px;gap:${Math.round(sz.pad * 0.5)}px;min-width:0;min-height:0;${esRow ? 'border-right' : 'border-bottom'}:6px solid #151515}` +
+    `.bloque-amarillo{flex:1 1 0;background:#EAFF38;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:${sz.pad}px;gap:10px;min-width:0;min-height:0}` +
+    `.hd{display:flex;justify-content:space-between;align-items:center}` +
+    `.hd .lg{height:${sz.logo}px;display:block}` +
+    `.badge{background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:${sz.badge}px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:8px 20px}` +
+    `.titulo{font-family:'Array',sans-serif;font-weight:700;color:#FFFFFF;font-size:${sz.titulo}px;line-height:1.08}` +
+    `.tagline{font-family:'Ubuntu',sans-serif;color:rgba(255,255,255,0.75);font-size:${sz.tagline}px;line-height:1.35}` +
+    `.pkgs{display:flex;flex-direction:column;gap:${sz.pkgGap}px;flex:1 1 auto;justify-content:center;min-height:0}` +
+    `.pkg{display:flex;flex-direction:column;gap:4px}` +
+    `.pkg-hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}` +
+    `.pkg-flag{font-size:${sz.pkgNombre}px;line-height:1}` +
+    `.pkg-nombre{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#EAFF38;font-size:${sz.pkgNombre}px;line-height:1.1;overflow-wrap:anywhere}` +
+    `.pkg-desc{font-family:'Ubuntu',sans-serif;color:rgba(255,255,255,0.85);font-size:${sz.pkgDesc}px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}` +
+    `.num{font-family:'Array',sans-serif;font-weight:700;color:#151515;font-size:${sz.num}px;line-height:0.95;text-align:center}` +
+    `.num-label{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#151515;font-size:${sz.numLabel}px;letter-spacing:0.1em;text-transform:uppercase;text-align:center}` +
+    `.num-sub{font-family:'Ubuntu',sans-serif;color:#151515;font-size:${sz.numSub}px;text-align:center;font-weight:700}`;
+
+  const body =
+    `<div class="catalogo">` +
+    `<div class="bloque-azul">` +
+    `<div class="hd">${logo ? `<img class="lg" src="${logo}"/>` : '<span></span>'}<div class="badge">Catálogo</div></div>` +
+    `<div class="titulo">Paquetes de R<br>hechos en Latinoamérica</div>` +
+    `<div class="tagline">Descubrí el trabajo de la comunidad R en la región</div>` +
+    `<div class="pkgs">${pkgsHTML}</div>` +
+    `</div>` +
+    `<div class="bloque-amarillo">` +
+    `<div class="num">${escapeHtml(totalPaquetes)}</div>` +
+    `<div class="num-label">Paquetes</div>` +
+    `<div class="num-sub">en ${escapeHtml(totalPaises)} países</div>` +
+    `</div>` +
+    `</div>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${fontsCSS}${css}
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+async function generateCatalogo(config, assets) {
+  const outputDir = config.output_dir;
+  if (!outputDir) throw new Error('output_dir requerido para template catalogo');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const formatos = Array.isArray(config.formatos)
+    ? config.formatos
+    : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['redes', 'feed', 'story']);
+
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+
+  try {
+    for (const fmt of formatos) {
+      const html = buildCatalogoHTML(config, fmt, assets);
+      const tmpHTML = path.join(require('os').tmpdir(), `catalogo_${fmt}_${Date.now()}.html`);
+      fs.writeFileSync(tmpHTML, html);
+
+      const page = await browser.newPage();
+      await page.setViewportSize(fmt === 'redes' ? { width: 1300, height: 730 }
+        : fmt === 'feed' ? { width: 1200, height: 1450 } : { width: 1200, height: 2020 });
+      await page.goto('file://' + tmpHTML, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+
+      const outPNG = path.join(outputDir, `catalogo_${fmt}.png`);
+      await page.locator('.catalogo').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.close();
+      fs.unlinkSync(tmpHTML);
+      console.log(`Catalogo ${fmt}: ${outPNG}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Carga los assets compartidos (logo, logos por tinta, íconos, isotipo, fuente
 // Array) desde www/, relativos a scriptDir. Extraída de main() para que
 // worker.js pueda cargarlos una sola vez al arrancar (ver Etapa 3 del plan de
@@ -1612,6 +1772,12 @@ async function main() {
     return;
   }
 
+  // Placa de catálogo de paquetes (redes/feed/story): genera PNGs en output_dir; no usa --output
+  if (config.template === 'catalogo') {
+    await generateCatalogo(config, tarjAssets);
+    return;
+  }
+
   // Carousel (paquete 4 slides / curso 3-4 slides): genera PNGs en output_dir; no usa --output
   if (config.template === 'carousel' || config.template === 'carousel_curso') {
     await generateCarousel(config, logoB64, tarjAssets.arrayFont);
@@ -1657,6 +1823,7 @@ module.exports = {
   buildVizHTML,
   buildTarjetaHTML,
   buildDescuentoHTML,
+  buildCatalogoHTML,
   buildSlide1,
   buildSlide2,
   buildSlide3,

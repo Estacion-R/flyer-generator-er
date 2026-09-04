@@ -614,6 +614,92 @@ server <- function(input, output, session) {
       }
     }
   )
+
+  # -- Catálogo de Paquetes: reactivos --
+  # Mismo patrón que "Visuales para redes": el preview siempre muestra los 3
+  # formatos, el checkbox de formatos solo decide qué va en el ZIP descargado.
+  catalogo_data <- reactive({
+    list(
+      paquetes = list(
+        list(nombre = input$cat_p1_nombre %||% "", pais = input$cat_p1_pais %||% "", descripcion = input$cat_p1_desc %||% ""),
+        list(nombre = input$cat_p2_nombre %||% "", pais = input$cat_p2_pais %||% "", descripcion = input$cat_p2_desc %||% ""),
+        list(nombre = input$cat_p3_nombre %||% "", pais = input$cat_p3_pais %||% "", descripcion = input$cat_p3_desc %||% "")
+      ),
+      total_paquetes = input$cat_total_paquetes %||% 0,
+      total_paises   = input$cat_total_paises %||% 0
+    )
+  })
+
+  catalogo_debounced <- debounce(catalogo_data, 400)
+
+  catalogo_last_html <- new.env(parent = emptyenv())
+
+  catalogo_render <- function(key, formato) {
+    d <- catalogo_debounced()
+    config <- list(
+      paquetes       = d$paquetes,
+      total_paquetes = d$total_paquetes,
+      total_paises   = d$total_paises
+    )
+    html <- flyer_worker_render(flyer_worker_ensure(), "catalogo", config, formato)
+    if (is.null(html)) html <- catalogo_last_html[[key]] else catalogo_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_cat_redes <- renderUI({
+    html <- catalogo_render("redes", "redes")
+    req(html)
+    tarjeta_iframe(html, 1200, 630, 540)
+  })
+  output$preview_cat_feed <- renderUI({
+    html <- catalogo_render("feed", "feed")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_cat_story <- renderUI({
+    html <- catalogo_render("story", "story")
+    req(html)
+    tarjeta_iframe(html, 1080, 1920, 540)
+  })
+
+  # -- Catálogo de Paquetes: descarga ZIP --
+  output$descargar_catalogo_zip <- downloadHandler(
+    filename = function() paste0("catalogo_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$cat_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- catalogo_data()
+      cat_dir <- tempfile(pattern = "catalogo_")
+      dir.create(cat_dir)
+      on.exit(unlink(cat_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template       = "catalogo",
+        output_dir     = cat_dir,
+        paquetes       = d$paquetes,
+        total_paquetes = d$total_paquetes,
+        total_paises   = d$total_paises,
+        formatos       = I(fmts)
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "el catálogo", session)
+      if (is.null(result)) req(FALSE)
+
+      pngs <- list.files(cat_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar el catálogo: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+
+      old_wd <- setwd(cat_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
 }
 
 shinyApp(ui, server)

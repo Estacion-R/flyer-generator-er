@@ -487,6 +487,66 @@ build_ui <- function() {
 
       div(class = "flyer-wrap", uiOutput("preview_lnk"))
     )
+  ),
+
+  # ---- Tab Catálogo de Paquetes ----
+  nav_panel(
+    "📦 Catálogo de Paquetes",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 340,
+        class = "panel-form",
+
+        tags$span("Formatos a incluir en el ZIP", class = "section-label"),
+        checkboxGroupInput("cat_formatos", NULL,
+          choices = CATALOGO_FORMATOS_OPTS,
+          selected = unname(CATALOGO_FORMATOS_OPTS)),
+
+        tags$hr(),
+        tags$span("Totales del catálogo vigente", class = "section-label"),
+        numericInput("cat_total_paquetes", "Cantidad total de paquetes", value = 134, min = 0),
+        numericInput("cat_total_paises", "Cantidad de países representados", value = 15, min = 0),
+
+        tags$hr(),
+        accordion(
+          open = c("cat_p1"),
+          multiple = TRUE,
+
+          accordion_panel("📦 Paquete destacado 1", value = "cat_p1",
+            textInput("cat_p1_nombre", "Nombre", value = "geoAr"),
+            selectInput("cat_p1_pais", "País", choices = CATALOGO_PAIS_OPTS, selected = "Argentina"),
+            textAreaInput("cat_p1_desc", "Descripción corta", rows = 2,
+              value = "Toolbox de datos espaciales de Argentina")
+          ),
+          accordion_panel("📦 Paquete destacado 2", value = "cat_p2",
+            textInput("cat_p2_nombre", "Nombre", value = "geobr"),
+            selectInput("cat_p2_pais", "País", choices = CATALOGO_PAIS_OPTS, selected = "Brasil"),
+            textAreaInput("cat_p2_desc", "Descripción corta", rows = 2,
+              value = "Descarga datos espaciales oficiales de Brasil")
+          ),
+          accordion_panel("📦 Paquete destacado 3", value = "cat_p3",
+            textInput("cat_p3_nombre", "Nombre", value = "ech"),
+            selectInput("cat_p3_pais", "País", choices = CATALOGO_PAIS_OPTS, selected = "Uruguay"),
+            textAreaInput("cat_p3_desc", "Descripción corta", rows = 2,
+              value = "Procesamiento de la Encuesta Continua de Hogares")
+          )
+        ),
+
+        downloadButton("descargar_catalogo_zip",
+          "⬇ Descargar ZIP",
+          class = "btn-zip",
+          style = "margin-top: 1rem;")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "Horizontal — LinkedIn/X/OG (1200×630)"),
+        uiOutput("preview_cat_redes"),
+        div(class = "slide-label", "Feed — Instagram (1080×1350)"),
+        uiOutput("preview_cat_feed"),
+        div(class = "slide-label", "Story — Instagram (1080×1920)"),
+        uiOutput("preview_cat_story")
+      )
+    )
   )
   )
 }

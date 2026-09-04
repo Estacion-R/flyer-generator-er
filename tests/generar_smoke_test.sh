@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Smoke test del CLI generate_flyer.js: genera los 7 builders de la app
+# Smoke test del CLI generate_flyer.js: genera los 8 builders de la app
 # (carrusel de paquete, carrusel de curso, tarjeta clásica de curso 4:5+16:9,
 # visual de datos para redes, flyer de curso LinkedIn/X, tarjeta de tip/paquete,
-# tarjeta de descuento 4:5+1:1+16:9) con datos de prueba fijos y verifica que
-# cada uno termine sin error y produzca un archivo no vacío. No compara
-# contenido pixel a pixel: solo "generó algo razonable sin crashear".
+# tarjeta de descuento 4:5+1:1+16:9, catálogo de paquetes redes+feed+story) con
+# datos de prueba fijos y verifica que cada uno termine sin error y produzca un
+# archivo no vacío. No compara contenido pixel a pixel: solo "generó algo
+# razonable sin crashear".
 #
 # Uso:
 #   tests/generar_smoke_test.sh
@@ -79,7 +80,7 @@ run_node() {
   fi
 }
 
-echo "== Smoke test: generate_flyer.js (7 builders) =="
+echo "== Smoke test: generate_flyer.js (8 builders) =="
 echo "Node: $NODE_BIN"
 echo "Workdir temporal: $WORKDIR"
 echo
@@ -279,6 +280,33 @@ JSON
 if run_node "descuento: render" generate_flyer.js --config "$CFG"; then
   for fmt in 4x5 1x1 16x9; do
     check_file "$OUT_DIR/descuento_$fmt.png" "$MIN_PNG_BYTES" "descuento: descuento_$fmt.png"
+  done
+fi
+echo
+
+# ---------------------------------------------------------------
+# 8. Catalogo de paquetes (redes 1200x630 + feed 1080x1350 + story 1080x1920)
+# ---------------------------------------------------------------
+echo "-- 8. Catalogo de paquetes --"
+CFG="$WORKDIR/catalogo.json"
+OUT_DIR="$WORKDIR/catalogo"
+cat > "$CFG" <<JSON
+{
+  "template": "catalogo",
+  "output_dir": "$OUT_DIR",
+  "paquetes": [
+    {"nombre": "geoAr", "pais": "Argentina", "descripcion": "Toolbox de datos espaciales de Argentina"},
+    {"nombre": "geobr", "pais": "Brasil", "descripcion": "Descarga datos espaciales oficiales de Brasil"},
+    {"nombre": "ech", "pais": "Uruguay", "descripcion": "Procesamiento de la Encuesta Continua de Hogares"}
+  ],
+  "total_paquetes": 134,
+  "total_paises": 15,
+  "formatos": ["redes", "feed", "story"]
+}
+JSON
+if run_node "catalogo: render" generate_flyer.js --config "$CFG"; then
+  for fmt in redes feed story; do
+    check_file "$OUT_DIR/catalogo_$fmt.png" "$MIN_PNG_BYTES" "catalogo: catalogo_$fmt.png"
   done
 fi
 echo

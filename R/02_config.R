@@ -169,6 +169,21 @@ UBUNTU_FONT_FACES <- paste0(
 
 TARJETA_FONTS <- paste0(UBUNTU_FONT_FACES, ARRAY_FONT_FACE)
 
+# ---- Catálogo de Paquetes R: banderas por país (espejo de PAIS_BANDERAS en generate_flyer.js) ----
+PAIS_BANDERAS <- c(
+  "Argentina" = "🇦🇷", "Brasil" = "🇧🇷", "Chile" = "🇨🇱", "Colombia" = "🇨🇴",
+  "México" = "🇲🇽", "Uruguay" = "🇺🇾", "Paraguay" = "🇵🇾", "Perú" = "🇵🇪",
+  "Bolivia" = "🇧🇴", "Ecuador" = "🇪🇨", "Venezuela" = "🇻🇪", "Cuba" = "🇨🇺",
+  "Costa Rica" = "🇨🇷", "Guatemala" = "🇬🇹", "Panamá" = "🇵🇦",
+  "Puerto Rico" = "🇵🇷", "República Dominicana" = "🇩🇴"
+)
+CATALOGO_PAIS_OPTS <- setNames(names(PAIS_BANDERAS), paste(PAIS_BANDERAS, names(PAIS_BANDERAS)))
+CATALOGO_FORMATOS_OPTS <- c(
+  "Horizontal — LinkedIn/X/OG (1200×630)" = "redes",
+  "Feed — Instagram (1080×1350)" = "feed",
+  "Story — Instagram (1080×1920)" = "story"
+)
+
 # ---- SVG icons ----
 SVG_ICON <- function(path_d, extra_path = NULL) {
   paths <- paste0('<path d="', path_d, '"/>')
