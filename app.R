@@ -40,38 +40,43 @@ server <- function(input, output, session) {
   }
 
   # -- Landing: tarjetas --
-  # Cada tarjeta de "Inicio" cambia de tab con nav_select() y, si la pieza
-  # vive detrás de un selector dentro de esa tab (ig_tipo_carrusel), lo
-  # precarga -- así el click deja al usuario directo en el formulario listo,
-  # sin un paso intermedio de "ahora elegí qué tipo".
-  observeEvent(input$home_curso_carrusel, {
-    nav_select("main_nav", "instagram", session = session)
-    updateSelectInput(session, "ig_tipo_carrusel", selected = "curso")
-  })
-  observeEvent(input$home_curso_tarjeta, {
-    nav_select("main_nav", "instagram", session = session)
-    updateSelectInput(session, "ig_tipo_carrusel", selected = "tarjeta")
-  })
-  observeEvent(input$home_descuento, {
-    nav_select("main_nav", "instagram", session = session)
-    updateSelectInput(session, "ig_tipo_carrusel", selected = "descuento")
-  })
-  observeEvent(input$home_paquete_carrusel, {
-    nav_select("main_nav", "instagram", session = session)
-    updateSelectInput(session, "ig_tipo_carrusel", selected = "paquete")
-  })
-  observeEvent(input$home_tip, {
-    nav_select("main_nav", "linkedin", session = session)
-  })
-  observeEvent(input$home_catalogo, {
-    nav_select("main_nav", "catalogo", session = session)
-  })
-  observeEvent(input$home_viz, {
-    nav_select("main_nav", "viz", session = session)
-  })
+  # Cada tarjeta de "Inicio" cambia de tab con nav_select(). Ya no hace falta
+  # precargar ningún selector interno (2026-09-17): las 4 variantes del
+  # carrusel de Instagram, que antes vivían detrás de un selectInput "Tipo
+  # de carrusel" dentro de una sola tab, ahora son 4 tabs dedicadas -- ver
+  # nota en R/09_ui.R.
+  observeEvent(input$home_curso_carrusel,  nav_select("main_nav", "ig_curso", session = session))
+  observeEvent(input$home_curso_tarjeta,   nav_select("main_nav", "ig_tarjeta", session = session))
+  observeEvent(input$home_descuento,       nav_select("main_nav", "ig_descuento", session = session))
+  observeEvent(input$home_paquete_carrusel, nav_select("main_nav", "ig_paquete", session = session))
+  observeEvent(input$home_tip,      nav_select("main_nav", "linkedin", session = session))
+  observeEvent(input$home_catalogo, nav_select("main_nav", "catalogo", session = session))
+  observeEvent(input$home_viz,      nav_select("main_nav", "viz", session = session))
+
+  # Links "← Inicio" repetidos arriba de cada generador (ver back_to_home()
+  # en R/09_ui.R, un input distinto por tab para no repetir IDs) -- todas
+  # las tabs de destino están escondidas de la barra de navegación (ver
+  # .navbar-nav en css_app), así que esta es la única vuelta explícita.
+  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "linkedin", "catalogo")) {
+    local({
+      id <- paste0("go_home_", suf)
+      observeEvent(input[[id]], nav_select("main_nav", "home", session = session), ignoreInit = TRUE)
+    })
+  }
 
   # -- Instagram: reactivos --
-  ig_tipo <- reactive(input$ig_tipo_carrusel %||% "paquete")
+  # Deriva de qué tab está activa en vez de un selectInput -- las 4
+  # variantes (paquete/curso/tarjeta/descuento) son tabs separadas desde
+  # 2026-09-17, no un selector dentro de una tab compartida.
+  ig_tipo <- reactive({
+    switch(input$main_nav %||% "",
+      ig_paquete   = "paquete",
+      ig_curso     = "curso",
+      ig_tarjeta   = "tarjeta",
+      ig_descuento = "descuento",
+      "paquete"
+    )
+  })
 
   ig_data <- reactive({
     redes_sel <- input$ig_pkg_redes
@@ -290,7 +295,11 @@ server <- function(input, output, session) {
   })
 
   # -- Instagram: descarga ZIP --
-  output$descargar_zip <- downloadHandler(
+  # Los 4 botones de descarga (uno por tab, ver R/09_ui.R) comparten esta
+  # misma lógica -- content()/filename() ya leen de ig_tipo(), que ahora
+  # deriva de qué tab está activa, así que un solo downloadHandler asignado
+  # a los 4 outputs alcanza (no hace falta duplicar la lógica).
+  descargar_zip_handler <- downloadHandler(
     filename = function() {
       pref <- switch(ig_tipo(),
         tarjeta   = "tarjeta_er_",
@@ -388,6 +397,10 @@ server <- function(input, output, session) {
       utils::zip(zipfile = file, files = pngs, flags = "-j9")
     }
   )
+  output$descargar_zip_paquete   <- descargar_zip_handler
+  output$descargar_zip_curso     <- descargar_zip_handler
+  output$descargar_zip_tarjeta   <- descargar_zip_handler
+  output$descargar_zip_descuento <- descargar_zip_handler
 
   # -- Visuales para redes: reactivos --
   viz_data <- reactive({

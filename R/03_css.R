@@ -97,6 +97,23 @@ css_app <- paste0(UBUNTU_FONT_FACES, "
 .landing-card .lc-icon { font-size: 1.6rem; display: block; margin-bottom: 0.6rem; }
 .landing-card .lc-title { font-weight: 700; font-size: 0.98rem; display: block; margin-bottom: 0.3rem; }
 .landing-card .lc-desc { font-size: 0.8rem; color: #707073; line-height: 1.4; display: block; }
+
+/* La landing (tab 'Inicio') es la única entrada de navegación visible.
+   Las tabs de cada generador siguen existiendo (nav_select() las necesita
+   para poder saltar ahí desde una tarjeta), pero se esconden de la tira de
+   tabs de arriba -- si no, quedan dos formas paralelas de elegir qué
+   generar (la landing y la tira de tabs), que es justo la duplicación que
+   se quiso sacar. */
+#main_nav > li.nav-item:has(> a:not([data-value=\"home\"])) {
+  display: none;
+}
+
+.back-home {
+  display: inline-block; margin-bottom: 1.2rem;
+  font-family: 'Ubuntu Mono', monospace; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; color: #151515; text-decoration: none;
+}
+.back-home:hover { color: #EE6331; text-decoration: none; }
 ")
 
 # ---- CSS flyer LinkedIn/X ----
