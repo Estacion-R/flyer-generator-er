@@ -344,7 +344,7 @@ body { background: ${p.bodyBg}; display: flex; justify-content: center; align-it
 
 .tip-card { width: 540px; border: 3px solid #151515; box-shadow: 10px 10px 0 #EAFF38; overflow: hidden; background: ${p.cardBg}; font-family: 'Ubuntu', sans-serif; }
 
-.tip-header { background: #447099; padding: 2.2rem 2.5rem 2rem 2.5rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
+.tip-header { background: #405BFF; padding: 2.2rem 2.5rem 2rem 2.5rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
 .tip-header::after { content: 'R'; position: absolute; right: -0.5rem; bottom: -1.2rem; font-family: 'Ubuntu Mono', monospace; font-size: 8rem; font-weight: 700; color: rgba(255,255,255,0.08); line-height: 1; pointer-events: none; user-select: none; }
 
 .tip-badge { display: inline-block; background: #EAFF38; color: #151515; font-family: 'Ubuntu Mono', monospace; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.7rem; border: 2px solid #151515; width: fit-content; }
@@ -356,9 +356,9 @@ body { background: ${p.bodyBg}; display: flex; justify-content: center; align-it
 .tip-body { padding: 1.8rem 2.5rem 1.5rem 2.5rem; display: flex; flex-direction: column; gap: 1.4rem; }
 .tip-desc { font-size: 0.95rem; color: ${p.desc}; line-height: 1.6; }
 
-.tip-code { background: ${p.codeBg}; border: 2px solid ${p.codeBorder}; border-left: 5px solid #447099; padding: 0.9rem 1rem; font-family: 'Ubuntu Mono', monospace; font-size: 0.82rem; color: ${p.codeText}; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.tip-code { background: ${p.codeBg}; border: 2px solid ${p.codeBorder}; border-left: 5px solid #1839F4; padding: 0.9rem 1rem; font-family: 'Ubuntu Mono', monospace; font-size: 0.82rem; color: ${p.codeText}; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .tip-code .code-comment { color: ${p.comment}; }
-.tip-code .code-fn { color: #447099; font-weight: 700; }
+.tip-code .code-fn { color: #1839F4; font-weight: 700; }
 .tip-code .code-arg { color: #EE6331; }
 .tip-code .code-str { color: #419599; }
 
