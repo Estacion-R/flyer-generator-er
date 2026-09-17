@@ -49,7 +49,6 @@ server <- function(input, output, session) {
   observeEvent(input$home_curso_tarjeta,   nav_select("main_nav", "ig_tarjeta", session = session))
   observeEvent(input$home_descuento,       nav_select("main_nav", "ig_descuento", session = session))
   observeEvent(input$home_paquete_carrusel, nav_select("main_nav", "ig_paquete", session = session))
-  observeEvent(input$home_tip,      nav_select("main_nav", "linkedin", session = session))
   observeEvent(input$home_catalogo, nav_select("main_nav", "catalogo", session = session))
   observeEvent(input$home_viz,      nav_select("main_nav", "viz", session = session))
 
@@ -57,7 +56,7 @@ server <- function(input, output, session) {
   # en R/09_ui.R, un input distinto por tab para no repetir IDs) -- todas
   # las tabs de destino están escondidas de la barra de navegación (ver
   # .navbar-nav en css_app), así que esta es la única vuelta explícita.
-  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "linkedin", "catalogo")) {
+  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "catalogo")) {
     local({
       id <- paste0("go_home_", suf)
       observeEvent(input[[id]], nav_select("main_nav", "home", session = session), ignoreInit = TRUE)
@@ -492,85 +491,11 @@ server <- function(input, output, session) {
     }
   )
 
-  # -- LinkedIn/X: reactivos --
-  # El template "Curso" de esta pestaña se sacó (2026-09-17): duplicaba la
-  # tarjeta clásica de curso del tab Instagram con un diseño más viejo y sin
-  # pulir (ver memory/proyecto-flyer-generator.md). Esta pestaña queda
-  # dedicada solo a la tarjeta Tip/Paquete de R.
-  tip_formato_dims <- reactive(FORMATOS_TIP[[input$lnk_tip_formato]])
-
-  # Preview en vivo (Etapa 3, mismo patrón que las otras 2 pestañas): el HTML
-  # sale del worker (mismo builder JS que usan las descargas desde la Etapa 2,
-  # ver R/10_flyer_worker.R), con debounce() y cache del último HTML bueno.
-  lnk_last_html <- new.env(parent = emptyenv())
-
-  lnk_tip_config <- reactive(list(
-    categoria    = input$lnk_tip_categoria,
-    pkg_nombre   = input$lnk_tip_nombre,
-    version_line = input$lnk_tip_version,
-    descripcion  = input$lnk_tip_desc,
-    codigo       = input$lnk_tip_codigo,
-    autor_line   = input$lnk_tip_autor,
-    modo         = input$lnk_tip_modo,
-    formato      = tip_formato_dims()$key
-  ))
-
-  lnk_debounced <- debounce(lnk_tip_config, 400)
-
-  output$preview_lnk <- renderUI({
-    config <- lnk_debounced()
-    html <- flyer_worker_render(flyer_worker_ensure(), "tip", config)
-    if (is.null(html)) html <- lnk_last_html[["tip"]] else lnk_last_html[["tip"]] <- html
-    req(html)
-    # isolate(): leemos la última altura reportada por el iframe anterior sin
-    # suscribirnos a sus cambios -- si no, cada Shiny.setInputValue() del
-    # onload (ver flyer_iframe en R/08_builders_linkedin.R) re-invalidaría
-    # este mismo renderUI y armaría un loop de re-renders.
-    last_h <- isolate(input$lnk_preview_h) %||% 520
-    flyer_iframe(html, tip_formato_dims()$w %||% 540, last_h = last_h)
-  })
-
-  # -- LinkedIn/X: descarga HTML --
-  output$lnk_descargar_html <- downloadHandler(
-    filename = function() paste0("tip_er_", format(Sys.Date(), "%Y%m%d"), ".html"),
-    content = function(file) {
-      tmp_html <- tempfile(fileext = ".html")
-      on.exit(unlink(tmp_html), add = TRUE)
-
-      config <- c(list(template = "tip"), lnk_tip_config())
-      cfg_file <- tempfile(fileext = ".json")
-      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
-      on.exit(unlink(cfg_file), add = TRUE)
-
-      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", tmp_html), "el HTML", session)
-      if (is.null(result)) req(FALSE)
-      if (!file.exists(tmp_html)) {
-        showNotification("No se pudo generar el HTML: el render no produjo ningún archivo (probá de nuevo).",
-          type = "error", duration = 10, session = session)
-        req(FALSE)
-      }
-      file.copy(tmp_html, file, overwrite = TRUE)
-    }
-  )
-
-  # -- LinkedIn/X: descarga PNG --
-  output$lnk_descargar_png <- downloadHandler(
-    filename = function() paste0("tip_er_", format(Sys.Date(), "%Y%m%d"), ".png"),
-    content = function(file) {
-      config <- c(list(template = "tip"), lnk_tip_config())
-      cfg_file <- tempfile(fileext = ".json")
-      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
-      on.exit(unlink(cfg_file), add = TRUE)
-
-      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file, "--output", file), "el PNG", session)
-      if (is.null(result)) req(FALSE)
-      if (!file.exists(file)) {
-        showNotification("No se pudo generar el PNG: el render no produjo ningún archivo (probá de nuevo).",
-          type = "error", duration = 10, session = session)
-        req(FALSE)
-      }
-    }
-  )
+  # La pestaña "💼 LinkedIn · X" (tarjeta Tip/Paquete de R) se sacó el
+  # 2026-09-17 -- Pablo decidió usar los slides de "💡 Tip de R" (antes
+  # "Carrusel de paquete", renombrado en R/09_ui.R) para LinkedIn/X también,
+  # en vez de mantener un generador aparte. Ver
+  # memory/proyecto-flyer-generator.md.
 
   # -- Catálogo de Paquetes: reactivos --
   # Mismo patrón que "Visuales para redes": el preview siempre muestra los 3

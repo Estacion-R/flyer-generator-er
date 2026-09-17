@@ -1,20 +1,11 @@
 # ---- Config ----
-# Nota (2026-09-17): BADGE_COLORES y FORMATOS_LNK (del viejo template "curso"
-# de la pestaña LinkedIn/X) se sacaron de acá -- ese template quedó fuera de
-# la UI (duplicaba la tarjeta clásica de curso). generate_flyer.js conserva
-# su propia copia de BADGE_COLORES y sigue soportando `template: "curso"`
-# vía CLI si hiciera falta; solo se limpió el lado R, que ya no lo usa.
-
-# Formatos de salida para la tarjeta Tip/Paquete de R. "linkedin" es el
-# diseño original (tarjeta sola, alto automático, sin canvas). "1x1" y
-# "story" envuelven la misma tarjeta centrada en un canvas de fondo al
-# tamaño pedido (ver .tip-canvas en CSS_TIP), en vez de rediseñar el
-# layout interno por formato.
-FORMATOS_TIP <- list(
-  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL, key = "linkedin"),
-  "Cuadrado — Instagram (1:1)"       = list(w = 540, h = 540,  key = "1x1"),
-  "Story / Reels (9:16)"             = list(w = 380, h = 675,  key = "story")
-)
+# Nota (2026-09-17): BADGE_COLORES, FORMATOS_LNK (viejo template "curso" de
+# LinkedIn/X, duplicaba la tarjeta clásica de curso) y FORMATOS_TIP (tarjeta
+# Tip/Paquete de R, reemplazada por los slides de "Tip de R" para LinkedIn/X
+# también) se sacaron de acá -- esas dos pestañas quedaron fuera de la UI.
+# generate_flyer.js conserva su propia copia de BADGE_COLORES y sigue
+# soportando ambos templates (`"curso"`, `"tip"`) vía CLI si hiciera falta;
+# solo se limpió el lado R, que ya no los usa.
 
 # Redes sociales oficiales de Estación R (confirmado con redes, 2026-09-02).
 # Instagram/X/LinkedIn están en el footer del sitio; Bluesky/Mastodon son cuenta

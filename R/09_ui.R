@@ -73,10 +73,8 @@ build_ui <- function() {
       div(class = "landing-group",
         div(class = "landing-group-title", "Paquetes de R"),
         div(class = "landing-grid",
-          landing_card("home_paquete_carrusel", "📦", "Carrusel de paquete",
-            "4 slides fijos para Instagram, 1080×1080"),
-          landing_card("home_tip", "💡", "Tip / Paquete de R",
-            "Tarjeta para LinkedIn/X — claro u oscuro, 3 formatos"),
+          landing_card("home_paquete_carrusel", "💡", "Tip de R",
+            "4 slides fijos, 1080×1080 — para Instagram y también para LinkedIn/X"),
           landing_card("home_catalogo", "🗂️", "Catálogo de paquetes",
             "Placa de hito: total de paquetes y países, con destacados")
         )
@@ -101,7 +99,7 @@ build_ui <- function() {
   # (armar config, nombre de archivo del ZIP) -- ahora deriva de qué tab
   # está activa (input$main_nav) en vez de leer un input que ya no existe.
   nav_panel(
-    "📦 Carrusel de paquete", value = "ig_paquete",
+    "💡 Tip de R", value = "ig_paquete",
     layout_sidebar(
       sidebar = sidebar(
         width = 340,
@@ -480,51 +478,15 @@ build_ui <- function() {
   ),
 
   # ---- Tab LinkedIn / X ----
-  nav_panel(
-    "💼 LinkedIn · X", value = "linkedin",
-    layout_sidebar(
-      sidebar = sidebar(
-        width = 320,
-        class = "panel-form",
-        back_to_home("linkedin"),
-
-        # El template "Curso" de esta pestaña se sacó (2026-09-17): duplicaba
-        # la tarjeta clásica de curso del tab Instagram con un diseño más
-        # viejo. Ver memory/proyecto-flyer-generator.md.
-        tags$span("Formato", class = "section-label"),
-        selectInput("lnk_tip_formato", NULL,
-          choices = names(FORMATOS_TIP),
-          selected = names(FORMATOS_TIP)[1]),
-        tags$span("Modo", class = "section-label"),
-        selectInput("lnk_tip_modo", NULL,
-          choices = c("Claro" = "claro", "Oscuro" = "oscuro"),
-          selected = "claro"),
-        tags$span("Categoría (badge)", class = "section-label"),
-        textInput("lnk_tip_categoria", NULL, value = "Paquete de R"),
-        tags$span("Nombre del paquete / tip", class = "section-label"),
-        textInput("lnk_tip_nombre", NULL, value = "janitor"),
-        tags$span("Versión / fuente", class = "section-label"),
-        textInput("lnk_tip_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
-        tags$span("Descripción", class = "section-label"),
-        textAreaInput("lnk_tip_desc", NULL, rows = 2,
-          value = "Limpiá y normalizá datos de forma rápida: nombres de columnas, tablas cruzadas y detección de duplicados con una sola línea de código."),
-        tags$span("Código (R)", class = "section-label"),
-        textAreaInput("lnk_tip_codigo", NULL, rows = 5,
-          value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")"),
-        tags$span("Autor / repo", class = "section-label"),
-        textInput("lnk_tip_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor"),
-
-        div(style = "display:flex; gap:0.5rem; margin-top:1rem;",
-          downloadButton("lnk_descargar_html", "⬇ HTML", class = "btn-download",
-            style = "flex:1; margin:0;"),
-          downloadButton("lnk_descargar_png", "⬇ PNG", class = "btn-download",
-            style = "flex:1; margin:0; background:#447099; color:#fff;")
-        )
-      ),
-
-      div(class = "flyer-wrap", uiOutput("preview_lnk"))
-    )
-  ),
+  # La tab "💼 LinkedIn · X" (tarjeta Tip/Paquete de R, claro/oscuro, 3
+  # formatos) se sacó el 2026-09-17: Pablo decidió que para LinkedIn/X se
+  # usan los slides del carrusel "Tip de R" (antes "Carrusel de paquete",
+  # renombrado más abajo) en vez de mantener un generador aparte. Quedó
+  # obsoleta el mismo día que se le agregó modo oscuro -- el trabajo de
+  # generate_flyer.js (cssTip/buildTipHTML/TIP_CANVAS_DIMS) se dejó ahí sin
+  # referencias desde la UI, mismo criterio que con el viejo template
+  # "curso" (ver commit anterior): no se purgó el JS, solo se sacó el
+  # camino de entrada. Ver memory/proyecto-flyer-generator.md.
 
   # ---- Tab Catálogo de Paquetes ----
   nav_panel(
