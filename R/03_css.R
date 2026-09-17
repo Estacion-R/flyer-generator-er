@@ -60,6 +60,43 @@ css_app <- paste0(UBUNTU_FONT_FACES, "
 .flyer-wrap {
   display: flex; justify-content: center; align-items: flex-start; padding: 1rem;
 }
+
+.landing-wrap { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.landing-intro { margin-bottom: 2.2rem; }
+.landing-intro h2 {
+  font-family: 'Ubuntu', sans-serif; font-weight: 700; font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+}
+.landing-intro p { color: #707073; font-size: 0.95rem; }
+
+.landing-group + .landing-group { margin-top: 2.2rem; }
+.landing-group-title {
+  font-family: 'Ubuntu Mono', monospace; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #151515;
+  border-bottom: 2px solid #151515; padding-bottom: 0.4rem; margin-bottom: 1rem;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.1rem;
+}
+
+.landing-card {
+  display: block; width: 100%; text-align: left;
+  background: #FFFFFF; border: 2px solid #151515; box-shadow: 5px 5px 0 #EAFF38;
+  padding: 1.2rem 1.3rem; cursor: pointer;
+  font-family: 'Ubuntu', sans-serif; color: #151515;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.landing-card:hover {
+  transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #EAFF38;
+  background: #FFFFFF; color: #151515;
+}
+.landing-card:active { transform: translate(0, 0); box-shadow: 3px 3px 0 #EAFF38; }
+.landing-card .lc-icon { font-size: 1.6rem; display: block; margin-bottom: 0.6rem; }
+.landing-card .lc-title { font-weight: 700; font-size: 0.98rem; display: block; margin-bottom: 0.3rem; }
+.landing-card .lc-desc { font-size: 0.8rem; color: #707073; line-height: 1.4; display: block; }
 ")
 
 # ---- CSS flyer LinkedIn/X ----

@@ -1,15 +1,9 @@
 # ---- Config ----
-BADGE_COLORES <- c(
-  "Azul ER"    = "#447099",
-  "Naranja ER" = "#EE6331",
-  "Teal ER"    = "#419599",
-  "Negro"      = "#151515"
-)
-
-FORMATOS_LNK <- list(
-  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL, key = "linkedin"),
-  "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675,  key = "story")
-)
+# Nota (2026-09-17): BADGE_COLORES y FORMATOS_LNK (del viejo template "curso"
+# de la pestaña LinkedIn/X) se sacaron de acá -- ese template quedó fuera de
+# la UI (duplicaba la tarjeta clásica de curso). generate_flyer.js conserva
+# su propia copia de BADGE_COLORES y sigue soportando `template: "curso"`
+# vía CLI si hiciera falta; solo se limpió el lado R, que ya no lo usa.
 
 # Formatos de salida para la tarjeta Tip/Paquete de R. "linkedin" es el
 # diseño original (tarjeta sola, alto automático, sin canvas). "1x1" y

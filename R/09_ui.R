@@ -6,9 +6,27 @@
 # corrido todavía sus library(bslib/htmltools/...) -- si esto se evaluara acá
 # arriba, page_navbar() no existiría aún. build_ui() se llama recién desde
 # app.R, después de sus library(), cuando bslib ya está attached.
+
+# Tarjeta clickeable de la landing ("Inicio"). Es un actionLink (Shiny lo
+# bindea como cualquier action button) con clase .landing-card en vez del
+# estilo default de link -- el click lo maneja el server (ver "Landing:
+# tarjetas" en app.R), que cambia de tab con nav_select() y precarga el
+# selector correspondiente si la pieza lo necesita.
+landing_card <- function(input_id, icon, title, desc) {
+  actionLink(input_id, class = "landing-card",
+    label = tagList(
+      tags$span(class = "lc-icon", icon),
+      tags$span(class = "lc-title", title),
+      tags$span(class = "lc-desc", desc)
+    )
+  )
+}
+
 build_ui <- function() {
   page_navbar(
   title = "Generador Estación R",
+  id = "main_nav",
+  selected = "home",
   theme = bs_theme(
     version = 5,
     bg = "#FFFFFF", fg = "#151515",
@@ -23,9 +41,49 @@ build_ui <- function() {
     tags$style(HTML(css_tip))
   ),
 
+  # ---- Tab Inicio (landing con tarjetas) ----
+  nav_panel(
+    "🏠 Inicio", value = "home",
+    div(class = "landing-wrap",
+      div(class = "landing-intro",
+        tags$h2("¿Qué querés generar?"),
+        tags$p("Elegí una pieza. Te lleva directo al formulario, con todo listo para completar.")
+      ),
+      div(class = "landing-group",
+        div(class = "landing-group-title", "Cursos"),
+        div(class = "landing-grid",
+          landing_card("home_curso_carrusel", "🎓", "Carrusel de curso",
+            "Anuncio de curso para Instagram — hasta 5 placas, orden libre por drag & drop"),
+          landing_card("home_curso_tarjeta", "🎴", "Tarjeta de curso",
+            "Imagen única para Instagram — 4:5 y 16:9, con fondos, íconos y recuadro de inscripción"),
+          landing_card("home_descuento", "🏷️", "Tarjeta de descuento",
+            "Promo o cupón — 4:5, 1:1 y 16:9")
+        )
+      ),
+      div(class = "landing-group",
+        div(class = "landing-group-title", "Paquetes de R"),
+        div(class = "landing-grid",
+          landing_card("home_paquete_carrusel", "📦", "Carrusel de paquete",
+            "4 slides fijos para Instagram, 1080×1080"),
+          landing_card("home_tip", "💡", "Tip / Paquete de R",
+            "Tarjeta para LinkedIn/X — claro u oscuro, 3 formatos"),
+          landing_card("home_catalogo", "🗂️", "Catálogo de paquetes",
+            "Placa de hito: total de paquetes y países, con destacados")
+        )
+      ),
+      div(class = "landing-group",
+        div(class = "landing-group-title", "Contenido general"),
+        div(class = "landing-grid",
+          landing_card("home_viz", "📊", "Visuales para redes",
+            "Enmarcá un gráfico propio con el branding de Estación R — 1:1, 4:5, 16:9")
+        )
+      )
+    )
+  ),
+
   # ---- Tab Instagram ----
   nav_panel(
-    "📸 Instagram — Carrusel",
+    "📸 Instagram — Carrusel", value = "instagram",
     layout_sidebar(
       sidebar = sidebar(
         width = 340,
@@ -347,7 +405,7 @@ build_ui <- function() {
 
   # ---- Tab Visuales para redes ----
   nav_panel(
-    "📊 Visuales para redes",
+    "📊 Visuales para redes", value = "viz",
     layout_sidebar(
       sidebar = sidebar(
         width = 320,
@@ -396,94 +454,37 @@ build_ui <- function() {
 
   # ---- Tab LinkedIn / X ----
   nav_panel(
-    "💼 LinkedIn · X",
+    "💼 LinkedIn · X", value = "linkedin",
     layout_sidebar(
       sidebar = sidebar(
         width = 320,
         class = "panel-form",
 
-        tags$span("Plantilla", class = "section-label"),
-        selectInput("lnk_template", NULL,
-          choices = c("Curso", "Tip / Paquete de R"),
-          selected = "Curso"),
-
-        conditionalPanel(
-          condition = "input.lnk_template == 'Curso'",
-
-          tags$span("Formato", class = "section-label"),
-          selectInput("lnk_formato", NULL,
-            choices = names(FORMATOS_LNK),
-            selected = names(FORMATOS_LNK)[1]),
-
-          tags$span("Imagen del curso", class = "section-label"),
-          fileInput("lnk_course_image", NULL,
-            accept = c("image/png", "image/jpeg"),
-            buttonLabel = "Elegir imagen...",
-            placeholder = "Sin imagen"),
-
-          tags$span("Tipo de evento", class = "section-label"),
-          textInput("lnk_badge", NULL, value = "Curso virtual"),
-
-          tags$span("Color del badge", class = "section-label"),
-          selectInput("lnk_badge_color", NULL,
-            choices = names(BADGE_COLORES), selected = "Azul ER"),
-
-          tags$span("Título del curso", class = "section-label"),
-          textAreaInput("lnk_titulo", NULL,
-            value = "INTRODUCCIÓN A R PARA CIENCIAS SOCIALES", rows = 3),
-
-          tags$span("Descripción breve", class = "section-label"),
-          textAreaInput("lnk_subtitulo", NULL,
-            value = "Aprendé a procesar, visualizar y comunicar datos con R desde cero.", rows = 2),
-
-          tags$span("Contenidos (uno por línea)", class = "section-label"),
-          textAreaInput("lnk_bullets", NULL,
-            value = "Introducción a R y RStudio\nManejo de datos con tidyverse\nVisualización con ggplot2\nReportes con Quarto\nAnálisis estadístico aplicado",
-            rows = 5),
-
-          tags$hr(),
-          tags$span("Acceso de por vida — texto", class = "section-label"),
-          textAreaInput("lnk_col1", NULL,
-            value = "Grabaciones disponibles para repasar cuando quieras", rows = 2),
-          tags$span("Certificación — texto", class = "section-label"),
-          textAreaInput("lnk_col2", NULL,
-            value = "Certificado de participación al completar el programa", rows = 2),
-          tags$span("Acceso a la comunidad — texto", class = "section-label"),
-          textAreaInput("lnk_col3", NULL,
-            value = "Canal exclusivo de Estación R para consultas y seguimiento", rows = 2),
-
-          tags$hr(),
-          tags$span("Destacado final", class = "section-label"),
-          textInput("lnk_footer_icon", "Ícono (emoji)", value = "📣"),
-          textAreaInput("lnk_footer_texto", "Texto",
-            value = "INSCRIPCIÓN ABIERTA\nMARTES 19:00 | INICIO 12 AGOSTO", rows = 2)
-        ),
-
-        conditionalPanel(
-          condition = "input.lnk_template == 'Tip / Paquete de R'",
-          tags$span("Formato", class = "section-label"),
-          selectInput("lnk_tip_formato", NULL,
-            choices = names(FORMATOS_TIP),
-            selected = names(FORMATOS_TIP)[1]),
-          tags$span("Modo", class = "section-label"),
-          selectInput("lnk_tip_modo", NULL,
-            choices = c("Claro" = "claro", "Oscuro" = "oscuro"),
-            selected = "claro"),
-          tags$span("Categoría (badge)", class = "section-label"),
-          textInput("lnk_tip_categoria", NULL, value = "Paquete de R"),
-          tags$span("Nombre del paquete / tip", class = "section-label"),
-          textInput("lnk_tip_nombre", NULL, value = "janitor"),
-          tags$span("Versión / fuente", class = "section-label"),
-          textInput("lnk_tip_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
-          tags$span("Descripción", class = "section-label"),
-          textAreaInput("lnk_tip_desc", NULL, rows = 2,
-            value = "Limpiá y normalizá datos de forma rápida: nombres de columnas, tablas cruzadas y detección de duplicados con una sola línea de código."),
-          tags$span("Código (R)", class = "section-label"),
-          textAreaInput("lnk_tip_codigo", NULL, rows = 5,
-            value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")"),
-          tags$span("Autor / repo", class = "section-label"),
-          textInput("lnk_tip_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor")
-        ),
+        # El template "Curso" de esta pestaña se sacó (2026-09-17): duplicaba
+        # la tarjeta clásica de curso del tab Instagram con un diseño más
+        # viejo. Ver memory/proyecto-flyer-generator.md.
+        tags$span("Formato", class = "section-label"),
+        selectInput("lnk_tip_formato", NULL,
+          choices = names(FORMATOS_TIP),
+          selected = names(FORMATOS_TIP)[1]),
+        tags$span("Modo", class = "section-label"),
+        selectInput("lnk_tip_modo", NULL,
+          choices = c("Claro" = "claro", "Oscuro" = "oscuro"),
+          selected = "claro"),
+        tags$span("Categoría (badge)", class = "section-label"),
+        textInput("lnk_tip_categoria", NULL, value = "Paquete de R"),
+        tags$span("Nombre del paquete / tip", class = "section-label"),
+        textInput("lnk_tip_nombre", NULL, value = "janitor"),
+        tags$span("Versión / fuente", class = "section-label"),
+        textInput("lnk_tip_version", NULL, value = "v2.2.0 · CRAN · Sam Firke"),
+        tags$span("Descripción", class = "section-label"),
+        textAreaInput("lnk_tip_desc", NULL, rows = 2,
+          value = "Limpiá y normalizá datos de forma rápida: nombres de columnas, tablas cruzadas y detección de duplicados con una sola línea de código."),
+        tags$span("Código (R)", class = "section-label"),
+        textAreaInput("lnk_tip_codigo", NULL, rows = 5,
+          value = "# Normalizá los nombres de columnas\ndatos <- datos |>\n  clean_names() |>\n  remove_empty(which = \"rows\")"),
+        tags$span("Autor / repo", class = "section-label"),
+        textInput("lnk_tip_autor", NULL, value = "📦 janitor · GitHub: sfirke/janitor"),
 
         div(style = "display:flex; gap:0.5rem; margin-top:1rem;",
           downloadButton("lnk_descargar_html", "⬇ HTML", class = "btn-download",
@@ -499,7 +500,7 @@ build_ui <- function() {
 
   # ---- Tab Catálogo de Paquetes ----
   nav_panel(
-    "📦 Catálogo de Paquetes",
+    "📦 Catálogo de Paquetes", value = "catalogo",
     layout_sidebar(
       sidebar = sidebar(
         width = 340,
