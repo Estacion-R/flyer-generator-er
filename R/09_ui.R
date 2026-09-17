@@ -461,6 +461,14 @@ build_ui <- function() {
 
         conditionalPanel(
           condition = "input.lnk_template == 'Tip / Paquete de R'",
+          tags$span("Formato", class = "section-label"),
+          selectInput("lnk_tip_formato", NULL,
+            choices = names(FORMATOS_TIP),
+            selected = names(FORMATOS_TIP)[1]),
+          tags$span("Modo", class = "section-label"),
+          selectInput("lnk_tip_modo", NULL,
+            choices = c("Claro" = "claro", "Oscuro" = "oscuro"),
+            selected = "claro"),
           tags$span("Categoría (badge)", class = "section-label"),
           textInput("lnk_tip_categoria", NULL, value = "Paquete de R"),
           tags$span("Nombre del paquete / tip", class = "section-label"),

@@ -450,6 +450,7 @@ server <- function(input, output, session) {
 
   # -- LinkedIn/X: reactivos --
   lnk_formato_dims <- reactive(FORMATOS_LNK[[input$lnk_formato]])
+  tip_formato_dims <- reactive(FORMATOS_TIP[[input$lnk_tip_formato]])
 
   # Preview en vivo (Etapa 3, mismo patrón que las otras 2 pestañas): el HTML
   # sale del worker (mismo builder JS que usan las descargas desde la Etapa 2,
@@ -465,7 +466,9 @@ server <- function(input, output, session) {
         version_line = input$lnk_tip_version,
         descripcion  = input$lnk_tip_desc,
         codigo       = input$lnk_tip_codigo,
-        autor_line   = input$lnk_tip_autor
+        autor_line   = input$lnk_tip_autor,
+        modo         = input$lnk_tip_modo,
+        formato      = tip_formato_dims()$key
       ),
       curso = list(
         formato      = lnk_formato_dims()$key,
@@ -498,7 +501,8 @@ server <- function(input, output, session) {
     # onload (ver flyer_iframe en R/08_builders_linkedin.R) re-invalidaría
     # este mismo renderUI y armaría un loop de re-renders.
     last_h <- isolate(input$lnk_preview_h) %||% 520
-    flyer_iframe(html, if (is_tip) 540 else inp$w, last_h = last_h)
+    tip_w <- if (is_tip) (tip_formato_dims()$w %||% 540) else 540
+    flyer_iframe(html, if (is_tip) tip_w else inp$w, last_h = last_h)
   })
 
   # -- LinkedIn/X: descarga HTML --
@@ -519,7 +523,9 @@ server <- function(input, output, session) {
           version_line = input$lnk_tip_version,
           descripcion  = input$lnk_tip_desc,
           codigo       = input$lnk_tip_codigo,
-          autor_line   = input$lnk_tip_autor
+          autor_line   = input$lnk_tip_autor,
+          modo         = input$lnk_tip_modo,
+          formato      = tip_formato_dims()$key
         )
       } else {
         dims <- lnk_formato_dims()
@@ -571,7 +577,9 @@ server <- function(input, output, session) {
           version_line = input$lnk_tip_version,
           descripcion  = input$lnk_tip_desc,
           codigo       = input$lnk_tip_codigo,
-          autor_line   = input$lnk_tip_autor
+          autor_line   = input$lnk_tip_autor,
+          modo         = input$lnk_tip_modo,
+          formato      = tip_formato_dims()$key
         )
         cfg_file <- tempfile(fileext = ".json")
         writeLines(jsonlite::toJSON(config, auto_unbox = TRUE), cfg_file)

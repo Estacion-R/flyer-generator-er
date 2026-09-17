@@ -11,6 +11,17 @@ FORMATOS_LNK <- list(
   "Story / Reels — WhatsApp (9:16)"  = list(w = 380, h = 675,  key = "story")
 )
 
+# Formatos de salida para la tarjeta Tip/Paquete de R. "linkedin" es el
+# diseño original (tarjeta sola, alto automático, sin canvas). "1x1" y
+# "story" envuelven la misma tarjeta centrada en un canvas de fondo al
+# tamaño pedido (ver .tip-canvas en CSS_TIP), en vez de rediseñar el
+# layout interno por formato.
+FORMATOS_TIP <- list(
+  "Vertical — feed / LinkedIn (4:5)" = list(w = 540, h = NULL, key = "linkedin"),
+  "Cuadrado — Instagram (1:1)"       = list(w = 540, h = 540,  key = "1x1"),
+  "Story / Reels (9:16)"             = list(w = 380, h = 675,  key = "story")
+)
+
 # Redes sociales oficiales de Estación R (confirmado con redes, 2026-09-02).
 # Instagram/X/LinkedIn están en el footer del sitio; Bluesky/Mastodon son cuenta
 # personal de Pablo con voz de marca, activas pero no oficializadas en el sitio.

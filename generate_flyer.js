@@ -27,8 +27,16 @@
  *   "version_line": "v2.2.0 · CRAN · Sam Firke",
  *   "descripcion": "...",
  *   "codigo": "datos <- datos |>\n  clean_names()",
- *   "autor_line": "📦 janitor · GitHub: sfirke/janitor"
+ *   "autor_line": "📦 janitor · GitHub: sfirke/janitor",
+ *   "modo": "claro|oscuro",
+ *   "formato": "linkedin|1x1|story"
  * }
+ * "modo" (opcional, default "claro"): paleta de la tarjeta -- header/badge/footer
+ * de marca se mantienen iguales, cambia el fondo de tarjeta/código y los grises.
+ * "formato" (opcional, default "linkedin"): "linkedin" es la tarjeta sola (diseño
+ * original, sin canvas). "1x1"/"story" envuelven la misma tarjeta centrada y
+ * autoescalada (JS inline en el HTML, ver TIP_CANVAS_DIMS) en un canvas de fondo
+ * del tamaño pedido -- no es un rediseño de layout por formato, solo reencuadre.
  *
  * config.json (template "carousel" — paquete de R, 4 slides 1080×1080, ZIP desde R):
  * {
@@ -308,13 +316,33 @@ body { background: #f5f5f5; display: flex; justify-content: center; align-items:
 `;
 
 // ---- CSS tip ----
-const CSS_TIP = `
+// Paletas claro/oscuro de la tarjeta Tip/Paquete de R. El header azul, el
+// badge/footer amarillo y el acento naranja de argumentos se mantienen
+// iguales en los dos modos (son la identidad de marca); lo que cambia es
+// el fondo de la tarjeta y del bloque de código, y los grises de texto
+// para mantener contraste legible sobre fondo oscuro.
+const TIP_PALETAS = {
+  claro: {
+    bodyBg: '#f5f5f5', cardBg: '#FFFFFF', desc: '#404041',
+    codeBg: '#F5F5F5', codeBorder: '#151515', codeText: '#151515',
+    comment: '#707073', autor: '#707073', autorStrong: '#151515'
+  },
+  oscuro: {
+    bodyBg: '#151515', cardBg: '#151515', desc: '#C8C8CA',
+    codeBg: '#1F1F20', codeBorder: '#404041', codeText: '#E8E8E8',
+    comment: '#8A8A8D', autor: '#A0A0A3', autorStrong: '#FFFFFF'
+  }
+};
+
+function cssTip(modo) {
+  const p = TIP_PALETAS[modo] || TIP_PALETAS.claro;
+  return `
 ${UBUNTU_FONT_FACES}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #f5f5f5; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
+body { background: ${p.bodyBg}; display: flex; justify-content: center; align-items: flex-start; padding: 2rem; }
 
-.tip-card { width: 540px; border: 3px solid #151515; box-shadow: 10px 10px 0 #EAFF38; overflow: hidden; background: #FFFFFF; font-family: 'Ubuntu', sans-serif; }
+.tip-card { width: 540px; border: 3px solid #151515; box-shadow: 10px 10px 0 #EAFF38; overflow: hidden; background: ${p.cardBg}; font-family: 'Ubuntu', sans-serif; }
 
 .tip-header { background: #447099; padding: 2.2rem 2.5rem 2rem 2.5rem; position: relative; display: flex; flex-direction: column; gap: 1rem; }
 .tip-header::after { content: 'R'; position: absolute; right: -0.5rem; bottom: -1.2rem; font-family: 'Ubuntu Mono', monospace; font-size: 8rem; font-weight: 700; color: rgba(255,255,255,0.08); line-height: 1; pointer-events: none; user-select: none; }
@@ -326,21 +354,32 @@ body { background: #f5f5f5; display: flex; justify-content: center; align-items:
 .tip-version { font-family: 'Ubuntu Mono', monospace; font-size: 0.75rem; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; }
 
 .tip-body { padding: 1.8rem 2.5rem 1.5rem 2.5rem; display: flex; flex-direction: column; gap: 1.4rem; }
-.tip-desc { font-size: 0.95rem; color: #404041; line-height: 1.6; }
+.tip-desc { font-size: 0.95rem; color: ${p.desc}; line-height: 1.6; }
 
-.tip-code { background: #F5F5F5; border: 2px solid #151515; border-left: 5px solid #447099; padding: 0.9rem 1rem; font-family: 'Ubuntu Mono', monospace; font-size: 0.82rem; color: #151515; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-.tip-code .code-comment { color: #707073; }
+.tip-code { background: ${p.codeBg}; border: 2px solid ${p.codeBorder}; border-left: 5px solid #447099; padding: 0.9rem 1rem; font-family: 'Ubuntu Mono', monospace; font-size: 0.82rem; color: ${p.codeText}; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.tip-code .code-comment { color: ${p.comment}; }
 .tip-code .code-fn { color: #447099; font-weight: 700; }
 .tip-code .code-arg { color: #EE6331; }
 .tip-code .code-str { color: #419599; }
 
-.tip-autor { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #707073; font-family: 'Ubuntu Mono', monospace; }
-.tip-autor strong { color: #151515; }
+.tip-autor { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: ${p.autor}; font-family: 'Ubuntu Mono', monospace; }
+.tip-autor strong { color: ${p.autorStrong}; }
 
 .tip-footer { background: #EAFF38; border-top: 2px solid #151515; padding: 0.65rem 2.5rem; display: flex; align-items: center; justify-content: space-between; }
 .tip-footer .brand { font-family: 'Ubuntu Mono', monospace; font-size: 0.72rem; font-weight: 700; color: #151515; letter-spacing: 0.1em; text-transform: uppercase; }
 .tip-footer .url { font-family: 'Ubuntu Mono', monospace; font-size: 0.68rem; color: #404041; letter-spacing: 0.06em; }
+
+.tip-canvas { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: ${p.bodyBg}; }
+.tip-canvas .tip-card { flex-shrink: 0; }
 `;
+}
+
+// Tamaños de canvas para los formatos que envuelven la tarjeta (todo lo que
+// no sea "linkedin", que es la tarjeta sola sin canvas, tamaño original).
+const TIP_CANVAS_DIMS = {
+  '1x1':   { w: 540, h: 540 },
+  'story': { w: 380, h: 675 }
+};
 
 // Redes sociales oficiales de Estación R (espejo de SOCIAL_ICONS en app.R).
 // Íconos: Simple Icons (CC0), viewBox 24x24, un solo <path>.
@@ -447,11 +486,10 @@ function buildTipHTML(config, logoB64) {
     autorHTML = autorHTML.replace(new RegExp(escapeRegExp(nombre), 'g'),
       (m) => `<strong>${m}</strong>`);
   }
-  return `<!DOCTYPE html>
-<html lang="es">
-<head><meta charset="UTF-8"><style>${CSS_TIP}</style></head>
-<body>
-<div class="tip-card">
+  const modo = config.modo === 'oscuro' ? 'oscuro' : 'claro';
+  const css = cssTip(modo);
+
+  const cardHTML = `<div class="tip-card" id="tip-card">
   <div class="tip-header">
     <div class="tip-badge">${escapeHtml(config.categoria || 'Paquete de R')}</div>
     <div class="tip-nombre"><span class="brace">{</span>${escapeHtml(nombre)}<span class="brace">}</span></div>
@@ -466,7 +504,51 @@ function buildTipHTML(config, logoB64) {
     <span class="brand">Estación R</span>
     <span class="url">estacion-r.com</span>
   </div>
+</div>`;
+
+  const dims = TIP_CANVAS_DIMS[config.formato];
+  if (!dims) {
+    // Formato "linkedin" (o sin formato): tarjeta sola, tamaño original.
+    return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><style>${css}</style></head>
+<body>
+${cardHTML}
+</body>
+</html>`;
+  }
+
+  // "1x1" / "story": la misma tarjeta, centrada y escalada para entrar en
+  // un canvas de tamaño fijo. La tarjeta no cambia de diseño interno --
+  // se calcula la escala en el cliente después de que el contenido real
+  // (código, descripción) determina su alto, tanto para el preview en
+  // vivo (iframe) como para la captura server-side (mismo HTML, Playwright
+  // espera fonts.ready + timeout antes de la screenshot).
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><style>${css}
+html, body { width: ${dims.w}px; height: ${dims.h}px; overflow: hidden; padding: 0; }
+</style></head>
+<body>
+<div class="tip-canvas" id="tip-canvas" style="width:${dims.w}px;height:${dims.h}px;">
+${cardHTML}
 </div>
+<script>
+(function () {
+  var canvas = document.getElementById('tip-canvas');
+  var card = document.getElementById('tip-card');
+  var pad = 32;
+  function fit() {
+    var sw = (canvas.clientWidth  - pad * 2) / card.offsetWidth;
+    var sh = (canvas.clientHeight - pad * 2) / card.offsetHeight;
+    var scale = Math.min(sw, sh, 1);
+    card.style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  window.addEventListener('resize', fit);
+})();
+</script>
 </body>
 </html>`;
 }
@@ -1806,7 +1888,8 @@ async function main() {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
 
-  const selector = config.template === 'tip' ? '.tip-card' : '.flyer';
+  const isTipCanvas = config.template === 'tip' && TIP_CANVAS_DIMS[config.formato];
+  const selector = isTipCanvas ? '.tip-canvas' : (config.template === 'tip' ? '.tip-card' : '.flyer');
   await page.locator(selector).screenshot({ path: outputFile, scale: 'css', type: 'png' });
 
   await browser.close();
