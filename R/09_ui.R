@@ -40,7 +40,7 @@ build_ui <- function() {
   theme = bs_theme(
     version = 5,
     bg = "#FFFFFF", fg = "#151515",
-    primary = "#447099", secondary = "#707073",
+    primary = "#405BFF", secondary = "#707073",
     base_font = font_google("Ubuntu"),
     heading_font = font_google("Ubuntu", wght = c(400, 700)),
     "border-radius" = "0"

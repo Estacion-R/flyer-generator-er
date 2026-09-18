@@ -10,7 +10,7 @@ css_app <- paste0(UBUNTU_FONT_FACES, "
 
 .section-label {
   font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
-  text-transform: uppercase; color: #447099;
+  text-transform: uppercase; color: #405BFF;
   font-family: 'Ubuntu', sans-serif; margin-bottom: 0.5rem; display: block;
 }
 
@@ -21,10 +21,10 @@ css_app <- paste0(UBUNTU_FONT_FACES, "
   text-transform: uppercase; letter-spacing: 0.08em;
   cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;
 }
-.btn-download:hover { background: #447099; color: #FFFFFF; }
+.btn-download:hover { background: #405BFF; color: #FFFFFF; }
 
 .btn-zip {
-  background: #447099; color: #FFFFFF; border: 2px solid #151515;
+  background: #405BFF; color: #FFFFFF; border: 2px solid #151515;
   font-family: 'Ubuntu', sans-serif; font-weight: 700;
   padding: 0.65rem 1.5rem; width: 100%;
   text-transform: uppercase; letter-spacing: 0.08em;
