@@ -581,7 +581,7 @@ build_ui <- function() {
 
         tags$hr(),
         tags$span("Edición de esta semana", class = "section-label"),
-        numericInput("nl_edicion", "Número de edición", value = 47, min = 1),
+        numericInput("nl_edicion", "Número de edición", value = 27, min = 1),
         textInput("nl_fecha", "Fecha (ej: 2 de octubre)", value = fecha_es_hoy()),
 
         tags$hr(),
