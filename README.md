@@ -9,7 +9,7 @@ App Shiny para generar piezas de difusión de Estación R (minimalista neobrutal
 ## Características
 
 - Instagram: carrusel de paquete (4 slides), carrusel de curso (5 tipos de placa disponibles — Portada, ¿Qué vas a aprender?, ¿Qué te llevás?, CTA de inscripción, Contacto "Comentá una palabra clave y te mandamos el programa" — elegís cuáles usar y en qué orden arrastrando entre dos listas conectadas tipo sticker; título/CTA en Array; contador, 👉 de swipe y píldoras de redes se recalculan según la posición real de cada placa, no según su tipo) y **tarjeta clásica de curso** — feed 4:5 (1080×1350) + horizontal 16:9 (1920×1080), fondos negro/azul/amarillo/blanco con paleta adaptativa, título en Array, badge CURSOS y píldora "Sumate!" arriba a la izquierda en ambos formatos, caja central con imagen opcional o isotipo, de 1 a 6 ítems editables con íconos Boxicons (cantidad configurable; tamaño/espaciado se recalcula automáticamente para una distribución vertical armónica en 16:9) y recuadro "INSCRIPCIÓN ABIERTA" opcional al pie de la tarjeta en ambos formatos (fondo amarillo, texto en negrita, ícono de megáfono, fecha/horario configurable; ancho completo en 4:5, anclado a la columna de ítems en 16:9). El 16:9 suma además borde negro
-- Dos plantillas: **Curso** y **Tip / Paquete de R** (tarjeta con header azul, código R resaltado — comentarios, funciones, strings y args — y footer amarillo)
+- Navegación: landing con tarjetas como única entrada (2026-09-17) — cada pieza es una tab con su formulario: carrusel de paquete ("Tip de R", 4 slides, también para LinkedIn/X), carrusel de curso, tarjeta clásica de curso, tarjeta de descuento, visuales para redes (chart propio enmarcado), catálogo de paquetes y **newsletter semanal** (placa de edición — reemplaza `generar_imagen_newsletter.py` de redes, 2026-10-02)
 - Curso: formulario en vivo (formato/red, imagen, badge, título, contenidos, columnas de info, destacado)
 - Tres formatos de salida para curso: vertical feed/LinkedIn (4:5), cuadrado Instagram (1:1), story/WhatsApp (9:16)
 - Preview en vivo con branding ER: borde negro, sombra dura amarilla `#EAFF38`, paleta oficial, Ubuntu / Ubuntu Mono
@@ -84,7 +84,7 @@ Notas del entorno (notebook de Estación R):
 
 ## Branding
 
-Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Estacion-R/estacion-r-branding): paleta oficial (Azul `#447099`, Naranja `#EE6331`, Teal `#419599`, Negro `#151515`, acento amarillo `#EAFF38`), tipografías Ubuntu / Ubuntu Mono, sombras duras estilo neobrutalista.
+Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Estacion-R/estacion-r-branding): paleta oficial (Azul `#405BFF`, Azul oscuro `#1839F4` para resaltado en bloques de código, Naranja `#EE6331`, Teal `#419599`, Negro `#151515`, acento amarillo `#EAFF38`), tipografías Ubuntu / Ubuntu Mono, sombras duras estilo neobrutalista. El azul legacy `#447099` no se usa en ninguna pieza viva desde el 2026-09-18 (sweep completo: `dfa2644` + `d60f3bc`); queda solo en templates retirados que se conservan en `generate_flyer.js` como rescate CLI.
 
 ## Roadmap
 
@@ -97,7 +97,7 @@ Toda pieza visual respeta el spec de [estacion-r-branding](https://github.com/Es
 - ~~Simetría 4:5 ↔ 16:9: agregar el badge "CURSOS" también al 16:9 (esquina liberada por la píldora en `v2.4.1`) y llevar el recuadro "INSCRIPCIÓN ABIERTA" también al 4:5, reemplazando ahí al botón CTA~~ ✅ `v2.4.2`
 - ~~Visuales de datos para redes: gráfico ggplot subido como PNG y enmarcado con branding ER en 1:1 + 4:5 + 16:9, descarga ZIP~~ ✅ `v2.5.0`
 - ~~Carrusel de curso: selector de 3 o 4 placas (slide 4 opcional "Comentá INFO y te mandamos el programa"), tipografía Array en portada/CTA para alinear con la tarjeta clásica~~ ✅ `v2.6.0`
-- ~~Fix azul off-brand (`#447099`) en el carrusel de curso → azul oficial `#405BFF`~~ ✅ `v2.6.1` — el mismo azul legacy sigue en el carrusel de paquete, la tarjeta tip y el flyer LinkedIn; pendiente decidir si se hace un sweep completo
+- ~~Fix azul off-brand (`#447099`) en el carrusel de curso → azul oficial `#405BFF`~~ ✅ `v2.6.1` + sweep completo (2026-09-18, `dfa2644` + `d60f3bc`): toda la UI viva usa `#405BFF`; el legacy queda solo en templates retirados (rescate CLI, sin uso desde la UI)
 - ~~Indicador de swipe (👉) en los slides que no son la última placa del carrusel de curso; selector de redes tipo "sticker" (Instagram/X/LinkedIn/Bluesky/Mastodon) que solo aparecen en la última placa~~ ✅ `v2.7.0`
 - ~~Íconos de marca (Simple Icons, CC0) en las píldoras de redes del carrusel de curso, junto al handle~~ ✅ `v2.7.1`
 - ~~Picker tipo "sticker" (drag & drop, `shinyjqui::orderInput`) para elegir qué placas van en el carrusel de curso y en qué orden, sin límite fijo de 3/4. Placa nueva "¿Qué te llevás?" (bullets, mismo patrón que "¿Qué vas a aprender?"). El contador, el 👉 y las píldoras de redes ahora se calculan por posición real en el plan, no por tipo de placa fijo~~ ✅ `v2.8.0`
