@@ -32,6 +32,16 @@ back_to_home <- function(suffix) {
   actionLink(paste0("go_home_", suffix), class = "back-home", label = tagList("← Inicio"))
 }
 
+# Fecha de hoy en español ("2 de octubre") para el default del campo de fecha
+# de la newsletter -- el sistema no garantiza locale es_AR, así que el nombre
+# del mes se arma a mano.
+fecha_es_hoy <- function() {
+  meses <- c("enero", "febrero", "marzo", "abril", "mayo", "junio",
+             "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+  paste0(as.integer(format(Sys.Date(), "%d")), " de ",
+         meses[as.integer(format(Sys.Date(), "%m"))])
+}
+
 build_ui <- function() {
   page_navbar(
   title = "Generador Estación R",
@@ -83,7 +93,9 @@ build_ui <- function() {
         div(class = "landing-group-title", "Contenido general"),
         div(class = "landing-grid",
           landing_card("home_viz", "📊", "Visuales para redes",
-            "Enmarcá un gráfico propio con el branding de Estación R — 1:1, 4:5, 16:9")
+            "Enmarcá un gráfico propio con el branding de Estación R — 1:1, 4:5, 16:9"),
+          landing_card("home_newsletter", "📬", "Newsletter semanal",
+            "Placa de edición — número y fecha para anunciar la newsletter de la semana")
         )
       )
     )
@@ -545,6 +557,57 @@ build_ui <- function() {
         uiOutput("preview_cat_feed"),
         div(class = "slide-label", "Story — Instagram (1080×1920)"),
         uiOutput("preview_cat_story")
+      )
+    )
+  ),
+
+  # ---- Tab Newsletter semanal ----
+  # Fusiona generar_imagen_newsletter.py de redes (2026-10-02): mismo layout
+  # de dos bloques que el Catálogo (template "catalogo" con tipo "newsletter"
+  # en generate_flyer.js), sin lista de paquetes -- el bloque amarillo lleva
+  # número de edición y fecha en vez de totales del catálogo.
+  nav_panel(
+    "📬 Newsletter semanal", value = "newsletter",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 340,
+        class = "panel-form",
+        back_to_home("newsletter"),
+
+        tags$span("Formatos a incluir en el ZIP", class = "section-label"),
+        checkboxGroupInput("nl_formatos", NULL,
+          choices = CATALOGO_FORMATOS_OPTS,
+          selected = unname(CATALOGO_FORMATOS_OPTS)),
+
+        tags$hr(),
+        tags$span("Edición de esta semana", class = "section-label"),
+        numericInput("nl_edicion", "Número de edición", value = 47, min = 1),
+        textInput("nl_fecha", "Fecha (ej: 2 de octubre)", value = fecha_es_hoy()),
+
+        tags$hr(),
+        accordion(
+          open = FALSE,
+          multiple = TRUE,
+
+          accordion_panel("📝 Textos (opcional)", value = "nl_textos",
+            textInput("nl_titulo", "Título (admite <br>)", value = "Newsletter<br>Semanal"),
+            textInput("nl_tagline", "Tagline", value = "Lo mejor de la semana en R, directo a tu email")
+          )
+        ),
+
+        downloadButton("descargar_newsletter_zip",
+          "⬇ Descargar ZIP",
+          class = "btn-zip",
+          style = "margin-top: 1rem;")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "Horizontal — LinkedIn/X/OG (1200×630)"),
+        uiOutput("preview_nl_redes"),
+        div(class = "slide-label", "Feed — Instagram (1080×1350)"),
+        uiOutput("preview_nl_feed"),
+        div(class = "slide-label", "Story — Instagram (1080×1920)"),
+        uiOutput("preview_nl_story")
       )
     )
   )

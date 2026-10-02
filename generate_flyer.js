@@ -154,8 +154,19 @@
  */
 
 /*
- * config.json (template "catalogo" — placa de catálogo de paquetes, 1200×630 "redes"
- * horizontal + 1080×1350 "feed" + 1080×1920 "story"):
+ * config.json (template "catalogo" — placa de hito de dos bloques, 1200×630
+ * "redes" horizontal + 1080×1350 "feed" + 1080×1920 "story"):
+ *
+ * "tipo" (opcional, default "catalogo") elige la variante. Layout idéntico
+ * en las dos (bloque azul con logo+badge+título+tagline, bloque amarillo con
+ * número grande+label+subtexto) -- fusionado 2026-09-18 a pedido de redes,
+ * que tenía dos scripts Python gemelos (generar_imagen_newsletter.py y
+ * generar_imagen_paquetes.py, el segundo literalmente importaba utilidades
+ * del primero) generando la misma placa con distinto dato en el bloque
+ * amarillo. Acá es un único layout parametrizado en vez de mantener dos.
+ *
+ * tipo "catalogo" (compatibilidad total con el formato viejo, sin "tipo"
+ * también cae acá):
  * {
  *   "template": "catalogo",
  *   "output_dir": "/tmp/catalogo_xxx/",
@@ -173,8 +184,24 @@
  * son los agregados del catálogo vigente (no necesariamente iguales a los 3
  * destacados) y se muestran como número grande en el bloque amarillo. La bandera
  * por país sale de PAIS_BANDERAS (15 países de Latinoamérica + 🌎 de fallback si
- * el país no está en la tabla). Genera catalogo_redes.png + catalogo_feed.png +
- * catalogo_story.png en output_dir.
+ * el país no está en la tabla).
+ *
+ * tipo "newsletter" (sin lista de paquetes destacados en el bloque azul):
+ * {
+ *   "template": "catalogo",
+ *   "tipo": "newsletter",
+ *   "output_dir": "/tmp/newsletter_xxx/",
+ *   "badge_texto": "Edición",
+ *   "titulo": "Newsletter<br>Semanal",
+ *   "tagline": "Lo mejor de la semana en R, directo a tu email",
+ *   "num": "47",
+ *   "num_label": "Edición",
+ *   "num_sub": "18 de septiembre",
+ *   "formatos": ["redes", "feed", "story"]
+ * }
+ * Genera <tipo o "catalogo">_redes.png + _feed.png + _story.png en output_dir
+ * (el prefijo de archivo es "catalogo" para tipo catalogo, "newsletter" para
+ * tipo newsletter -- ver generateCatalogo()).
  */
 
 const { chromium } = require('playwright');
@@ -1682,11 +1709,26 @@ function buildCatalogoHTML(config, formato, assets) {
   const sz = CATALOGO_SIZES[fmt];
   const esRow = fmt === 'redes';
   const logo = (assets.logos && assets.logos.blanco) || '';
+  const esNewsletter = config.tipo === 'newsletter';
 
-  const paquetes = (Array.isArray(config.paquetes) ? config.paquetes : []).slice(0, 3);
-  const totalPaquetes = String(config.total_paquetes != null ? config.total_paquetes : '').trim();
-  const totalPaises = String(config.total_paises != null ? config.total_paises : '').trim();
+  // tipo "catalogo" (default, compatibilidad con el formato viejo): badge/
+  // título/tagline fijos, lista de paquetes destacados, número = total del
+  // catálogo. tipo "newsletter": todo viene del config (sin lista de
+  // paquetes), pensado para el reemplazo de generar_imagen_newsletter.py.
+  const paquetes = esNewsletter ? [] : (Array.isArray(config.paquetes) ? config.paquetes : []).slice(0, 3);
   const pkgsHTML = paquetes.map(catalogoPaqueteHtml).join('');
+
+  const badgeTexto = config.badge_texto || (esNewsletter ? 'Edición' : 'Catálogo');
+  const titulo = config.titulo || 'Paquetes de R<br>hechos en Latinoamérica';
+  const tagline = config.tagline || 'Descubrí el trabajo de la comunidad R en la región';
+
+  const num = esNewsletter
+    ? String(config.num != null ? config.num : '').trim()
+    : String(config.total_paquetes != null ? config.total_paquetes : '').trim();
+  const numLabel = config.num_label || (esNewsletter ? 'Edición' : 'Paquetes');
+  const numSub = esNewsletter
+    ? String(config.num_sub || '').trim()
+    : `en ${String(config.total_paises != null ? config.total_paises : '').trim()} países`;
 
   const fontsCSS =
     UBUNTU_FONT_FACES +
@@ -1715,15 +1757,15 @@ function buildCatalogoHTML(config, formato, assets) {
   const body =
     `<div class="catalogo">` +
     `<div class="bloque-azul">` +
-    `<div class="hd">${logo ? `<img class="lg" src="${logo}"/>` : '<span></span>'}<div class="badge">Catálogo</div></div>` +
-    `<div class="titulo">Paquetes de R<br>hechos en Latinoamérica</div>` +
-    `<div class="tagline">Descubrí el trabajo de la comunidad R en la región</div>` +
-    `<div class="pkgs">${pkgsHTML}</div>` +
+    `<div class="hd">${logo ? `<img class="lg" src="${logo}"/>` : '<span></span>'}<div class="badge">${escapeHtml(badgeTexto)}</div></div>` +
+    `<div class="titulo">${titulo}</div>` +
+    `<div class="tagline">${escapeHtml(tagline)}</div>` +
+    (pkgsHTML ? `<div class="pkgs">${pkgsHTML}</div>` : '') +
     `</div>` +
     `<div class="bloque-amarillo">` +
-    `<div class="num">${escapeHtml(totalPaquetes)}</div>` +
-    `<div class="num-label">Paquetes</div>` +
-    `<div class="num-sub">en ${escapeHtml(totalPaises)} países</div>` +
+    `<div class="num">${escapeHtml(num)}</div>` +
+    `<div class="num-label">${escapeHtml(numLabel)}</div>` +
+    `<div class="num-sub">${escapeHtml(numSub)}</div>` +
     `</div>` +
     `</div>`;
 
@@ -1748,6 +1790,7 @@ async function generateCatalogo(config, assets) {
   const formatos = Array.isArray(config.formatos)
     ? config.formatos
     : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['redes', 'feed', 'story']);
+  const prefijo = config.tipo === 'newsletter' ? 'newsletter' : 'catalogo';
 
   const browser = await chromium.launch({
     executablePath: '/usr/bin/google-chrome',
@@ -1757,7 +1800,7 @@ async function generateCatalogo(config, assets) {
   try {
     for (const fmt of formatos) {
       const html = buildCatalogoHTML(config, fmt, assets);
-      const tmpHTML = path.join(require('os').tmpdir(), `catalogo_${fmt}_${Date.now()}.html`);
+      const tmpHTML = path.join(require('os').tmpdir(), `${prefijo}_${fmt}_${Date.now()}.html`);
       fs.writeFileSync(tmpHTML, html);
 
       const page = await browser.newPage();
@@ -1767,11 +1810,11 @@ async function generateCatalogo(config, assets) {
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(500);
 
-      const outPNG = path.join(outputDir, `catalogo_${fmt}.png`);
+      const outPNG = path.join(outputDir, `${prefijo}_${fmt}.png`);
       await page.locator('.catalogo').screenshot({ path: outPNG, scale: 'css', type: 'png' });
       await page.close();
       fs.unlinkSync(tmpHTML);
-      console.log(`Catalogo ${fmt}: ${outPNG}`);
+      console.log(`${prefijo} ${fmt}: ${outPNG}`);
     }
   } finally {
     await browser.close();

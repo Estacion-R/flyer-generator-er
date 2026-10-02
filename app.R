@@ -51,12 +51,13 @@ server <- function(input, output, session) {
   observeEvent(input$home_paquete_carrusel, nav_select("main_nav", "ig_paquete", session = session))
   observeEvent(input$home_catalogo, nav_select("main_nav", "catalogo", session = session))
   observeEvent(input$home_viz,      nav_select("main_nav", "viz", session = session))
+  observeEvent(input$home_newsletter, nav_select("main_nav", "newsletter", session = session))
 
   # Links "← Inicio" repetidos arriba de cada generador (ver back_to_home()
   # en R/09_ui.R, un input distinto por tab para no repetir IDs) -- todas
   # las tabs de destino están escondidas de la barra de navegación (ver
   # .navbar-nav en css_app), así que esta es la única vuelta explícita.
-  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "catalogo")) {
+  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "catalogo", "newsletter")) {
     local({
       id <- paste0("go_home_", suf)
       observeEvent(input[[id]], nav_select("main_nav", "home", session = session), ignoreInit = TRUE)
@@ -578,6 +579,92 @@ server <- function(input, output, session) {
       }
 
       old_wd <- setwd(cat_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
+
+  # -- Newsletter semanal: reactivos --
+  # Fusiona generar_imagen_newsletter.py de redes (2026-10-02): mismo layout
+  # de dos bloques que el Catálogo (template "catalogo" con tipo "newsletter"
+  # en generate_flyer.js), sin lista de paquetes -- el bloque amarillo lleva
+  # número de edición y fecha en vez de totales del catálogo.
+  newsletter_data <- reactive({
+    list(
+      tipo        = "newsletter",
+      badge_texto = "Newsletter",
+      titulo      = input$nl_titulo  %||% "Newsletter<br>Semanal",
+      tagline     = input$nl_tagline %||% "Lo mejor de la semana en R, directo a tu email",
+      num         = input$nl_edicion %||% "",
+      num_label   = "Edición",
+      num_sub     = input$nl_fecha   %||% ""
+    )
+  })
+
+  newsletter_debounced <- debounce(newsletter_data, 400)
+  newsletter_last_html <- new.env(parent = emptyenv())
+
+  newsletter_render <- function(key, formato) {
+    d <- newsletter_debounced()
+    html <- flyer_worker_render(flyer_worker_ensure(), "catalogo", d, formato)
+    if (is.null(html)) html <- newsletter_last_html[[key]] else newsletter_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_nl_redes <- renderUI({
+    html <- newsletter_render("redes", "redes")
+    req(html)
+    tarjeta_iframe(html, 1200, 630, 540)
+  })
+  output$preview_nl_feed <- renderUI({
+    html <- newsletter_render("feed", "feed")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_nl_story <- renderUI({
+    html <- newsletter_render("story", "story")
+    req(html)
+    tarjeta_iframe(html, 1080, 1920, 540)
+  })
+
+  # -- Newsletter semanal: descarga ZIP --
+  output$descargar_newsletter_zip <- downloadHandler(
+    filename = function() paste0("newsletter_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$nl_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- newsletter_data()
+      nl_dir <- tempfile(pattern = "newsletter_")
+      dir.create(nl_dir)
+      on.exit(unlink(nl_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template    = "catalogo",
+        tipo        = "newsletter",
+        output_dir  = nl_dir,
+        badge_texto = d$badge_texto,
+        titulo      = d$titulo,
+        tagline     = d$tagline,
+        num         = d$num,
+        num_label   = d$num_label,
+        num_sub     = d$num_sub,
+        formatos    = I(fmts)
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "la newsletter", session)
+      if (is.null(result)) req(FALSE)
+
+      pngs <- list.files(nl_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar la newsletter: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+
+      old_wd <- setwd(nl_dir)
       on.exit(setwd(old_wd), add = TRUE)
       utils::zip(zipfile = file, files = pngs, flags = "-j9")
     }
