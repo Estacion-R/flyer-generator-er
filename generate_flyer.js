@@ -1709,24 +1709,41 @@ function buildCatalogoHTML(config, formato, assets) {
   const sz = CATALOGO_SIZES[fmt];
   const esRow = fmt === 'redes';
   const logo = (assets.logos && assets.logos.blanco) || '';
-  const esNewsletter = config.tipo === 'newsletter';
+  const tipo = config.tipo || 'catalogo';
 
   // tipo "catalogo" (default, compatibilidad con el formato viejo): badge/
   // título/tagline fijos, lista de paquetes destacados, número = total del
-  // catálogo. tipo "newsletter": todo viene del config (sin lista de
-  // paquetes), pensado para el reemplazo de generar_imagen_newsletter.py.
-  const paquetes = esNewsletter ? [] : (Array.isArray(config.paquetes) ? config.paquetes : []).slice(0, 3);
+  // catálogo. tipos "newsletter" / "blog" (hito): todo viene del config
+  // (sin lista de paquetes) — reemplazo de generar_imagen_newsletter.py y
+  // placa de post del blog. tipo "encuesta": sin paquetes, opciones con
+  // barras en el bloque azul y total de respuestas en el amarillo.
+  // Los tres pedidos por redes (issue #3).
+  const esHito = tipo === 'newsletter' || tipo === 'blog';
+  const esEncuesta = tipo === 'encuesta';
+
+  const paquetes = (esHito || esEncuesta) ? [] : (Array.isArray(config.paquetes) ? config.paquetes : []).slice(0, 3);
   const pkgsHTML = paquetes.map(catalogoPaqueteHtml).join('');
 
-  const badgeTexto = config.badge_texto || (esNewsletter ? 'Edición' : 'Catálogo');
+  // tipo "encuesta": opciones [{texto, pct}] → filas con barra de resultado.
+  const opciones = esEncuesta ? (Array.isArray(config.opciones) ? config.opciones : []).slice(0, 4) : [];
+  const optsHTML = opciones.map(o => {
+    const txt = escapeHtml((o && o.texto) || '');
+    const pct = Math.max(0, Math.min(100, Number(o && o.pct != null ? o.pct : 0) || 0));
+    return `<div class="opt">` +
+      `<div class="opt-hd"><span class="opt-txt">${txt}</span><span class="opt-pct">${pct}%</span></div>` +
+      `<div class="opt-track"><div class="opt-fill" style="width:${pct}%"></div></div>` +
+      `</div>`;
+  }).join('');
+
+  const badgeTexto = config.badge_texto || { newsletter: 'Edición', blog: 'Blog', encuesta: 'Encuesta' }[tipo] || 'Catálogo';
   const titulo = config.titulo || 'Paquetes de R<br>hechos en Latinoamérica';
   const tagline = config.tagline || 'Descubrí el trabajo de la comunidad R en la región';
 
-  const num = esNewsletter
+  const num = (esHito || esEncuesta)
     ? String(config.num != null ? config.num : '').trim()
     : String(config.total_paquetes != null ? config.total_paquetes : '').trim();
-  const numLabel = config.num_label || (esNewsletter ? 'Edición' : 'Paquetes');
-  const numSub = esNewsletter
+  const numLabel = config.num_label || { newsletter: 'Edición', blog: 'Leer', encuesta: 'Respuestas' }[tipo] || 'Paquetes';
+  const numSub = (esHito || esEncuesta)
     ? String(config.num_sub || '').trim()
     : `en ${String(config.total_paises != null ? config.total_paises : '').trim()} países`;
 
@@ -1750,6 +1767,13 @@ function buildCatalogoHTML(config, formato, assets) {
     `.pkg-flag{font-size:${sz.pkgNombre}px;line-height:1}` +
     `.pkg-nombre{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#EAFF38;font-size:${sz.pkgNombre}px;line-height:1.1;overflow-wrap:anywhere}` +
     `.pkg-desc{font-family:'Ubuntu',sans-serif;color:rgba(255,255,255,0.85);font-size:${sz.pkgDesc}px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}` +
+    `.opts{display:flex;flex-direction:column;gap:${sz.pkgGap}px;flex:1 1 auto;justify-content:center;min-height:0}` +
+    `.opt{display:flex;flex-direction:column;gap:8px}` +
+    `.opt-hd{display:flex;justify-content:space-between;align-items:baseline;gap:14px}` +
+    `.opt-txt{font-family:'Ubuntu',sans-serif;font-weight:700;color:#FFFFFF;font-size:${sz.pkgNombre}px;line-height:1.2;overflow-wrap:anywhere}` +
+    `.opt-pct{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#EAFF38;font-size:${sz.pkgNombre}px;flex-shrink:0}` +
+    `.opt-track{height:${Math.max(12, Math.round(sz.pkgNombre * 0.55))}px;background:rgba(255,255,255,0.18);overflow:hidden}` +
+    `.opt-fill{height:100%;background:#EAFF38}` +
     `.num{font-family:'Array',sans-serif;font-weight:700;color:#151515;font-size:${sz.num}px;line-height:0.95;text-align:center}` +
     `.num-label{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#151515;font-size:${sz.numLabel}px;letter-spacing:0.1em;text-transform:uppercase;text-align:center}` +
     `.num-sub{font-family:'Ubuntu',sans-serif;color:#151515;font-size:${sz.numSub}px;text-align:center;font-weight:700}`;
@@ -1761,6 +1785,7 @@ function buildCatalogoHTML(config, formato, assets) {
     `<div class="titulo">${titulo}</div>` +
     `<div class="tagline">${escapeHtml(tagline)}</div>` +
     (pkgsHTML ? `<div class="pkgs">${pkgsHTML}</div>` : '') +
+    (optsHTML ? `<div class="opts">${optsHTML}</div>` : '') +
     `</div>` +
     `<div class="bloque-amarillo">` +
     `<div class="num">${escapeHtml(num)}</div>` +
@@ -1790,7 +1815,7 @@ async function generateCatalogo(config, assets) {
   const formatos = Array.isArray(config.formatos)
     ? config.formatos
     : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['redes', 'feed', 'story']);
-  const prefijo = config.tipo === 'newsletter' ? 'newsletter' : 'catalogo';
+  const prefijo = { newsletter: 'newsletter', blog: 'blog', encuesta: 'encuesta' }[config.tipo] || 'catalogo';
 
   const browser = await chromium.launch({
     executablePath: '/usr/bin/google-chrome',
@@ -1815,6 +1840,112 @@ async function generateCatalogo(config, assets) {
       await page.close();
       fs.unlinkSync(tmpHTML);
       console.log(`${prefijo} ${fmt}: ${outPNG}`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+// ---- Template "cita": cita/frase destacada (issue #3, pedido de redes) ----
+// Distinto de los tipos de catálogo (dos bloques): tres bandas — azul arriba
+// (logo + badge), cuerpo oscuro centrado (comilla gigante + frase + autor/a),
+// amarillo abajo (logo negro + handles). Mismos 3 formatos (redes/feed/story).
+
+const CITA_SIZES = {
+  redes: { pad: 44, badge: 19, glyph: 150, cita: 42, autor: 19, logo: 38, foot: 18 },
+  feed:  { pad: 56, badge: 22, glyph: 220, cita: 54, autor: 24, logo: 46, foot: 22 },
+  story: { pad: 60, badge: 24, glyph: 260, cita: 62, autor: 27, logo: 50, foot: 25 }
+};
+
+function buildCitaHTML(config, formato, assets) {
+  const fmt = (formato === 'feed' || formato === 'story') ? formato : 'redes';
+  const dims = fmt === 'redes' ? { w: 1200, h: 630 } : fmt === 'feed' ? { w: 1080, h: 1350 } : { w: 1080, h: 1920 };
+  const sz = CITA_SIZES[fmt];
+  const logoBlanco = (assets.logos && assets.logos.blanco) || '';
+  const logoNegro = (assets.logos && assets.logos.negro) || '';
+
+  const badgeTexto = config.badge_texto || 'Cita';
+  const cita = String(config.cita || '').trim();
+  const autor = String(config.autor || '').trim();
+  const contexto = String(config.contexto || '').trim();
+  const handles = String(config.handles || 'estacion-r.com · @estacion.erre').trim();
+
+  const fontsCSS =
+    UBUNTU_FONT_FACES +
+    `@font-face{font-family:'Array';src:url('data:font/woff2;base64,${assets.arrayFont}') format('woff2');font-weight:700;font-style:normal;font-display:block;}`;
+
+  const css =
+    `*{margin:0;padding:0;box-sizing:border-box}` +
+    `.cita{width:${dims.w}px;height:${dims.h}px;background:#151515;font-family:'Ubuntu',sans-serif;overflow:hidden;display:flex;flex-direction:column}` +
+    `.cita-hd{background:#405BFF;display:flex;justify-content:space-between;align-items:center;padding:${Math.round(sz.pad * 0.7)}px ${sz.pad}px}` +
+    `.cita-hd .lg{height:${sz.logo}px;display:block}` +
+    `.badge{background:#EAFF38;color:#151515;font-family:'Ubuntu Mono',monospace;font-size:${sz.badge}px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:8px 20px}` +
+    `.cita-body{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;gap:${Math.round(sz.cita * 0.4)}px;padding:${Math.round(sz.pad * 1.3)}px;min-height:0}` +
+    `.cita-glyph{font-family:'Array',sans-serif;font-weight:700;color:#EAFF38;font-size:${sz.glyph}px;line-height:1}` +
+    `.cita-texto{font-weight:700;color:#FFFFFF;font-size:${sz.cita}px;line-height:1.22}` +
+    `.cita-autor{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#EAFF38;font-size:${sz.autor}px;letter-spacing:0.04em}` +
+    `.cita-foot{background:#EAFF38;display:flex;justify-content:space-between;align-items:center;padding:${Math.round(sz.pad * 0.55)}px ${sz.pad}px}` +
+    `.cita-foot .lg{height:${Math.round(sz.logo * 0.8)}px;display:block}` +
+    `.cita-handles{font-family:'Ubuntu Mono',monospace;font-weight:700;color:#151515;font-size:${sz.foot}px;letter-spacing:0.05em}`;
+
+  const autorHTML = [autor, contexto].filter(Boolean).map(s => escapeHtml(s)).join(' · ');
+
+  const body =
+    `<div class="cita">` +
+    `<div class="cita-hd">${logoBlanco ? `<img class="lg" src="${logoBlanco}"/>` : '<span></span>'}<div class="badge">${escapeHtml(badgeTexto)}</div></div>` +
+    `<div class="cita-body">` +
+    `<div class="cita-glyph">«</div>` +
+    (cita ? `<div class="cita-texto">${escapeHtml(cita)}</div>` : '') +
+    (autorHTML ? `<div class="cita-autor">— ${autorHTML}</div>` : '') +
+    `</div>` +
+    `<div class="cita-foot">${logoNegro ? `<img class="lg" src="${logoNegro}"/>` : '<span></span>'}<span class="cita-handles">${escapeHtml(handles)}</span></div>` +
+    `</div>`;
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8">
+<style>
+${fontsCSS}${css}
+</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
+async function generateCita(config, assets) {
+  const outputDir = config.output_dir;
+  if (!outputDir) throw new Error('output_dir requerido para template cita');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+
+  const formatos = Array.isArray(config.formatos)
+    ? config.formatos
+    : (typeof config.formatos === 'string' && config.formatos ? [config.formatos] : ['redes', 'feed', 'story']);
+
+  const browser = await chromium.launch({
+    executablePath: '/usr/bin/google-chrome',
+    args: ['--no-sandbox', '--disable-gpu']
+  });
+
+  try {
+    for (const fmt of formatos) {
+      const html = buildCitaHTML(config, fmt, assets);
+      const tmpHTML = path.join(require('os').tmpdir(), `cita_${fmt}_${Date.now()}.html`);
+      fs.writeFileSync(tmpHTML, html);
+
+      const page = await browser.newPage();
+      await page.setViewportSize(fmt === 'redes' ? { width: 1300, height: 730 }
+        : fmt === 'feed' ? { width: 1200, height: 1450 } : { width: 1200, height: 2020 });
+      await page.goto('file://' + tmpHTML, { waitUntil: 'networkidle' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+
+      const outPNG = path.join(outputDir, `cita_${fmt}.png`);
+      await page.locator('.cita').screenshot({ path: outPNG, scale: 'css', type: 'png' });
+      await page.close();
+      fs.unlinkSync(tmpHTML);
+      console.log(`cita ${fmt}: ${outPNG}`);
     }
   } finally {
     await browser.close();
@@ -1903,6 +2034,12 @@ async function main() {
     return;
   }
 
+  // Cita destacada (redes/feed/story): genera PNGs en output_dir; no usa --output
+  if (config.template === 'cita') {
+    await generateCita(config, tarjAssets);
+    return;
+  }
+
   // Carousel (paquete 4 slides / curso 3-4 slides): genera PNGs en output_dir; no usa --output
   if (config.template === 'carousel' || config.template === 'carousel_curso') {
     await generateCarousel(config, logoB64, tarjAssets.arrayFont);
@@ -1950,6 +2087,7 @@ module.exports = {
   buildTarjetaHTML,
   buildDescuentoHTML,
   buildCatalogoHTML,
+  buildCitaHTML,
   buildSlide1,
   buildSlide2,
   buildSlide3,

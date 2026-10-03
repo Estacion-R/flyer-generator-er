@@ -52,12 +52,15 @@ server <- function(input, output, session) {
   observeEvent(input$home_catalogo, nav_select("main_nav", "catalogo", session = session))
   observeEvent(input$home_viz,      nav_select("main_nav", "viz", session = session))
   observeEvent(input$home_newsletter, nav_select("main_nav", "newsletter", session = session))
+  observeEvent(input$home_cita,      nav_select("main_nav", "cita", session = session))
+  observeEvent(input$home_blog,      nav_select("main_nav", "blog", session = session))
+  observeEvent(input$home_encuesta,  nav_select("main_nav", "encuesta", session = session))
 
   # Links "← Inicio" repetidos arriba de cada generador (ver back_to_home()
   # en R/09_ui.R, un input distinto por tab para no repetir IDs) -- todas
   # las tabs de destino están escondidas de la barra de navegación (ver
   # .navbar-nav en css_app), así que esta es la única vuelta explícita.
-  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "catalogo", "newsletter")) {
+  for (suf in c("paquete", "curso", "tarjeta", "descuento", "viz", "catalogo", "newsletter", "cita", "blog", "encuesta")) {
     local({
       id <- paste0("go_home_", suf)
       observeEvent(input[[id]], nav_select("main_nav", "home", session = session), ignoreInit = TRUE)
@@ -669,6 +672,275 @@ server <- function(input, output, session) {
       utils::zip(zipfile = file, files = pngs, flags = "-j9")
     }
   )
+
+  # -- Cita destacada: reactivos (issue #3, template "cita" en JS) --
+  cita_data <- reactive({
+    list(
+      cita        = input$cita_texto %||% "",
+      autor       = input$cita_autor %||% "",
+      contexto    = input$cita_contexto %||% "",
+      badge_texto = input$cita_badge %||% "Cita",
+      handles     = input$cita_handles %||% ""
+    )
+  })
+
+  cita_debounced <- debounce(cita_data, 400)
+  cita_last_html <- new.env(parent = emptyenv())
+
+  cita_render <- function(key, formato) {
+    d <- cita_debounced()
+    html <- flyer_worker_render(flyer_worker_ensure(), "cita", d, formato)
+    if (is.null(html)) html <- cita_last_html[[key]] else cita_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_cita_redes <- renderUI({
+    html <- cita_render("redes", "redes")
+    req(html)
+    tarjeta_iframe(html, 1200, 630, 540)
+  })
+  output$preview_cita_feed <- renderUI({
+    html <- cita_render("feed", "feed")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_cita_story <- renderUI({
+    html <- cita_render("story", "story")
+    req(html)
+    tarjeta_iframe(html, 1080, 1920, 540)
+  })
+
+  # -- Cita destacada: descarga ZIP --
+  output$descargar_cita_zip <- downloadHandler(
+    filename = function() paste0("cita_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$cita_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- cita_data()
+      out_dir <- tempfile(pattern = "cita_")
+      dir.create(out_dir)
+      on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template    = "cita",
+        output_dir  = out_dir,
+        cita        = d$cita,
+        autor       = d$autor,
+        contexto    = d$contexto,
+        badge_texto = d$badge_texto,
+        handles     = d$handles,
+        formatos    = I(fmts)
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "la cita", session)
+      if (is.null(result)) req(FALSE)
+
+      pngs <- list.files(out_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar la cita: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+
+      old_wd <- setwd(out_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
+
+  # -- Anuncio de blog: reactivos (tipo "blog" del template catalogo) --
+  blog_data <- reactive({
+    list(
+      tipo        = "blog",
+      badge_texto = "Blog",
+      titulo      = input$blog_titulo %||% "",
+      tagline     = input$blog_extracto %||% "",
+      num         = input$blog_cta_num %||% "Leer",
+      num_label   = input$blog_cta_label %||% "Link en el post fijado",
+      num_sub     = input$blog_cta_sub %||% "estacion-r.com"
+    )
+  })
+
+  blog_debounced <- debounce(blog_data, 400)
+  blog_last_html <- new.env(parent = emptyenv())
+
+  blog_render <- function(key, formato) {
+    d <- blog_debounced()
+    html <- flyer_worker_render(flyer_worker_ensure(), "catalogo", d, formato)
+    if (is.null(html)) html <- blog_last_html[[key]] else blog_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_blog_redes <- renderUI({
+    html <- blog_render("redes", "redes")
+    req(html)
+    tarjeta_iframe(html, 1200, 630, 540)
+  })
+  output$preview_blog_feed <- renderUI({
+    html <- blog_render("feed", "feed")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_blog_story <- renderUI({
+    html <- blog_render("story", "story")
+    req(html)
+    tarjeta_iframe(html, 1080, 1920, 540)
+  })
+
+  # -- Anuncio de blog: descarga ZIP --
+  output$descargar_blog_zip <- downloadHandler(
+    filename = function() paste0("blog_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$blog_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- blog_data()
+      out_dir <- tempfile(pattern = "blog_")
+      dir.create(out_dir)
+      on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template    = "catalogo",
+        tipo        = "blog",
+        output_dir  = out_dir,
+        badge_texto = d$badge_texto,
+        titulo      = d$titulo,
+        tagline     = d$tagline,
+        num         = d$num,
+        num_label   = d$num_label,
+        num_sub     = d$num_sub,
+        formatos    = I(fmts)
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "el anuncio de blog", session)
+      if (is.null(result)) req(FALSE)
+
+      pngs <- list.files(out_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar el anuncio de blog: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+
+      old_wd <- setwd(out_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
+
+  # -- Resumen de encuesta: reactivos (tipo "encuesta" del template catalogo) --
+  enc_data <- reactive({
+    opciones <- list(
+      list(texto = input$enc_o1 %||% "", pct = as.numeric(input$enc_p1 %||% 0)),
+      list(texto = input$enc_o2 %||% "", pct = as.numeric(input$enc_p2 %||% 0)),
+      list(texto = input$enc_o3 %||% "", pct = as.numeric(input$enc_p3 %||% 0)),
+      list(texto = input$enc_o4 %||% "", pct = as.numeric(input$enc_p4 %||% 0))
+    )
+    # Opciones vacías no se muestran (uso esporádico, cantidad variable)
+    opciones <- Filter(function(o) nzchar(trimws(o$texto)), opciones)
+    list(
+      tipo      = "encuesta",
+      titulo    = input$enc_pregunta %||% "",
+      opciones  = opciones,
+      num       = input$enc_total %||% 0,
+      num_label = "Respuestas",
+      num_sub   = "¡Gracias por participar!"
+    )
+  })
+
+  enc_debounced <- debounce(enc_data, 400)
+  enc_last_html <- new.env(parent = emptyenv())
+
+  enc_render <- function(key, formato) {
+    d <- enc_debounced()
+    html <- flyer_worker_render(flyer_worker_ensure(), "catalogo", d, formato)
+    if (is.null(html)) html <- enc_last_html[[key]] else enc_last_html[[key]] <- html
+    html
+  }
+
+  output$preview_enc_redes <- renderUI({
+    html <- enc_render("redes", "redes")
+    req(html)
+    tarjeta_iframe(html, 1200, 630, 540)
+  })
+  output$preview_enc_feed <- renderUI({
+    html <- enc_render("feed", "feed")
+    req(html)
+    tarjeta_iframe(html, 1080, 1350, 540)
+  })
+  output$preview_enc_story <- renderUI({
+    html <- enc_render("story", "story")
+    req(html)
+    tarjeta_iframe(html, 1080, 1920, 540)
+  })
+
+  # -- Resumen de encuesta: descarga ZIP --
+  output$descargar_enc_zip <- downloadHandler(
+    filename = function() paste0("encuesta_er_", format(Sys.Date(), "%Y%m%d"), ".zip"),
+    content = function(file) {
+      fmts <- input$enc_formatos
+      if (length(fmts) == 0) stop("Elegí al menos un formato")
+      d <- enc_data()
+      out_dir <- tempfile(pattern = "encuesta_")
+      dir.create(out_dir)
+      on.exit(unlink(out_dir, recursive = TRUE), add = TRUE)
+
+      config <- list(
+        template    = "catalogo",
+        tipo        = "encuesta",
+        output_dir  = out_dir,
+        titulo      = d$titulo,
+        opciones    = d$opciones,
+        num         = d$num,
+        num_label   = d$num_label,
+        num_sub     = d$num_sub,
+        formatos    = I(fmts)
+      )
+      cfg_file <- tempfile(fileext = ".json")
+      writeLines(jsonlite::toJSON(config, auto_unbox = TRUE, null = "null"), cfg_file)
+      on.exit(unlink(cfg_file), add = TRUE)
+
+      result <- run_flyer_render(c(PLAYWRIGHT_SCRIPT, "--config", cfg_file), "la encuesta", session)
+      if (is.null(result)) req(FALSE)
+
+      pngs <- list.files(out_dir, pattern = "\\.png$", full.names = FALSE)
+      if (length(pngs) == 0) {
+        showNotification("No se pudo generar la encuesta: el render no produjo ninguna imagen (probá de nuevo).",
+          type = "error", duration = 10, session = session)
+        req(FALSE)
+      }
+
+      old_wd <- setwd(out_dir)
+      on.exit(setwd(old_wd), add = TRUE)
+      utils::zip(zipfile = file, files = pngs, flags = "-j9")
+    }
+  )
+
+  # -- Fix: previews de cita/blog/encuesta no computaban al abrir la tab --
+  # Sintoma: al entrar desde la landing, los previews quedaban en
+  # "recalculating" eterno (0 iframes) mientras newsletter/catalogo andaban
+  # igual. Diagnostico con trazas: el path de computo estaba OK (worker
+  # responde, debounce dispara, renderUI corre); lo que no llega es la
+  # senal de visibilidad del cliente para estos outputs al activar el pane
+  # via nav_select -- con Shiny.unbindAll()/bindAll() manual renderizaban
+  # al instante (probado E2E). Con suspendWhenHidden = FALSE el server los
+  # computa en el primer flush (invalidacion del debounce ~400ms tras el
+  # arranque) y el preview ya esta renderizado al abrir la tab. Mismo
+  # patron que shiny_eph_panel usa para sus vistas conditionalPanel. Las
+  # tabs preexistentes no se tocan: su senalizacion funciona y no vale la
+  # pena sumar renders de arranque.
+  for (out in c(
+    "preview_cita_redes", "preview_cita_feed", "preview_cita_story",
+    "preview_blog_redes", "preview_blog_feed", "preview_blog_story",
+    "preview_enc_redes",  "preview_enc_feed",  "preview_enc_story"
+  )) {
+    outputOptions(output, out, suspendWhenHidden = FALSE)
+  }
 }
 
 shinyApp(ui, server)

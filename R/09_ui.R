@@ -95,7 +95,13 @@ build_ui <- function() {
           landing_card("home_viz", "📊", "Visuales para redes",
             "Enmarcá un gráfico propio con el branding de Estación R — 1:1, 4:5, 16:9"),
           landing_card("home_newsletter", "📬", "Newsletter semanal",
-            "Placa de edición — número y fecha para anunciar la newsletter de la semana")
+            "Placa de edición — número y fecha para anunciar la newsletter de la semana"),
+          landing_card("home_cita", "💬", "Cita destacada",
+            "Frases de cursos, charlas o la comunidad — con autor/a y contexto"),
+          landing_card("home_blog", "📝", "Anuncio de blog",
+            "Placa para difundir un post nuevo — título, extracto y CTA"),
+          landing_card("home_encuesta", "🗳️", "Resumen de encuesta",
+            "Resultados de una encuesta o poll — opciones con barras y total")
         )
       )
     )
@@ -608,6 +614,163 @@ build_ui <- function() {
         uiOutput("preview_nl_feed"),
         div(class = "slide-label", "Story — Instagram (1080×1920)"),
         uiOutput("preview_nl_story")
+      )
+    )
+  ),
+
+  # ---- Tab Cita destacada (issue #3, template "cita" en generate_flyer.js) ----
+  # Layout propio: banda azul (logo + badge), cuerpo oscuro con « gigante +
+  # frase + autor/a, banda amarilla (logo negro + handles).
+  nav_panel(
+    "💬 Cita destacada", value = "cita",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 340,
+        class = "panel-form",
+        back_to_home("cita"),
+
+        tags$span("Formatos a incluir en el ZIP", class = "section-label"),
+        checkboxGroupInput("cita_formatos", NULL,
+          choices = CATALOGO_FORMATOS_OPTS,
+          selected = unname(CATALOGO_FORMATOS_OPTS)),
+
+        tags$hr(),
+        tags$span("Cita", class = "section-label"),
+        textAreaInput("cita_texto", "Frase", rows = 3,
+          value = "Los datos no mienten, pero tampoco se explican solos."),
+        textInput("cita_autor", "Autor/a", value = "Estación R"),
+        textInput("cita_contexto", "Contexto (curso, charla, comunidad)",
+          value = "Comunidad R de Latinoamérica"),
+
+        tags$hr(),
+        accordion(
+          open = FALSE,
+          multiple = TRUE,
+
+          accordion_panel("📝 Textos extra (opcional)", value = "cita_extra",
+            textInput("cita_badge", "Badge (default Cita)", value = "Cita"),
+            textInput("cita_handles", "Pie (handles)",
+              value = "estacion-r.com · @estacion.erre")
+          )
+        ),
+
+        downloadButton("descargar_cita_zip",
+          "⬇ Descargar ZIP",
+          class = "btn-zip",
+          style = "margin-top: 1rem;")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "Horizontal — LinkedIn/X/OG (1200×630)"),
+        uiOutput("preview_cita_redes"),
+        div(class = "slide-label", "Feed — Instagram (1080×1350)"),
+        uiOutput("preview_cita_feed"),
+        div(class = "slide-label", "Story — Instagram (1080×1920)"),
+        uiOutput("preview_cita_story")
+      )
+    )
+  ),
+
+  # ---- Tab Anuncio de blog (issue #3) ----
+  # Tipo "blog" del template catalogo: badge BLOG, título + extracto del post
+  # en el bloque azul, CTA de lectura en el amarillo. Convención de redes:
+  # link en el post fijado, no en el cuerpo de la placa.
+  nav_panel(
+    "📝 Anuncio de blog", value = "blog",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 340,
+        class = "panel-form",
+        back_to_home("blog"),
+
+        tags$span("Formatos a incluir en el ZIP", class = "section-label"),
+        checkboxGroupInput("blog_formatos", NULL,
+          choices = CATALOGO_FORMATOS_OPTS,
+          selected = unname(CATALOGO_FORMATOS_OPTS)),
+
+        tags$hr(),
+        tags$span("Post", class = "section-label"),
+        textInput("blog_titulo", "Título",
+          value = "Cómo armar tu primer panel con la EPH"),
+        textAreaInput("blog_extracto", "Extracto (1-2 líneas)", rows = 3,
+          value = "Una guía paso a paso, de los microdatos al panel listo para analizar."),
+
+        tags$hr(),
+        accordion(
+          open = FALSE,
+          multiple = TRUE,
+
+          accordion_panel("💬 Bloque amarillo (CTA)", value = "blog_cta",
+            textInput("blog_cta_num", "Palabra grande", value = "Leer"),
+            textInput("blog_cta_label", "Etiqueta", value = "Link en el post fijado"),
+            textInput("blog_cta_sub", "Subtexto", value = "estacion-r.com")
+          )
+        ),
+
+        downloadButton("descargar_blog_zip",
+          "⬇ Descargar ZIP",
+          class = "btn-zip",
+          style = "margin-top: 1rem;")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "Horizontal — LinkedIn/X/OG (1200×630)"),
+        uiOutput("preview_blog_redes"),
+        div(class = "slide-label", "Feed — Instagram (1080×1350)"),
+        uiOutput("preview_blog_feed"),
+        div(class = "slide-label", "Story — Instagram (1080×1920)"),
+        uiOutput("preview_blog_story")
+      )
+    )
+  ),
+
+  # ---- Tab Resumen de encuesta (issue #3) ----
+  # Tipo "encuesta" del template catalogo: pregunta + opciones con barras en
+  # el bloque azul, total de respuestas en el amarillo. Opciones vacías no
+  # se muestran (hasta 4).
+  nav_panel(
+    "🗳️ Resumen de encuesta", value = "encuesta",
+    layout_sidebar(
+      sidebar = sidebar(
+        width = 340,
+        class = "panel-form",
+        back_to_home("encuesta"),
+
+        tags$span("Formatos a incluir en el ZIP", class = "section-label"),
+        checkboxGroupInput("enc_formatos", NULL,
+          choices = CATALOGO_FORMATOS_OPTS,
+          selected = unname(CATALOGO_FORMATOS_OPTS)),
+
+        tags$hr(),
+        tags$span("Encuesta", class = "section-label"),
+        textInput("enc_pregunta", "Pregunta",
+          value = "¿Qué tema querés ver en el próximo taller?"),
+        numericInput("enc_total", "Total de respuestas", value = 128, min = 0),
+
+        tags$hr(),
+        tags$span("Opciones (vacías = no se muestran)", class = "section-label"),
+        textInput("enc_o1", "Opción 1", value = "Shiny a fondo"),
+        numericInput("enc_p1", "% opción 1", value = 40, min = 0, max = 100),
+        textInput("enc_o2", "Opción 2", value = "R espacial"),
+        numericInput("enc_p2", "% opción 2", value = 30, min = 0, max = 100),
+        textInput("enc_o3", "Opción 3", value = "Scraping"),
+        numericInput("enc_p3", "% opción 3", value = 20, min = 0, max = 100),
+        textInput("enc_o4", "Opción 4", value = "Machine learning"),
+        numericInput("enc_p4", "% opción 4", value = 10, min = 0, max = 100),
+
+        downloadButton("descargar_enc_zip",
+          "⬇ Descargar ZIP",
+          class = "btn-zip",
+          style = "margin-top: 1rem;")
+      ),
+
+      div(class = "flyer-wrap",
+        div(class = "slide-label", "Horizontal — LinkedIn/X/OG (1200×630)"),
+        uiOutput("preview_enc_redes"),
+        div(class = "slide-label", "Feed — Instagram (1080×1350)"),
+        uiOutput("preview_enc_feed"),
+        div(class = "slide-label", "Story — Instagram (1080×1920)"),
+        uiOutput("preview_enc_story")
       )
     )
   )
