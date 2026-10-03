@@ -1737,7 +1737,9 @@ function buildCatalogoHTML(config, formato, assets) {
 
   const badgeTexto = config.badge_texto || { newsletter: 'Edición', blog: 'Blog', encuesta: 'Encuesta' }[tipo] || 'Catálogo';
   const titulo = config.titulo || 'Paquetes de R<br>hechos en Latinoamérica';
-  const tagline = config.tagline || 'Descubrí el trabajo de la comunidad R en la región';
+  const tagline = config.tagline ||
+    (esEncuesta ? 'Resultados de la encuesta de la comunidad'
+                : 'Descubrí el trabajo de la comunidad R en la región');
 
   const num = (esHito || esEncuesta)
     ? String(config.num != null ? config.num : '').trim()
@@ -1868,7 +1870,12 @@ function buildCitaHTML(config, formato, assets) {
   const cita = String(config.cita || '').trim();
   const autor = String(config.autor || '').trim();
   const contexto = String(config.contexto || '').trim();
-  const handles = String(config.handles || 'estacion-r.com · @estacion.erre').trim();
+  // Redes (E2E 2026-10-03): el handle de IG (@estacion.erre) no existe en X/LinkedIn.
+  // Con el pie default, el horizontal muestra el handle válido de X; si el usuario
+  // personaliza el pie, se respeta su texto en todos los formatos.
+  const HANDLES_PIE_IG = 'estacion-r.com · @estacion.erre';
+  let handles = String(config.handles || HANDLES_PIE_IG).trim();
+  if (fmt === 'redes' && handles === HANDLES_PIE_IG) handles = 'estacion-r.com · @estacion_erre';
 
   const fontsCSS =
     UBUNTU_FONT_FACES +

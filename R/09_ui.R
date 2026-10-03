@@ -650,7 +650,8 @@ build_ui <- function() {
           accordion_panel("📝 Textos extra (opcional)", value = "cita_extra",
             textInput("cita_badge", "Badge (default Cita)", value = "Cita"),
             textInput("cita_handles", "Pie (handles)",
-              value = "estacion-r.com · @estacion.erre")
+              value = "estacion-r.com · @estacion.erre"),
+            helpText("Con el pie default, el horizontal (LinkedIn/X) usa @estacion_erre; feed y story (Instagram) usan @estacion.erre.")
           )
         ),
 
